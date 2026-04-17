@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -87,6 +88,10 @@ type CORSConfig struct {
 // Environment variables take precedence over file values.
 // Example: APP_PORT=8080 overrides app.port in the file.
 func Load() (*Config, error) {
+	// Load .env file into OS environment variables if it exists.
+	// We ignore the error because in production we might purely rely on OS env vars.
+	_ = godotenv.Load(".env")
+
 	v := viper.New()
 
 	// Defaults
