@@ -88,9 +88,10 @@ type CORSConfig struct {
 // Environment variables take precedence over file values.
 // Example: APP_PORT=8080 overrides app.port in the file.
 func Load() (*Config, error) {
-	// Load .env file into OS environment variables if it exists.
-	// We ignore the error because in production we might purely rely on OS env vars.
+	// Try to load .env file from current directory or parent directory
+	// This ensures it works if running from root or from backend/ folder
 	_ = godotenv.Load(".env")
+	_ = godotenv.Load("../.env")
 
 	v := viper.New()
 
@@ -105,6 +106,9 @@ func Load() (*Config, error) {
 	v.SetDefault("database.driver", "postgres")
 	v.SetDefault("database.host", "localhost")
 	v.SetDefault("database.port", 5432)
+	v.SetDefault("database.user", "postgres")
+	v.SetDefault("database.password", "password")
+	v.SetDefault("database.name", "kodia_db")
 	v.SetDefault("database.ssl_mode", "disable")
 	v.SetDefault("database.timezone", "UTC")
 	v.SetDefault("database.max_open_conns", 25)
@@ -113,8 +117,11 @@ func Load() (*Config, error) {
 
 	v.SetDefault("redis.host", "localhost")
 	v.SetDefault("redis.port", 6379)
+	v.SetDefault("redis.password", "")
 	v.SetDefault("redis.db", 0)
 
+	v.SetDefault("jwt.access_secret", "access_secret_key")
+	v.SetDefault("jwt.refresh_secret", "refresh_secret_key")
 	v.SetDefault("jwt.access_expiry_hours", 1)
 	v.SetDefault("jwt.refresh_expiry_days", 30)
 

@@ -33,6 +33,15 @@ func New(cfg *config.Config, log *zap.Logger) (*gorm.DB, error) {
 		logLevel = gormlogger.Info
 	}
 
+	log.Debug("Attempting database connection",
+		zap.String("driver", cfg.Database.Driver),
+		zap.String("host", cfg.Database.Host),
+		zap.Int("port", cfg.Database.Port),
+		zap.String("user", cfg.Database.User),
+		zap.String("database", cfg.Database.Name),
+		zap.String("ssl_mode", cfg.Database.SSLMode),
+	)
+
 	db, err := gorm.Open(dialector, &gorm.Config{
 		Logger: gormlogger.Default.LogMode(logLevel),
 	})
