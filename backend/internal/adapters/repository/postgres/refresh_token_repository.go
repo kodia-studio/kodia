@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/kodia/framework/backend/internal/core/domain"
+	"github.com/kodia-studio/kodia/internal/core/domain"
 	"gorm.io/gorm"
 )
 

@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 
-	"github.com/kodia/framework/backend/internal/core/domain"
-	"github.com/kodia/framework/backend/internal/core/ports"
-	"github.com/kodia/framework/backend/pkg/pagination"
+	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/internal/core/ports"
+	"github.com/kodia-studio/kodia/pkg/pagination"
 	"go.uber.org/zap"
 )
 
@@ -21,7 +21,7 @@ func NewProductService(repo ports.ProductRepository, log *zap.Logger) ports.Prod
 	}
 }
 
-func (s *productService) GetAll(ctx context.Context, params pagination.Params) ([]domain.Product, int64, error) {
+func (s *productService) GetAll(ctx context.Context, params *pagination.Params) ([]domain.Product, int64, error) {
 	return s.repo.FindAll(ctx, params)
 }
 

@@ -7,11 +7,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/kodia/framework/backend/internal/adapters/http/dto"
-	"github.com/kodia/framework/backend/internal/adapters/http/middleware"
-	"github.com/kodia/framework/backend/internal/core/domain"
-	"github.com/kodia/framework/backend/internal/core/ports"
-	"github.com/kodia/framework/backend/pkg/response"
+	"github.com/kodia-studio/kodia/internal/adapters/http/dto"
+	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
+	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/internal/core/ports"
+	"github.com/kodia-studio/kodia/pkg/response"
 	"go.uber.org/zap"
 )
 

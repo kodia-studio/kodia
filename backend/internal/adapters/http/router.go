@@ -5,10 +5,10 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/kodia/framework/backend/internal/adapters/http/handlers"
-	"github.com/kodia/framework/backend/internal/adapters/http/middleware"
-	"github.com/kodia/framework/backend/pkg/config"
-	"github.com/kodia/framework/backend/pkg/jwt"
+	"github.com/kodia-studio/kodia/internal/adapters/http/handlers"
+	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
+	"github.com/kodia-studio/kodia/pkg/config"
+	"github.com/kodia-studio/kodia/pkg/jwt"
 	"go.uber.org/zap"
 )
 

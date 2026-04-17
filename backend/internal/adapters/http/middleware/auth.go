@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kodia/framework/backend/pkg/jwt"
-	"github.com/kodia/framework/backend/pkg/response"
+	"github.com/kodia-studio/kodia/pkg/jwt"
+	"github.com/kodia-studio/kodia/pkg/response"
 )
 
 const (

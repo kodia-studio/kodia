@@ -7,8 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/kodia/framework/backend/internal/core/domain"
-	"github.com/kodia/framework/backend/pkg/pagination"
+	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/pkg/pagination"
 	"gorm.io/gorm"
 )
 

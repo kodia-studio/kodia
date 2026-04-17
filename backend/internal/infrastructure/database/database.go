@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kodia/framework/backend/pkg/config"
+	"github.com/kodia-studio/kodia/pkg/config"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"

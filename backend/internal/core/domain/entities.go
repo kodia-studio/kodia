@@ -28,6 +28,17 @@ type User struct {
 	DeletedAt *time.Time
 }
 
+// Product is the core product entity.
+type Product struct {
+	ID          string
+	Name        string
+	Description string
+	Price       float64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   *time.Time
+}
+
 // IsAdmin returns true if the user has admin role.
 func (u *User) IsAdmin() bool {
 	return u.Role == RoleAdmin

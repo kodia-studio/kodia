@@ -3,8 +3,8 @@ package ports
 import (
 	"context"
 
-	"github.com/kodia/framework/backend/internal/core/domain"
-	"github.com/kodia/framework/backend/pkg/pagination"
+	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/pkg/pagination"
 )
 
 // --- Service Interfaces ---
@@ -49,6 +49,19 @@ type UserService interface {
 	// UpdateAvatar updates the avatar URL for a user.
 	UpdateAvatar(ctx context.Context, id string, avatarURL string) error
 }
+
+// ProductService defines product management business operations.
+type ProductService interface {
+	// GetAll returns a paginated list of products.
+	GetAll(ctx context.Context, params *pagination.Params) ([]domain.Product, int64, error)
+
+	// GetByID fetches a single product by its ID.
+	GetByID(ctx context.Context, id string) (*domain.Product, error)
+
+	// Delete soft-deletes a product.
+	Delete(ctx context.Context, id string) error
+}
+
 
 // --- Input/Output DTOs for Services ---
 // These are separate from HTTP DTOs — they represent the contract between HTTP and Service layers.

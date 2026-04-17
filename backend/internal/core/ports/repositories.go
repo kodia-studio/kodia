@@ -6,8 +6,8 @@ package ports
 import (
 	"context"
 
-	"github.com/kodia/framework/backend/internal/core/domain"
-	"github.com/kodia/framework/backend/pkg/pagination"
+	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/pkg/pagination"
 )
 
 // --- Repository Interfaces ---
@@ -54,3 +54,22 @@ type RefreshTokenRepository interface {
 	// DeleteExpired removes all expired refresh tokens (for cleanup).
 	DeleteExpired(ctx context.Context) error
 }
+
+// ProductRepository defines all database operations for the Product entity.
+type ProductRepository interface {
+	// Create persists a new product to the database.
+	Create(ctx context.Context, product *domain.Product) error
+
+	// FindByID retrieves a product by its unique ID.
+	FindByID(ctx context.Context, id string) (*domain.Product, error)
+
+	// FindAll retrieves a paginated list of products.
+	FindAll(ctx context.Context, params *pagination.Params) ([]domain.Product, int64, error)
+
+	// Update persists changes to an existing product.
+	Update(ctx context.Context, product *domain.Product) error
+
+	// Delete soft-deletes a product by its ID.
+	Delete(ctx context.Context, id string) error
+}
+

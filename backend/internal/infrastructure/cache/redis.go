@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kodia/framework/backend/pkg/config"
+	"github.com/kodia-studio/kodia/pkg/config"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )

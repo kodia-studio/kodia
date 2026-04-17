@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/kodia/framework/backend/internal/core/domain"
-	"github.com/kodia/framework/backend/internal/core/ports"
-	"github.com/kodia/framework/backend/pkg/pagination"
+	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/internal/core/ports"
+	"github.com/kodia-studio/kodia/pkg/pagination"
 	"gorm.io/gorm"
 )
 
@@ -18,7 +18,7 @@ func NewProductRepository(db *gorm.DB) ports.ProductRepository {
 	return &productRepository{db: db}
 }
 
-func (r *productRepository) FindAll(ctx context.Context, params pagination.Params) ([]domain.Product, int64, error) {
+func (r *productRepository) FindAll(ctx context.Context, params *pagination.Params) ([]domain.Product, int64, error) {
 	var items []domain.Product
 	var total int64
 
@@ -28,7 +28,7 @@ func (r *productRepository) FindAll(ctx context.Context, params pagination.Param
 		return nil, 0, err
 	}
 
-	if err := query.Scopes(pagination.Paginate(&params)).Find(&items).Error; err != nil {
+	if err := query.Offset(params.Offset()).Limit(params.Limit()).Find(&items).Error; err != nil {
 		return nil, 0, err
 	}
 

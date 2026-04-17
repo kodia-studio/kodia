@@ -3,8 +3,8 @@ package dto
 import (
 	"time"
 
-	"github.com/kodia/framework/backend/internal/core/domain"
-	"github.com/kodia/framework/backend/internal/core/ports"
+	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/internal/core/ports"
 )
 
 // MapUserToResponse converts a domain.User to the public-safe UserResponse DTO.
