@@ -5,30 +5,30 @@
 [![Tailwind Version](https://img.shields.io/badge/Tailwind-4-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Kodia** adalah framework fullstack profesional yang dirancang untuk kecepatan pengembangan, keamanan, dan pengalaman pengembang (DX) yang luar biasa. Dibangun dengan kekuatan **Golang Gin** di backend dan reaktivitas **SvelteKit** di frontend.
+**Kodia** is a professional fullstack framework designed for development speed, security, and exceptional developer experience (DX). Built with the power of **Golang Gin** on the backend and the reactivity of **SvelteKit** on the frontend.
 
 ---
 
-## ✨ Fitur Utama
+## ✨ Key Features
 
-- 🐨 **Kodia CLI**: Tool baris perintah yang kuat untuk scaffolding fitur secara instan.
-- 🏗️ **Clean Architecture**: Backend yang modular, mudah diuji, dan skalabel dengan prinsip Clean Architecture.
-- ⚡ **Modern Frontend**: Menggunakan Svelte 5 runes, Tailwind CSS v4, dan Bits UI untuk UI yang premium dan responsif.
-- 🔐 **Secure by Default**: Autentikasi JWT (Access & Refresh Tokens), Middleware CORS, dan Validation out-of-the-box.
-- 🗄️ **Multi-DB Support**: Mendukung PostgreSQL dan MySQL melalui GORM.
-- 🐳 **Docker Ready**: Siap untuk deployment dengan Docker Compose yang sudah terkonfigurasi.
+- 🐨 **Kodia CLI**: A powerful command-line tool for instant feature scaffolding.
+- 🏗️ **Clean Architecture**: A modular, highly testable, and scalable backend following Clean Architecture principles.
+- ⚡ **Modern Frontend**: Powered by Svelte 5 runes, Tailwind CSS v4, and Bits UI for a premium, responsive UI.
+- 🔐 **Secure by Default**: JWT Authentication (Access & Refresh Tokens), CORS Middleware, and out-of-the-box Validation.
+- 🗄️ **Multi-DB Support**: Supports PostgreSQL and MySQL via GORM.
+- 🐳 **Docker Ready**: Deployment-ready with pre-configured Docker Compose.
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Prasyarat
+### 1. Prerequisites
 - Go 1.26+
 - Node.js 25+
 - Docker & Docker Compose
 
-### 2. Instalasi
-Clone repository dan jalankan inisialisasi:
+### 2. Installation
+Clone the repository and run initialization:
 ```bash
 git clone https://github.com/kodia/framework-kodia.git my-app
 cd my-app
@@ -37,37 +37,37 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-### 3. Jalankan menggunakan Docker
+### 3. Run with Docker
 ```bash
 make docker-up
 ```
 
-### 4. Mulai Development
+### 4. Start Development
 ```bash
 make dev
 ```
 
 ---
 
-## 🛠️ Struktur Proyek
+## 🛠️ Project Structure
 
 ```text
 .
 ├── backend/          # Golang Gin API
 ├── frontend/         # SvelteKit + Tailwind v4
-├── kodia-cli/        # Tool CLI untuk scaffolding
+├── kodia-cli/        # CLI tool for scaffolding
 ├── docker-compose.yml
 └── Makefile
 ```
 
 ---
 
-## 📚 Dokumentasi
+## 📚 Documentation
 
-Silakan baca dokumentasi lengkap kami (Segera hadir) untuk mempelajari lebih lanjut tentang routing, middleware, scaffolding, dan deployment.
+Please read our full documentation (Coming soon) to learn more about routing, middleware, scaffolding, and deployment.
 
 ---
 
-## 📄 Lisensi
+## 📄 License
 
-Kodia Framework dilisensikan di bawah [Lisensi MIT](LICENSE).
+Kodia Framework is licensed under the [MIT License](LICENSE).
