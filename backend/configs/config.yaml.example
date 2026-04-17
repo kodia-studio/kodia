@@ -1,0 +1,36 @@
+app:
+  name: "Kodia Framework"
+  env: "development"
+  port: 8080
+  debug: true
+  base_url: "http://localhost:8080"
+  frontend_url: "http://localhost:3000"
+
+database:
+  driver: "postgres" # postgres or mysql
+  host: "localhost"
+  port: 5432
+  name: "kodia_db"
+  user: "kodia"
+  password: "password"
+  ssl_mode: "disable"
+  timezone: "UTC"
+  max_open_conns: 25
+  max_idle_conns: 10
+  conn_max_lifetime: "30m"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+
+jwt:
+  access_secret: "yoursecretkeyforaccess"
+  refresh_secret: "yoursecretkeyforrefresh"
+  access_expiry_hours: 1
+  refresh_expiry_days: 30
+
+cors:
+  allowed_origins:
+    - "http://localhost:3000"

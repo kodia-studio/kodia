@@ -1,0 +1,79 @@
+name: kodia-framework
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: kodia_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: kodia_db
+      POSTGRES_USER: kodia
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kodia -d kodia_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # MySQL Database (Disabled by default, uncomment if needed)
+  # mysql:
+  #   image: mysql:8-oracle
+  #   container_name: kodia_mysql
+  #   restart: always
+  #   environment:
+  #     MYSQL_DATABASE: kodia_db
+  #     MYSQL_USER: kodia
+  #     MYSQL_PASSWORD: password
+  #     MYSQL_ROOT_PASSWORD: root
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+
+  # Redis for Caching and Session Management
+  redis:
+    image: redis:7-alpine
+    container_name: kodia_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Kodia Backend (Development mode with Hot Reload via Air)
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: kodia_backend
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   env_file: ./backend/.env
+
+  # Kodia Frontend
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: kodia_frontend
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
+
+volumes:
+  postgres_data:
+  mysql_data:
