@@ -16,6 +16,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.18.0
 	github.com/spf13/viper v1.21.0
+	github.com/wneessen/go-mail v0.7.2
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.50.0
 	gorm.io/driver/mysql v1.6.0

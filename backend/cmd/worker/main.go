@@ -10,6 +10,8 @@ import (
 	"github.com/kodia-studio/kodia/internal/infrastructure/database"
 	"github.com/kodia-studio/kodia/internal/infrastructure/logger"
 	"github.com/kodia-studio/kodia/internal/infrastructure/worker"
+	events_infra "github.com/kodia-studio/kodia/internal/infrastructure/events"
+	"github.com/kodia-studio/kodia/internal/core/events"
 	"github.com/kodia-studio/kodia/pkg/config"
 	"go.uber.org/zap"
 )
@@ -42,13 +44,22 @@ func main() {
 	}
 
 	// 4. Initialize cache (Redis)
-	_, err = cache.New(cfg, log)
+	cacheProvider, err := cache.New(cfg, log)
 	if err != nil {
 		log.Fatal("Redis connection failed, worker requires Redis", zap.Error(err))
 	}
+	_ = cacheProvider // Avoid unused var if not injected yet
 
 	// 5. Initialize Worker Processor
 	processor := worker.NewProcessor(cfg, log)
+
+	// 5.1 Initialize Dispatcher for Worker (to find listener instances)
+	queueProvider := worker.NewAsynqProvider(cfg, log)
+	dispatcher := events_infra.NewDispatcher(queueProvider, log)
+	events.RegisterEvents(dispatcher)
+
+	// Register generic event listener handler
+	processor.Register("event.listener.job", dispatcher.HandleListenerTask)
 
 	// --- Job Registration Start ---
 	// Jobs will be automatically registered here by the CLI

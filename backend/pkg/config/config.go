@@ -19,6 +19,7 @@ type Config struct {
 	JWT      JWTConfig      `mapstructure:"jwt"`
 	CORS     CORSConfig     `mapstructure:"cors"`
 	Storage  StorageConfig  `mapstructure:"storage"`
+	Mail     MailConfig     `mapstructure:"mail"`
 }
 
 // AppConfig holds general application settings.
@@ -97,6 +98,16 @@ type StorageConfig struct {
 	PublicURL string `mapstructure:"public_url"`
 }
 
+// MailConfig holds email service settings.
+type MailConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	FromAddr string `mapstructure:"from_addr"`
+	FromName string `mapstructure:"from_name"`
+}
+
 // Load reads the application configuration from environment variables and/or config.yaml.
 // Environment variables take precedence over file values.
 // Example: APP_PORT=8080 overrides app.port in the file.
@@ -144,6 +155,13 @@ func Load() (*Config, error) {
 	v.SetDefault("storage.local_dir", "./uploads")
 	v.SetDefault("storage.bucket", "kodia-bucket")
 	v.SetDefault("storage.region", "us-east-1")
+
+	v.SetDefault("mail.host", "localhost")
+	v.SetDefault("mail.port", 1025)
+	v.SetDefault("mail.user", "")
+	v.SetDefault("mail.password", "")
+	v.SetDefault("mail.from_addr", "no-reply@kodia.studio")
+	v.SetDefault("mail.from_name", "Kodia App")
 
 	// Config file
 	v.SetConfigName("config")

@@ -19,6 +19,10 @@ import (
 	"github.com/kodia-studio/kodia/internal/infrastructure/database"
 	"github.com/kodia-studio/kodia/internal/infrastructure/logger"
 	"github.com/kodia-studio/kodia/internal/infrastructure/storage"
+	"github.com/kodia-studio/kodia/internal/infrastructure/worker"
+	"github.com/kodia-studio/kodia/internal/infrastructure/mailer"
+	events_infra "github.com/kodia-studio/kodia/internal/infrastructure/events"
+	"github.com/kodia-studio/kodia/internal/core/events"
 	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/pkg/config"
 	"github.com/kodia-studio/kodia/pkg/jwt"
@@ -54,10 +58,11 @@ func main() {
 	}
 
 	// 4. Initialize cache (Redis)
-	_, err = cache.New(cfg, log)
+	cacheProvider, err := cache.New(cfg, log)
 	if err != nil {
 		log.Warn("Cache (Redis) connection failed, some features may be limited", zap.Error(err))
 	}
+	_ = cacheProvider // Avoid unused var if not injected yet
 
 	// 5. Initialize JWT manager
 	jwtManager := jwt.NewManager(
@@ -82,6 +87,21 @@ func main() {
 		log.Info("Local Storage initialized", zap.String("dir", cfg.Storage.LocalDir))
 	}
 	_ = storageProvider // Avoid unused var if not injected yet
+
+	// 5.2 Initialize Mailer
+	mailProvider, err := mailer.NewSMTPMailer(cfg, log)
+	if err != nil {
+		log.Fatal("Failed to initialize Mailer", zap.Error(err))
+	}
+	log.Info("SMTP Mailer initialized", zap.String("host", cfg.Mail.Host))
+	_ = mailProvider // Avoid unused var if not injected yet
+
+	// 5.3 Initialize Event Dispatcher
+	queueProvider := worker.NewAsynqProvider(cfg, log)
+	dispatcher := events_infra.NewDispatcher(queueProvider, log)
+	events.RegisterEvents(dispatcher)
+	log.Info("Event Dispatcher initialized and events registered")
+	_ = dispatcher // Avoid unused var if not injected yet
 
 	// 6. Initialize validation
 	validate := validator.New()
