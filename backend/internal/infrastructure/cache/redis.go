@@ -89,3 +89,8 @@ func (r *RedisProvider) Remember(ctx context.Context, key string, ttl time.Durat
 	data, _ := json.Marshal(val)
 	return json.Unmarshal(data, dest)
 }
+
+// GetClient returns the underlying Redis client for advanced operations.
+func (r *RedisProvider) GetClient() *redis.Client {
+	return r.client
+}

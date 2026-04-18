@@ -28,8 +28,14 @@ func NewLocalStorageProvider(cfg *config.Config) *LocalStorageProvider {
 }
 
 func (p *LocalStorageProvider) Upload(ctx context.Context, path string, content io.Reader) (string, error) {
-	fullPath := filepath.Join(p.baseDir, path)
-	
+	// Validate path to prevent directory traversal attacks
+	cleanPath, err := ValidatePathWithinBase(p.baseDir, path)
+	if err != nil {
+		return "", fmt.Errorf("invalid upload path: %w", err)
+	}
+
+	fullPath := filepath.Join(p.baseDir, cleanPath)
+
 	// Ensure subdirectories exist
 	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
 		return "", fmt.Errorf("failed to create directory: %w", err)
@@ -45,21 +51,39 @@ func (p *LocalStorageProvider) Upload(ctx context.Context, path string, content 
 		return "", fmt.Errorf("failed to save file: %w", err)
 	}
 
-	return path, nil
+	return cleanPath, nil
 }
 
 func (p *LocalStorageProvider) Delete(ctx context.Context, path string) error {
-	fullPath := filepath.Join(p.baseDir, path)
+	// Validate path to prevent directory traversal attacks
+	cleanPath, err := ValidatePathWithinBase(p.baseDir, path)
+	if err != nil {
+		return fmt.Errorf("invalid delete path: %w", err)
+	}
+
+	fullPath := filepath.Join(p.baseDir, cleanPath)
 	return os.Remove(fullPath)
 }
 
 func (p *LocalStorageProvider) GetURL(ctx context.Context, path string) (string, error) {
-	return fmt.Sprintf("%s/%s", p.publicURL, path), nil
+	// Validate path to prevent directory traversal attacks
+	cleanPath, err := ValidatePathWithinBase(p.baseDir, path)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL path: %w", err)
+	}
+
+	return fmt.Sprintf("%s/%s", p.publicURL, cleanPath), nil
 }
 
 func (p *LocalStorageProvider) Exists(ctx context.Context, path string) (bool, error) {
-	fullPath := filepath.Join(p.baseDir, path)
-	_, err := os.Stat(fullPath)
+	// Validate path to prevent directory traversal attacks
+	cleanPath, err := ValidatePathWithinBase(p.baseDir, path)
+	if err != nil {
+		return false, fmt.Errorf("invalid exists path: %w", err)
+	}
+
+	fullPath := filepath.Join(p.baseDir, cleanPath)
+	_, err = os.Stat(fullPath)
 	if os.IsNotExist(err) {
 		return false, nil
 	}

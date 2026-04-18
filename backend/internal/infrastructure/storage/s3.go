@@ -68,21 +68,33 @@ func NewS3StorageProvider(cfg *kodia_config.Config) (*S3StorageProvider, error) 
 }
 
 func (p *S3StorageProvider) Upload(ctx context.Context, path string, content io.Reader) (string, error) {
-	_, err := p.client.PutObject(ctx, &s3.PutObjectInput{
+	// Validate path to prevent directory traversal attacks (defense-in-depth)
+	cleanPath, err := ValidatePath(path)
+	if err != nil {
+		return "", fmt.Errorf("invalid upload path: %w", err)
+	}
+
+	_, err = p.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(p.bucket),
-		Key:    aws.String(path),
+		Key:    aws.String(cleanPath),
 		Body:   content,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to upload to S3: %w", err)
 	}
-	return path, nil
+	return cleanPath, nil
 }
 
 func (p *S3StorageProvider) Delete(ctx context.Context, path string) error {
-	_, err := p.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+	// Validate path to prevent directory traversal attacks (defense-in-depth)
+	cleanPath, err := ValidatePath(path)
+	if err != nil {
+		return fmt.Errorf("invalid delete path: %w", err)
+	}
+
+	_, err = p.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(p.bucket),
-		Key:    aws.String(path),
+		Key:    aws.String(cleanPath),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete from S3: %w", err)
@@ -91,13 +103,25 @@ func (p *S3StorageProvider) Delete(ctx context.Context, path string) error {
 }
 
 func (p *S3StorageProvider) GetURL(ctx context.Context, path string) (string, error) {
-	return fmt.Sprintf("%s/%s", strings.TrimSuffix(p.publicURL, "/"), path), nil
+	// Validate path to prevent directory traversal attacks (defense-in-depth)
+	cleanPath, err := ValidatePath(path)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL path: %w", err)
+	}
+
+	return fmt.Sprintf("%s/%s", strings.TrimSuffix(p.publicURL, "/"), cleanPath), nil
 }
 
 func (p *S3StorageProvider) Exists(ctx context.Context, path string) (bool, error) {
-	_, err := p.client.HeadObject(ctx, &s3.HeadObjectInput{
+	// Validate path to prevent directory traversal attacks (defense-in-depth)
+	cleanPath, err := ValidatePath(path)
+	if err != nil {
+		return false, fmt.Errorf("invalid exists path: %w", err)
+	}
+
+	_, err = p.client.HeadObject(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(p.bucket),
-		Key:    aws.String(path),
+		Key:    aws.String(cleanPath),
 	})
 	if err != nil {
 		// In AWS SDK v2, we check the error type or message for 404

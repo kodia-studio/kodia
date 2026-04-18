@@ -9,6 +9,7 @@ import (
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/pkg/config"
 	"github.com/kodia-studio/kodia/pkg/jwt"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -19,6 +20,7 @@ type Router struct {
 	jwtManager  *jwt.Manager
 	authHandler *handlers.AuthHandler
 	userHandler *handlers.UserHandler
+	redisClient *redis.Client
 }
 
 // NewRouter creates a new Router instance.
@@ -28,6 +30,7 @@ func NewRouter(
 	jwtManager *jwt.Manager,
 	authHandler *handlers.AuthHandler,
 	userHandler *handlers.UserHandler,
+	redisClient *redis.Client,
 ) *Router {
 	return &Router{
 		cfg:         cfg,
@@ -35,6 +38,7 @@ func NewRouter(
 		jwtManager:  jwtManager,
 		authHandler: authHandler,
 		userHandler: userHandler,
+		redisClient: redisClient,
 	}
 }
 
@@ -50,14 +54,20 @@ func (r *Router) Setup() *gin.Engine {
 	engine.Use(middleware.Recovery(r.log))
 	engine.Use(middleware.Logger(r.log))
 
+	// Validate CORS configuration for security issues
+	if err := ValidateCORSConfig(r.cfg, r.log); err != nil {
+		r.log.Fatal("CORS configuration validation failed", zap.Error(err))
+	}
+
 	// CORS configuration
-	engine.Use(cors.New(cors.Config{
+	corsConfig := cors.Config{
 		AllowOrigins:     r.cfg.CORS.AllowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-	}))
+	}
+	engine.Use(cors.New(corsConfig))
 
 	// API grouped routes
 	api := engine.Group("/api")
@@ -70,12 +80,22 @@ func (r *Router) Setup() *gin.Engine {
 			})
 		})
 
-		// Auth routes
+		// Auth routes with rate limiting
 		auth := api.Group("/auth")
 		{
-			auth.POST("/register", r.authHandler.Register)
-			auth.POST("/login", r.authHandler.Login)
-			auth.POST("/refresh", r.authHandler.RefreshToken)
+			// Apply rate limiting middleware to auth endpoints if Redis is available
+			if r.redisClient != nil {
+				authLimiter := middleware.AuthEndpointRateLimiter(r.redisClient, r.log)
+				auth.POST("/register", authLimiter.Middleware(), r.authHandler.Register)
+				auth.POST("/login", authLimiter.Middleware(), r.authHandler.Login)
+				auth.POST("/refresh", authLimiter.Middleware(), r.authHandler.RefreshToken)
+			} else {
+				// No rate limiting if Redis is not available
+				r.log.Warn("Redis client not available, rate limiting disabled for auth endpoints")
+				auth.POST("/register", r.authHandler.Register)
+				auth.POST("/login", r.authHandler.Login)
+				auth.POST("/refresh", r.authHandler.RefreshToken)
+			}
 			auth.POST("/logout", r.jwtManagerAuthMiddleware(), r.authHandler.Logout)
 
 			// Protected auth routes

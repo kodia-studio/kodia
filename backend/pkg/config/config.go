@@ -111,6 +111,7 @@ type MailConfig struct {
 // Load reads the application configuration from environment variables and/or config.yaml.
 // Environment variables take precedence over file values.
 // Example: APP_PORT=8080 overrides app.port in the file.
+// In production, JWT secrets must be at least 32 characters long.
 func Load() (*Config, error) {
 	// Try to load .env file from current directory or parent directory
 	// This ensures it works if running from root or from backend/ folder
@@ -144,8 +145,8 @@ func Load() (*Config, error) {
 	v.SetDefault("redis.password", "")
 	v.SetDefault("redis.db", 0)
 
-	v.SetDefault("jwt.access_secret", "access_secret_key")
-	v.SetDefault("jwt.refresh_secret", "refresh_secret_key")
+	v.SetDefault("jwt.access_secret", "")
+	v.SetDefault("jwt.refresh_secret", "")
 	v.SetDefault("jwt.access_expiry_hours", 1)
 	v.SetDefault("jwt.refresh_expiry_days", 30)
 
@@ -186,6 +187,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
+	// Validate JWT secrets
+	if err := cfg.ValidateJWTSecrets(); err != nil {
+		return nil, err
+	}
+
 	return &cfg, nil
 }
 
@@ -197,4 +203,38 @@ func (c *Config) IsProduction() bool {
 // IsDevelopment returns true when the app is running in development mode.
 func (c *Config) IsDevelopment() bool {
 	return strings.EqualFold(c.App.Env, "development")
+}
+
+// ValidateJWTSecrets ensures JWT secrets meet security requirements.
+// In production, secrets must be at least 32 characters long.
+// In development, if secrets are empty, a warning is issued but execution continues.
+func (c *Config) ValidateJWTSecrets() error {
+	const minSecretLength = 32
+
+	if c.JWT.AccessSecret == "" {
+		if c.IsProduction() {
+			return fmt.Errorf("JWT_ACCESS_SECRET must be set in production (minimum 32 characters)")
+		}
+		// Development mode with empty secret - this is acceptable but warn
+		return nil
+	}
+
+	if c.JWT.RefreshSecret == "" {
+		if c.IsProduction() {
+			return fmt.Errorf("JWT_REFRESH_SECRET must be set in production (minimum 32 characters)")
+		}
+		return nil
+	}
+
+	// Check secret lengths in production
+	if c.IsProduction() {
+		if len(c.JWT.AccessSecret) < minSecretLength {
+			return fmt.Errorf("JWT_ACCESS_SECRET must be at least %d characters long in production (got %d)", minSecretLength, len(c.JWT.AccessSecret))
+		}
+		if len(c.JWT.RefreshSecret) < minSecretLength {
+			return fmt.Errorf("JWT_REFRESH_SECRET must be at least %d characters long in production (got %d)", minSecretLength, len(c.JWT.RefreshSecret))
+		}
+	}
+
+	return nil
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/wneessen/go-mail"
 	"github.com/kodia-studio/kodia/pkg/config"
+	"github.com/kodia-studio/kodia/pkg/pathutil"
 	"go.uber.org/zap"
 )
 
@@ -73,8 +74,15 @@ func (m *SMTPMailer) SendHTML(ctx context.Context, to []string, subject string, 
 }
 
 func (m *SMTPMailer) SendWithTemplate(ctx context.Context, to []string, subject string, templatePath string, data interface{}) error {
-	fullPath := filepath.Join(m.basePath, templatePath)
-	
+	// Validate template path to prevent directory traversal attacks
+	cleanPath, err := pathutil.ValidatePathWithinBase(m.basePath, templatePath)
+	if err != nil {
+		m.log.Error("Invalid template path", zap.String("path", templatePath), zap.Error(err))
+		return fmt.Errorf("invalid template path: %w", err)
+	}
+
+	fullPath := filepath.Join(m.basePath, cleanPath)
+
 	tmpl, err := template.ParseFiles(fullPath)
 	if err != nil {
 		m.log.Error("Failed to parse email template", zap.String("path", fullPath), zap.Error(err))

@@ -26,6 +26,7 @@ import (
 	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/pkg/config"
 	"github.com/kodia-studio/kodia/pkg/jwt"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -51,6 +52,16 @@ func main() {
 		zap.Int("port", cfg.App.Port),
 	)
 
+	// Security warning for development weak JWT secrets
+	if cfg.IsDevelopment() {
+		if len(cfg.JWT.AccessSecret) < 32 || len(cfg.JWT.RefreshSecret) < 32 {
+			log.Warn("⚠️  SECURITY WARNING: JWT secrets are weak or not set. This is OK for development but NEVER use in production!",
+				zap.Int("access_secret_length", len(cfg.JWT.AccessSecret)),
+				zap.Int("refresh_secret_length", len(cfg.JWT.RefreshSecret)),
+			)
+		}
+	}
+
 	// 3. Initialize database
 	db, err := database.New(cfg, log)
 	if err != nil {
@@ -60,9 +71,16 @@ func main() {
 	// 4. Initialize cache (Redis)
 	cacheProvider, err := cache.New(cfg, log)
 	if err != nil {
-		log.Warn("Cache (Redis) connection failed, some features may be limited", zap.Error(err))
+		log.Warn("Cache (Redis) connection failed, rate limiting disabled", zap.Error(err))
 	}
-	_ = cacheProvider // Avoid unused var if not injected yet
+
+	// Extract Redis client for rate limiting (will be nil if cache init failed)
+	var redisClient *redis.Client
+	if cacheProvider != nil {
+		if rp, ok := cacheProvider.(*cache.RedisProvider); ok {
+			redisClient = rp.GetClient()
+		}
+	}
 
 	// 5. Initialize JWT manager
 	jwtManager := jwt.NewManager(
@@ -119,7 +137,7 @@ func main() {
 	userHandler := handlers.NewUserHandler(userService, validate, log)
 
 	// 10. Initialize router
-	router := kodia_http.NewRouter(cfg, log, jwtManager, authHandler, userHandler)
+	router := kodia_http.NewRouter(cfg, log, jwtManager, authHandler, userHandler, redisClient)
 	engine := router.Setup()
 
 	// 11. Start server with graceful shutdown
