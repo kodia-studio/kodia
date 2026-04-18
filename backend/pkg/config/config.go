@@ -18,6 +18,7 @@ type Config struct {
 	Redis    RedisConfig    `mapstructure:"redis"`
 	JWT      JWTConfig      `mapstructure:"jwt"`
 	CORS     CORSConfig     `mapstructure:"cors"`
+	Storage  StorageConfig  `mapstructure:"storage"`
 }
 
 // AppConfig holds general application settings.
@@ -84,6 +85,18 @@ type CORSConfig struct {
 	AllowedOrigins []string `mapstructure:"allowed_origins"`
 }
 
+// StorageConfig holds file storage settings.
+type StorageConfig struct {
+	Provider  string `mapstructure:"provider"` // local, s3
+	LocalDir  string `mapstructure:"local_dir"`
+	Bucket    string `mapstructure:"bucket"`
+	Region    string `mapstructure:"region"`
+	Endpoint  string `mapstructure:"endpoint"`
+	AccessID  string `mapstructure:"access_id"`
+	SecretKey string `mapstructure:"secret_key"`
+	PublicURL string `mapstructure:"public_url"`
+}
+
 // Load reads the application configuration from environment variables and/or config.yaml.
 // Environment variables take precedence over file values.
 // Example: APP_PORT=8080 overrides app.port in the file.
@@ -126,6 +139,11 @@ func Load() (*Config, error) {
 	v.SetDefault("jwt.refresh_expiry_days", 30)
 
 	v.SetDefault("cors.allowed_origins", []string{"http://localhost:3000"})
+
+	v.SetDefault("storage.provider", "local")
+	v.SetDefault("storage.local_dir", "./uploads")
+	v.SetDefault("storage.bucket", "kodia-bucket")
+	v.SetDefault("storage.region", "us-east-1")
 
 	// Config file
 	v.SetConfigName("config")

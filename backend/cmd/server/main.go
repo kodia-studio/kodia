@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -17,6 +18,8 @@ import (
 	"github.com/kodia-studio/kodia/internal/infrastructure/cache"
 	"github.com/kodia-studio/kodia/internal/infrastructure/database"
 	"github.com/kodia-studio/kodia/internal/infrastructure/logger"
+	"github.com/kodia-studio/kodia/internal/infrastructure/storage"
+	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/pkg/config"
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	"go.uber.org/zap"
@@ -63,6 +66,22 @@ func main() {
 		cfg.JWT.AccessExpiryHours,
 		cfg.JWT.RefreshExpiryDays,
 	)
+
+	// 5.1 Initialize Storage Provider
+	var storageProvider ports.StorageProvider
+	switch strings.ToLower(cfg.Storage.Provider) {
+	case "s3":
+		var err error
+		storageProvider, err = storage.NewS3StorageProvider(cfg)
+		if err != nil {
+			log.Fatal("Failed to initialize S3 storage", zap.Error(err))
+		}
+		log.Info("S3 Storage initialized", zap.String("bucket", cfg.Storage.Bucket))
+	default:
+		storageProvider = storage.NewLocalStorageProvider(cfg)
+		log.Info("Local Storage initialized", zap.String("dir", cfg.Storage.LocalDir))
+	}
+	_ = storageProvider // Avoid unused var if not injected yet
 
 	// 6. Initialize validation
 	validate := validator.New()

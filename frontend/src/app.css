@@ -1,3 +1,5 @@
+/* stylelint-disable at-rule-no-unknown */
+/* css-lint unknownAtRules: ignore */
 @import "tailwindcss";
 
 @theme {
@@ -50,11 +52,11 @@
 }
 
 @utility accent-gradient {
-  @apply bg-gradient-to-br from-primary-400 via-primary-600 to-primary-800;
+  @apply bg-linear-to-br from-primary-400 via-primary-600 to-primary-800;
 }
 
 @utility text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-primary-600;
+  @apply bg-clip-text text-transparent bg-linear-to-r from-primary-400 to-primary-600;
 }
 
 @utility btn-primary {
