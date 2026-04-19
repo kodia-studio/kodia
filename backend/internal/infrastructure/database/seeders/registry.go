@@ -9,7 +9,8 @@ import (
 // Registry contains all registered seeders.
 var Registry = []Seeder{
 	// --- Seeder Registration Start ---
-	// &UserSeeder{},
+	&UserSeeder{},
+	&ProductSeeder{},
 	// --- Seeder Registration End ---
 }
 

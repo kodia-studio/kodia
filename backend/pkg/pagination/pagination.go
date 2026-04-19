@@ -18,6 +18,9 @@ const (
 type Params struct {
 	Page    int
 	PerPage int
+	Sort    string // Field to sort by (e.g., "name", "created_at")
+	SortDir string // Sort direction: "asc" or "desc"
+	Search  string // Search query for full-text-like search
 }
 
 // Offset returns the SQL OFFSET value for the current page.
@@ -39,7 +42,7 @@ func (p *Params) TotalPages(total int64) int {
 }
 
 // FromContext parses pagination query parameters from a Gin context.
-// Supports ?page=1&per_page=15
+// Supports ?page=1&per_page=15&sort=name&sort_dir=asc&search=query
 func FromContext(c *gin.Context) *Params {
 	page := parseIntWithDefault(c.Query("page"), DefaultPage)
 	perPage := parseIntWithDefault(c.Query("per_page"), DefaultPerPage)
@@ -54,9 +57,18 @@ func FromContext(c *gin.Context) *Params {
 		perPage = MaxPerPage
 	}
 
+	sort := c.Query("sort")
+	sortDir := c.Query("sort_dir")
+	if sortDir != "asc" && sortDir != "desc" {
+		sortDir = "asc"
+	}
+
 	return &Params{
 		Page:    page,
 		PerPage: perPage,
+		Sort:    sort,
+		SortDir: sortDir,
+		Search:  c.Query("search"),
 	}
 }
 
