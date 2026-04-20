@@ -152,12 +152,12 @@ func (s *AuthService) LogoutAll(ctx context.Context, userID string) error {
 
 // generateTokenPair creates and stores an access + refresh token pair.
 func (s *AuthService) generateTokenPair(ctx context.Context, user *domain.User) (*ports.AuthResponse, error) {
-	accessToken, err := s.jwtManager.GenerateAccessToken(user.ID, user.Email, string(user.Role))
+	accessToken, err := s.jwtManager.GenerateAccessToken(user.ID, user.Email, string(user.Role), user.Permissions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
 
-	refreshTokenStr, err := s.jwtManager.GenerateRefreshToken(user.ID, user.Email, string(user.Role))
+	refreshTokenStr, err := s.jwtManager.GenerateRefreshToken(user.ID, user.Email, string(user.Role), user.Permissions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}

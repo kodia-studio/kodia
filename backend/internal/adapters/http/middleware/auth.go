@@ -2,6 +2,7 @@
 package middleware
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -10,9 +11,10 @@ import (
 )
 
 const (
-	userIDKey    = "user_id"
-	userEmailKey = "user_email"
-	userRoleKey  = "user_role"
+	userIDKey          = "user_id"
+	userEmailKey       = "user_email"
+	userRoleKey        = "user_role"
+	userPermissionsKey = "user_permissions"
 )
 
 // Auth validates the Bearer JWT access token and injects claims into the context.
@@ -44,6 +46,7 @@ func Auth(jwtManager *jwt.Manager) gin.HandlerFunc {
 		c.Set(userIDKey, claims.UserID)
 		c.Set(userEmailKey, claims.Email)
 		c.Set(userRoleKey, claims.Role)
+		c.Set(userPermissionsKey, claims.Permissions)
 		c.Next()
 	}
 }
@@ -54,14 +57,14 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userRole, exists := c.Get(userRoleKey)
 		if !exists {
-			response.Forbidden(c, "")
+			response.Forbidden(c, "Authentication required")
 			c.Abort()
 			return
 		}
 
 		roleStr, ok := userRole.(string)
 		if !ok {
-			response.Forbidden(c, "")
+			response.Forbidden(c, "Invalid role context")
 			c.Abort()
 			return
 		}
@@ -73,13 +76,79 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 			}
 		}
 
+		response.Forbidden(c, "Insufficient roles")
+		c.Abort()
+	}
+}
+
+// RequirePermission enforces that a user has AT LEAST ONE of the specified permissions.
+func RequirePermission(permissions ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userPerms, exists := c.Get(userPermissionsKey)
+		if !exists {
+			response.Forbidden(c, "Authentication required")
+			c.Abort()
+			return
+		}
+
+		perms, ok := userPerms.([]string)
+		if !ok {
+			response.Forbidden(c, "Invalid permission context")
+			c.Abort()
+			return
+		}
+
+		for _, required := range permissions {
+			for _, userPerm := range perms {
+				if strings.EqualFold(required, userPerm) {
+					c.Next()
+					return
+				}
+			}
+		}
+
 		response.Forbidden(c, "Insufficient permissions")
 		c.Abort()
 	}
 }
 
+// RequireAllPermissions enforces that a user has ALL of the specified permissions.
+func RequireAllPermissions(permissions ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userPerms, exists := c.Get(userPermissionsKey)
+		if !exists {
+			response.Forbidden(c, "Authentication required")
+			c.Abort()
+			return
+		}
+
+		perms, ok := userPerms.([]string)
+		if !ok {
+			response.Forbidden(c, "Invalid permission context")
+			c.Abort()
+			return
+		}
+
+		for _, required := range permissions {
+			found := false
+			for _, userPerm := range perms {
+				if strings.EqualFold(required, userPerm) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				response.Forbidden(c, fmt.Sprintf("Missing required permission: %s", required))
+				c.Abort()
+				return
+			}
+		}
+
+		c.Next()
+	}
+}
+
 // GetUserID extracts the authenticated user's ID from the Gin context.
-// Returns empty string if not set (unauthenticated context).
 func GetUserID(c *gin.Context) string {
 	id, _ := c.Get(userIDKey)
 	s, _ := id.(string)
@@ -90,5 +159,12 @@ func GetUserID(c *gin.Context) string {
 func GetUserRole(c *gin.Context) string {
 	role, _ := c.Get(userRoleKey)
 	s, _ := role.(string)
+	return s
+}
+
+// GetUserPermissions extracts the authenticated user's permissions from the Gin context.
+func GetUserPermissions(c *gin.Context) []string {
+	perms, _ := c.Get(userPermissionsKey)
+	s, _ := perms.([]string)
 	return s
 }

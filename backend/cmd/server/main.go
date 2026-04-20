@@ -14,6 +14,7 @@ import (
 	"github.com/kodia-studio/kodia/internal/adapters/http/handlers"
 	kodia_http "github.com/kodia-studio/kodia/internal/adapters/http"
 	"github.com/kodia-studio/kodia/internal/adapters/repository/postgres"
+	"github.com/kodia-studio/kodia/internal/adapters/websocket"
 	"github.com/kodia-studio/kodia/internal/core/services"
 	"github.com/kodia-studio/kodia/internal/infrastructure/cache"
 	"github.com/kodia-studio/kodia/internal/infrastructure/database"
@@ -26,6 +27,7 @@ import (
 	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/pkg/config"
 	"github.com/kodia-studio/kodia/pkg/jwt"
+	"github.com/kodia-studio/kodia/pkg/observability"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -90,6 +92,13 @@ func main() {
 		cfg.JWT.RefreshExpiryDays,
 	)
 
+	// 5.1 Initialize Observability Manager
+	obsManager := observability.NewManager(cfg, log)
+	if err := obsManager.Init(context.Background()); err != nil {
+		log.Warn("Observability initialization partially failed", zap.Error(err))
+	}
+	defer obsManager.Shutdown(context.Background())
+
 	// 5.1 Initialize Storage Provider
 	var storageProvider ports.StorageProvider
 	switch strings.ToLower(cfg.Storage.Provider) {
@@ -136,8 +145,19 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authService, validate, log)
 	userHandler := handlers.NewUserHandler(userService, validate, log)
 
+	// 9.1 Initialize WebSocket Hub
+	hub := websocket.NewHub()
+	go hub.Run() // Start the hub's event loop
+	log.Info("WebSocket Hub initialized and running")
+
+	// 9.2 Initialize WebSocket Handler
+	wsHandler := websocket.NewHandler(hub, jwtManager, log)
+
+	// 9.3 Initialize GraphQL Handler
+	graphqlHandler := handlers.NewGraphQLHandler(authService, userService, log)
+
 	// 10. Initialize router
-	router := kodia_http.NewRouter(cfg, log, jwtManager, authHandler, userHandler, redisClient)
+	router := kodia_http.NewRouter(cfg, log, jwtManager, authHandler, userHandler, redisClient, wsHandler, graphqlHandler, obsManager)
 	engine := router.Setup()
 
 	// 11. Start server with graceful shutdown

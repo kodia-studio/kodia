@@ -21,6 +21,7 @@ type User struct {
 	Email     string
 	Password  string // hashed
 	Role      UserRole
+	Permissions []string
 	IsActive  bool
 	AvatarURL *string
 	CreatedAt time.Time

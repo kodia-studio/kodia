@@ -1,135 +1,128 @@
 <script lang="ts">
-	import { authApi } from '$lib/api/auth';
-	import { toastStore } from '$lib/stores/toast.store';
-	import { goto } from '$app/navigation';
-	import { authStore } from '$lib/stores/auth.store';
-	import { onMount } from 'svelte';
+  import AuthLayout from "$lib/components/layouts/AuthLayout.svelte";
+  import FormField from "$lib/components/forms/FormField.svelte";
+  import Input from "$lib/components/forms/Input.svelte";
+  import Checkbox from "$lib/components/forms/Checkbox.svelte";
+  import { Mail, Lock, User, UserPlus, Loader2 } from "lucide-svelte";
+  import { api } from "$lib/api/client";
+  import { toast } from "svelte-sonner";
+  import { goto } from "$app/navigation";
 
-	let name = $state('');
-	let email = $state('');
-	let password = $state('');
-	let passwordConfirm = $state('');
-	let isLoading = $state(false);
+  let name = $state("");
+  let email = $state("");
+  let password = $state("");
+  let confirmPassword = $state("");
+  let agreeTerms = $state(false);
+  let isLoading = $state(false);
 
-	onMount(() => {
-		if ($authStore.isAuthenticated) {
-			goto('/dashboard');
-		}
-	});
+  async function handleRegister(e: SubmitEvent) {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (!agreeTerms) {
+      toast.error("You must agree to the terms");
+      return;
+    }
 
-	async function handleSubmit(e: SubmitEvent) {
-		e.preventDefault();
-		
-		if (password !== passwordConfirm) {
-			toastStore.error('Passwords do not match');
-			return;
-		}
-
-		isLoading = true;
-
-		try {
-			const res = await authApi.register({ name, email, password });
-			if (res.success) {
-				toastStore.success('Account created successfully!');
-				goto('/dashboard');
-			}
-		} catch (err: any) {
-			toastStore.error(err.message || 'Registration failed');
-		} finally {
-			isLoading = false;
-		}
-	}
+    isLoading = true;
+    try {
+      await api.post("/auth/register", { name, email, password });
+      toast.success("Account created successfully! Please sign in.");
+      goto("/auth/login");
+    } catch (err: any) {
+      toast.error(err.message || "Registration failed");
+    } finally {
+      isLoading = false;
+    }
+  }
 </script>
 
-<div class="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
-	<div class="w-full max-w-md">
-		<div class="text-center mb-8">
-			<div class="w-16 h-16 rounded-2xl bg-primary-600 mx-auto flex items-center justify-center text-white text-3xl font-bold mb-4 shadow-lg shadow-primary-500/20">K</div>
-			<h1 class="text-3xl font-bold tracking-tight mb-2">Create an account</h1>
-			<p class="text-slate-500 dark:text-slate-400">Join Kodia Framework today</p>
-		</div>
+<AuthLayout>
+  <form onsubmit={handleRegister} class="space-y-6">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold tracking-tight">Create Account</h1>
+      <p class="text-sm text-muted-foreground mt-2">Join Kodia and start building faster</p>
+    </div>
 
-		<div class="card glass">
-			<form onsubmit={handleSubmit} class="space-y-4">
-				<div>
-					<label for="name" class="block text-sm font-medium mb-1.5 ml-1">Full Name</label>
-					<input
-						type="text"
-						id="name"
-						placeholder="Jane Doe"
-						bind:value={name}
-						class="input-standard"
-						required
-					/>
-				</div>
+    <FormField label="Full Name" required>
+      <Input 
+        type="text" 
+        bind:value={name} 
+        placeholder="John Doe"
+        required
+      >
+        {#snippet icon()}
+          <User class="w-5 h-5" />
+        {/snippet}
+      </Input>
+    </FormField>
 
-				<div>
-					<label for="email" class="block text-sm font-medium mb-1.5 ml-1">Email Address</label>
-					<input
-						type="email"
-						id="email"
-						placeholder="name@example.com"
-						bind:value={email}
-						class="input-standard"
-						required
-					/>
-				</div>
+    <FormField label="Email Address" required>
+      <Input 
+        type="email" 
+        bind:value={email} 
+        placeholder="name@example.com"
+        required
+      >
+        {#snippet icon()}
+          <Mail class="w-5 h-5" />
+        {/snippet}
+      </Input>
+    </FormField>
 
-				<div>
-					<label for="password" class="block text-sm font-medium mb-1.5 ml-1">Password</label>
-					<input
-						type="password"
-						id="password"
-						placeholder="••••••••"
-						bind:value={password}
-						class="input-standard"
-						required
-						minlength="8"
-					/>
-				</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <FormField label="Password" required>
+        <Input 
+          type="password" 
+          bind:value={password} 
+          placeholder="••••••••"
+          required
+        >
+          {#snippet icon()}
+            <Lock class="w-5 h-5" />
+          {/snippet}
+        </Input>
+      </FormField>
 
-				<div>
-					<label for="passwordConfirm" class="block text-sm font-medium mb-1.5 ml-1">Confirm Password</label>
-					<input
-						type="password"
-						id="passwordConfirm"
-						placeholder="••••••••"
-						bind:value={passwordConfirm}
-						class="input-standard"
-						required
-						minlength="8"
-					/>
-				</div>
+      <FormField label="Confirm" required>
+        <Input 
+          type="password" 
+          bind:value={confirmPassword} 
+          placeholder="••••••••"
+          required
+        >
+          {#snippet icon()}
+            <Lock class="w-5 h-5" />
+          {/snippet}
+        </Input>
+      </FormField>
+    </div>
 
-				<button
-					type="submit"
-					class="w-full btn-primary mt-4 flex items-center justify-center gap-2"
-					disabled={isLoading}
-				>
-					{#if isLoading}
-						<svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-							<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-							<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-						</svg>
-						Creating account...
-					{:else}
-						Create account
-					{/if}
-				</button>
-			</form>
+    <Checkbox 
+      bind:checked={agreeTerms} 
+      label="I agree to the Terms of Service and Privacy Policy" 
+    />
 
-			<div class="mt-6 text-center">
-				<p class="text-sm text-slate-500">
-					Already have an account?
-					<a href="/login" class="text-primary-600 hover:text-primary-700 font-medium ml-1">Sign in instead</a>
-				</p>
-			</div>
-		</div>
+    <button
+      type="submit"
+      disabled={isLoading}
+      class="btn-primary w-full py-3 flex items-center justify-center gap-2 group"
+    >
+      {#if isLoading}
+        <Loader2 class="w-5 h-5 animate-spin" />
+      {:else}
+        <UserPlus class="w-5 h-5 group-hover:scale-110 transition-transform" />
+      {/if}
+      Create Account
+    </button>
 
-		<div class="mt-8 text-center flex items-center justify-center gap-4">
-			<button class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">Privacy Policy</button>
-			<span class="w-1 h-1 rounded-full bg-slate-300"></span>
-			<button class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">Terms of Service</button>
-		</div>
-	</div>
-</div>
+    <div class="text-center mt-6">
+      <p class="text-sm text-muted-foreground">
+        Already have an account? 
+        <a href="/auth/login" class="font-semibold text-primary hover:underline">Sign In</a>
+      </p>
+    </div>
+  </form>
+</AuthLayout>

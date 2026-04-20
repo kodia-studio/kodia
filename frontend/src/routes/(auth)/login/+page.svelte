@@ -1,104 +1,95 @@
 <script lang="ts">
-	import { authApi } from '$lib/api/auth';
-	import { toastStore } from '$lib/stores/toast.store';
-	import { goto } from '$app/navigation';
-	import { authStore } from '$lib/stores/auth.store';
-	import { onMount } from 'svelte';
+  import AuthLayout from "$lib/components/layouts/AuthLayout.svelte";
+  import FormField from "$lib/components/forms/FormField.svelte";
+  import Input from "$lib/components/forms/Input.svelte";
+  import Checkbox from "$lib/components/forms/Checkbox.svelte";
+  import { Mail, Lock, LogIn, Loader2 } from "lucide-svelte";
+  import { api } from "$lib/api/client";
+  import { authStore } from "$lib/stores/auth.store";
+  import { toast } from "svelte-sonner";
+  import { goto } from "$app/navigation";
 
-	let email = $state('');
-	let password = $state('');
-	let isLoading = $state(false);
+  let email = $state("");
+  let password = $state("");
+  let rememberMe = $state(false);
+  let isLoading = $state(false);
 
-	onMount(() => {
-		if ($authStore.isAuthenticated) {
-			goto('/dashboard');
-		}
-	});
+  async function handleLogin(e: SubmitEvent) {
+    e.preventDefault();
+    isLoading = true;
 
-	async function handleSubmit(e: SubmitEvent) {
-		e.preventDefault();
-		isLoading = true;
-
-		try {
-			const res = await authApi.login({ email, password });
-			if (res.success) {
-				toastStore.add('Welcome back!', 'success');
-				goto('/dashboard');
-			}
-		} catch (err: any) {
-			toastStore.add(err.message || 'Login failed', 'error');
-		} finally {
-			isLoading = false;
-		}
-	}
+    try {
+      // In a real app, we'd use superforms. For this template:
+      const response = await api.post<import("$lib/types/auth.types").AuthResponse>("/auth/login", { email, password });
+      authStore.login(response.user, response.access_token);
+      toast.success("Welcome back, " + response.user.name);
+      goto("/admin");
+    } catch (err: any) {
+      toast.error(err.message || "Invalid credentials");
+    } finally {
+      isLoading = false;
+    }
+  }
 </script>
 
-<div class="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
-	<div class="w-full max-w-md">
-		<div class="text-center mb-8">
-			<div class="w-16 h-16 rounded-2xl bg-primary-600 mx-auto flex items-center justify-center text-white text-3xl font-bold mb-4 shadow-lg shadow-primary-500/20">K</div>
-			<h1 class="text-3xl font-bold tracking-tight mb-2">Welcome to Kodia</h1>
-			<p class="text-slate-500 dark:text-slate-400">Sign in to your account to continue</p>
-		</div>
+<AuthLayout>
+  <form onsubmit={handleLogin} class="space-y-6">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold tracking-tight">Sign in to Account</h1>
+      <p class="text-sm text-muted-foreground mt-2">Enter your credentials to access your dashboard</p>
+    </div>
 
-		<div class="card glass">
-			<form onsubmit={handleSubmit} class="space-y-4">
-				<div>
-					<label for="email" class="block text-sm font-medium mb-1.5 ml-1">Email Address</label>
-					<input
-						type="email"
-						id="email"
-						placeholder="name@example.com"
-						bind:value={email}
-						class="input-standard"
-						required
-					/>
-				</div>
+    <FormField label="Email Address" required>
+      <Input 
+        type="email" 
+        bind:value={email} 
+        placeholder="name@example.com"
+        required
+      >
+        {#snippet icon()}
+          <Mail class="w-5 h-5" />
+        {/snippet}
+      </Input>
+    </FormField>
 
-				<div>
-					<div class="flex items-center justify-between mb-1.5 ml-1">
-						<label for="password" class="block text-sm font-medium">Password</label>
-						<a href="/forgot-password" class="text-xs text-primary-600 hover:text-primary-700 font-medium">Forgot password?</a>
-					</div>
-					<input
-						type="password"
-						id="password"
-						placeholder="••••••••"
-						bind:value={password}
-						class="input-standard"
-						required
-					/>
-				</div>
+    <FormField label="Password" required>
+      <Input 
+        type="password" 
+        bind:value={password} 
+        placeholder="••••••••"
+        required
+      >
+        {#snippet icon()}
+          <Lock class="w-5 h-5" />
+        {/snippet}
+      </Input>
+    </FormField>
 
-				<button
-					type="submit"
-					class="w-full btn-primary mt-2 flex items-center justify-center gap-2"
-					disabled={isLoading}
-				>
-					{#if isLoading}
-						<svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-							<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-							<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-						</svg>
-						Signing in...
-					{:else}
-						Sign in
-					{/if}
-				</button>
-			</form>
+    <div class="flex items-center justify-between">
+      <Checkbox bind:checked={rememberMe} label="Remember me" />
+      <a href="/auth/reset" class="text-sm font-semibold text-primary hover:underline">
+        Forgot password?
+      </a>
+    </div>
 
-			<div class="mt-6 text-center">
-				<p class="text-sm text-slate-500">
-					Don't have an account?
-					<a href="/register" class="text-primary-600 hover:text-primary-700 font-medium ml-1">Create an account</a>
-				</p>
-			</div>
-		</div>
+    <button
+      type="submit"
+      disabled={isLoading}
+      class="btn-primary w-full py-3 flex items-center justify-center gap-2 group"
+    >
+      {#if isLoading}
+        <Loader2 class="w-5 h-5 animate-spin" />
+      {:else}
+        <LogIn class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+      {/if}
+      Sign In
+    </button>
 
-		<div class="mt-8 text-center flex items-center justify-center gap-4">
-			<button class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">Privacy Policy</button>
-			<span class="w-1 h-1 rounded-full bg-slate-300"></span>
-			<button class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">Terms of Service</button>
-		</div>
-	</div>
-</div>
+    <div class="text-center mt-6">
+      <p class="text-sm text-muted-foreground">
+        Don't have an account? 
+        <a href="/auth/register" class="font-semibold text-primary hover:underline">Create one</a>
+      </p>
+    </div>
+  </form>
+</AuthLayout>

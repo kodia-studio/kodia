@@ -1,73 +1,458 @@
-# Kodia Framework
+# 🚀 Kodia Framework
 
 [![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![Svelte Version](https://img.shields.io/badge/Svelte-5-FF3E00?style=flat&logo=svelte)](https://svelte.dev/)
 [![Tailwind Version](https://img.shields.io/badge/Tailwind-4-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/kodia-studio/kodia?style=social)](https://github.com/kodia-studio/kodia)
 
-**Kodia** is a professional fullstack framework designed for development speed, security, and exceptional developer experience (DX). Built with the power of **Golang Gin** on the backend and the reactivity of **SvelteKit** on the frontend.
+**Kodia** is an **opinionated, batteries-included fullstack framework** designed for rapid development, security-first architecture, and exceptional developer experience (DX).
+
+Built with the power of **Go/Gin** on the backend, **SvelteKit** on the frontend, and a **powerful CLI tool** for instant scaffolding—Kodia brings the productivity of Laravel to the Go ecosystem.
 
 ---
 
 ## ✨ Key Features
 
-- 🐨 **Kodia CLI**: A powerful command-line tool for instant feature scaffolding.
-- 🏗️ **Clean Architecture**: A modular, highly testable, and scalable backend following Clean Architecture principles.
-- ⚡ **Modern Frontend**: Powered by Svelte 5 runes, Tailwind CSS v4, and Bits UI for a premium, responsive UI.
-- 🔐 **Secure by Default**: JWT Authentication (Access & Refresh Tokens), CORS Middleware, and out-of-the-box Validation.
-- 🗄️ **Multi-DB Support**: Supports PostgreSQL and MySQL via GORM.
-- 🐳 **Docker Ready**: Deployment-ready with pre-configured Docker Compose.
+| Feature | Description |
+|---------|-------------|
+| 🏗️ **Clean Architecture** | Backend follows SOLID principles with clear separation of concerns |
+| 🔐 **Enterprise Security** | 2FA (TOTP), RBAC & ABAC Policy Engine, Token Rotation, CSRF, XSS protection |
+| 📊 **Full Observability** | OpenTelemetry Traces, Prometheus Metrics, Sentry integration, pprof profiling |
+| 🏥 **Health Monitoring** | Real-time system vitals (CPU, RAM, Disk, DB, Redis) via CLI & API |
+| ⚡ **Developer Experience** | `kodia` CLI for instant feature scaffolding (like Laravel's `artisan`) |
+| 📦 **Batteries Included** | Auth, CRUD, middleware, validation, file uploads, email—all out-of-the-box |
+| 🗄️ **Multi-DB Support** | PostgreSQL & MySQL via GORM ORM |
+| 💾 **File Storage** | Local, S3, and cloud storage support |
+| 📧 **Email** | Built-in SMTP mailer with templating |
+| 🔄 **Background Jobs** | Async job queue with Asynq |
+| 🎨 **Modern Frontend** | SvelteKit 5, Tailwind CSS v4, component library included |
+| 🐳 **Production Ready** | Docker, CI/CD templates, health checks, structured logging |
+
+---
+
+## 🎯 Philosophy
+
+> **"Opinionated by default, flexible by design."**
+
+Like Laravel, Kodia provides a highly structured framework with best practices baked in—but remains flexible enough to adapt to your needs.
+
+- **Convention over Configuration** - Sensible defaults reduce boilerplate
+- **Batteries Included** - Everything you need from day one
+- **Developer Friendly** - Rapid scaffolding and intuitive APIs
+- **Production Grade** - Built with observability and security from the start
+- **Type Safe** - Leverage Go's strong typing and SvelteKit's type safety
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Prerequisites
-- Go 1.26+
-- Node.js 25+
-- Docker & Docker Compose
+### Prerequisites
 
-### 2. Installation
-Clone the repository and run initialization:
+- **Go** 1.26 or higher
+- **Node.js** 25 or higher  
+- **Docker** & **Docker Compose**
+- **PostgreSQL** 15+ (or MySQL 8+)
+
+### 1️⃣ Installation
+
 ```bash
-git clone https://github.com/kodia/framework-kodia.git my-app
+# Clone the repository
+git clone https://github.com/kodia-studio/kodia my-app
 cd my-app
-# Setup env files
+
+# Setup environment files
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
+
+# Install dependencies
+cd backend && go mod download
+cd ../frontend && npm install
 ```
 
-### 3. Run with Docker
+### 2️⃣ Run with Docker
+
 ```bash
+# Start all services (PostgreSQL, Redis, Backend, Frontend)
 make docker-up
+
+# Run migrations
+make migrate
+
+# Check services are healthy
+curl http://localhost:3000     # Frontend
+curl http://localhost:8080/api/health  # Backend
 ```
 
-### 4. Start Development
+### 3️⃣ Development
+
 ```bash
+# Start development servers
 make dev
+
+# In separate terminal, watch the CLI tool
+cd cli && make watch
+```
+
+**Access the app:**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8080
+- API Docs: http://localhost:8080/api/docs (Swagger)
+- PostgreSQL: localhost:5432
+
+### 4️⃣ Generate Your First Feature
+
+```bash
+# Generate a CRUD feature
+kodia generate crud posts \
+  --fields=title:string,content:text,author:references:users \
+  --with-tests \
+  --with-migrations \
+  --with-validation
+
+# This generates:
+# - Database migration
+# - Model (domain entity)
+# - Repository (data layer)
+# - Service (business logic)
+# - Handler (HTTP endpoints)
+# - Request/Response DTOs
+# - Validation rules
+# - Unit tests
+# - Frontend components
 ```
 
 ---
 
-## 🛠️ Project Structure
+## 📂 Project Structure
 
-```text
-.
-├── backend/          # Golang Gin API
-├── frontend/         # SvelteKit + Tailwind v4
-├── kodia-cli/        # CLI tool for scaffolding
-├── docker-compose.yml
-└── Makefile
+```
+kodia/
+├── backend/                  # Go/Gin REST API
+│   ├── cmd/server/          # Application entrypoint
+│   ├── internal/
+│   │   ├── core/            # Business logic (services, domain)
+│   │   ├── adapters/        # HTTP handlers, repositories
+│   │   └── infrastructure/  # DB, cache, mail, storage
+│   ├── pkg/                 # Shared packages
+│   ├── tests/               # Test suites
+│   ├── docs/                # API documentation (generated)
+│   └── Dockerfile
+│
+├── frontend/                # SvelteKit + Tailwind application
+│   ├── src/
+│   │   ├── lib/            # Reusable components & utilities
+│   │   ├── routes/         # Page components (file-based routing)
+│   │   └── styles/         # Global styles
+│   ├── tests/              # Component & E2E tests
+│   └── Dockerfile
+│
+├── cli/                    # Kodia CLI tool
+│   ├── internal/
+│   │   ├── commands/       # CLI commands
+│   │   ├── scaffolding/    # Code generation templates
+│   │   └── validation/     # Input validation
+│   └── kodia/main.go
+│
+├── docker-compose.yml      # Local development environment
+├── Makefile                # Development commands
+├── CONTRIBUTING.md         # Contributing guidelines
+├── CHANGELOG.md            # Version history
+└── docs/                   # Comprehensive documentation
+    ├── GETTING_STARTED.md
+    ├── ARCHITECTURE.md
+    ├── BACKEND_GUIDE.md
+    ├── FRONTEND_GUIDE.md
+    ├── CLI_GUIDE.md
+    ├── DEPLOYMENT.md
+    ├── SECURITY.md
+    ├── TESTING.md
+    └── FAQ.md
 ```
 
 ---
 
 ## 📚 Documentation
 
-Please read our full documentation (Coming soon) to learn more about routing, middleware, scaffolding, and deployment.
+Complete documentation is available in the `docs/` directory:
+
+| Document | Purpose |
+|----------|---------|
+| [Getting Started](docs/GETTING_STARTED.md) | Step-by-step setup and first app |
+| [Architecture](docs/ARCHITECTURE.md) | System design and patterns |
+| [Backend Guide](docs/BACKEND_GUIDE.md) | API development, routing, middleware |
+| [Frontend Guide](docs/FRONTEND_GUIDE.md) | SvelteKit, components, state management |
+| [CLI Reference](docs/CLI_GUIDE.md) | All scaffolding commands |
+| [Deployment](docs/DEPLOYMENT.md) | Docker, Kubernetes, cloud platforms |
+| [Security](docs/SECURITY.md) | Authentication, CORS, rate limiting, best practices |
+| [Testing](docs/TESTING.md) | Unit, integration, and E2E testing |
+| [FAQ](docs/FAQ.md) | Common questions and troubleshooting |
+
+---
+
+## 🔧 Common Commands
+
+```bash
+# Development
+make dev              # Start all dev servers
+make docker-up        # Start Docker services
+make docker-down      # Stop Docker services
+make migrate          # Run database migrations
+
+# Backend
+make backend-test     # Run backend tests
+make backend-build    # Build backend binary
+backend/.env setup    # Edit configuration
+
+# Frontend
+make frontend-dev     # Start frontend dev server
+make frontend-build   # Build for production
+make frontend-test    # Run component tests
+
+# CLI
+make cli-build        # Build CLI binary
+make cli-test         # Test CLI tool
+kodia --help          # See all commands
+
+# Database
+make db-reset         # Reset database to fresh state
+make db-seed          # Run database seeders
+make db-shell         # Connect to database shell
+
+# Testing
+make test             # Run all tests
+make test-coverage    # Generate coverage report
+make test-e2e         # Run end-to-end tests
+```
+
+---
+
+## 🏗️ Architecture Overview
+
+Kodia follows **Clean Architecture** principles:
+
+```
+┌─────────────────────────────────────────────┐
+│         HTTP Layer (Gin)                    │
+│  (Handlers, Middleware, CORS, Auth)        │
+└──────────────────┬──────────────────────────┘
+                   │
+┌──────────────────▼──────────────────────────┐
+│        Service Layer (Business Logic)       │
+│  (Auth, User, Post services, etc.)         │
+└──────────────────┬──────────────────────────┘
+                   │
+┌──────────────────▼──────────────────────────┐
+│    Repository Layer (Data Access)           │
+│  (PostgreSQL, MySQL, Redis)                │
+└─────────────────────────────────────────────┘
+```
+
+**Benefits:**
+- ✅ Easy testing (mock repositories)
+- ✅ Decoupled from frameworks
+- ✅ Clear separation of concerns
+- ✅ Flexible database switching
+
+Read [Architecture Guide](docs/ARCHITECTURE.md) for detailed explanation.
+
+---
+
+## 🔐 Security Features
+
+Kodia is **secure by default**:
+
+- ✅ **JWT Authentication** with access/refresh tokens
+- ✅ **Rate Limiting** on sensitive endpoints (5 req/15min on auth)
+- ✅ **CORS Protection** with configurable origins
+- ✅ **Input Validation** using modern validators
+- ✅ **SQL Injection Prevention** via parameterized queries
+- ✅ **CSRF Protection** via token validation
+- ✅ **Password Hashing** with bcrypt
+- ✅ **Secure Headers** (CSP, HSTS, X-Frame-Options)
+- ✅ **Audit Logging** for sensitive operations
+- ✅ **Environment Variable Management** (no hardcoded secrets)
+
+See [Security Guide](docs/SECURITY.md) for implementation details.
+
+---
+
+## 💡 Example: Building a Blog
+
+Generate a complete blog feature in seconds:
+
+```bash
+# 1. Create post model with all CRUD operations
+kodia generate crud posts \
+  --fields=title:string,slug:string,content:text,published:boolean,author:references:users \
+  --with-tests \
+  --with-validation \
+  --with-migrations
+
+# This generates:
+# ✅ Database migration (create posts table)
+# ✅ Post model (domain entity)
+# ✅ PostRepository (database queries)
+# ✅ PostService (business logic)
+# ✅ PostHandler (REST endpoints)
+# ✅ Request/Response DTOs
+# ✅ Validation rules
+# ✅ Unit & integration tests
+# ✅ PostList & PostDetail frontend components
+
+# 2. Create comment feature
+kodia generate crud comments \
+  --fields=content:text,post:references:posts,author:references:users \
+  --with-tests
+
+# 3. Add middleware for auth protection
+kodia generate middleware RequireAuth
+
+# 4. Generate API docs automatically
+kodia docs generate
+
+# 5. Run tests
+make test
+
+# 6. Deploy
+docker build -t my-blog .
+docker push my-blog:latest
+```
+
+---
+
+## 🧪 Testing
+
+Kodia comes with comprehensive testing support:
+
+```bash
+# Run all tests
+make test
+
+# Run specific test type
+make test-unit          # Unit tests only
+make test-integration   # Database integration tests
+make test-e2e           # End-to-end API tests
+make test-coverage      # With coverage report
+
+# Watch mode (rerun on file changes)
+make test-watch
+```
+
+**Test Structure:**
+- Backend: `backend/tests/` with unit, integration, fixtures
+- Frontend: `frontend/tests/` with component and E2E tests
+- Examples: See [Testing Guide](docs/TESTING.md)
+
+---
+
+## 🚀 Deployment
+
+Deploy to your favorite platform:
+
+**Supported Platforms:**
+- ✅ Docker & Kubernetes
+- ✅ Heroku
+- ✅ Railway
+- ✅ Fly.io
+- ✅ AWS (ECS, Lambda)
+- ✅ GCP (Cloud Run, App Engine)
+- ✅ Azure (App Service)
+- ✅ DigitalOcean App Platform
+
+See [Deployment Guide](docs/DEPLOYMENT.md) for step-by-step instructions.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**How to contribute:**
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📊 Comparison with Other Frameworks
+
+| Feature | Kodia | Laravel | Next.js |
+|---------|-------|---------|---------|
+| Language | Go | PHP | JavaScript |
+| Performance | ⚡⚡⚡ Very Fast | ⚡⚡ Good | ⚡⚡ Good |
+| Learning Curve | 🟢 Easy | 🟢 Easy | 🟡 Moderate |
+| Type Safety | 🟢 Yes (Go) | 🟡 Partial | 🟢 Yes (TS) |
+| CLI Scaffolding | ✅ Yes | ✅ Yes | ❌ No |
+| Built-in Auth | ✅ Yes | ✅ Yes | ❌ Optional |
+| Database ORM | ✅ GORM | ✅ Eloquent | ❌ Optional |
+| Rate Limiting | ✅ Yes | ✅ Yes | ❌ Optional |
+| Background Jobs | ✅ Yes | ✅ Yes | ❌ Optional |
+| Hot Reload | ✅ Yes | ✅ Yes | ✅ Yes |
+
+---
+
+## 📦 Kodia Ecosystem
+
+### Official Packages
+
+Coming soon:
+- 💳 `@kodia/payment` - Stripe, PayPal integration
+- 📧 `@kodia/notifications` - Email, SMS, Push notifications
+- 🗂️ `@kodia/storage` - AWS S3, Google Cloud Storage
+- 🔍 `@kodia/search` - Elasticsearch, Meilisearch
+- 📊 `@kodia/analytics` - Google Analytics, Mixpanel
+- 🌐 `@kodia/i18n` - Internationalization support
+
+### Community Packages
+
+We're building an ecosystem. [Publish your package](docs/PUBLISHING_PACKAGES.md)!
+
+---
+
+## 🐛 Reporting Issues
+
+Found a bug? Please [open an issue](https://github.com/kodia-studio/kodia/issues) with:
+
+- Clear description
+- Steps to reproduce
+- Expected vs actual behavior
+- Environment details (Go version, OS, etc.)
+- Screenshots if applicable
 
 ---
 
 ## 📄 License
 
 Kodia Framework is licensed under the [MIT License](LICENSE).
+
+---
+
+## 🌟 Support
+
+- 📖 [Full Documentation](docs/)
+- 💬 [GitHub Discussions](https://github.com/kodia-studio/kodia/discussions)
+- 🐛 [Issue Tracker](https://github.com/kodia-studio/kodia/issues)
+- 💬 [Discord Community](https://discord.gg/kodia) (coming soon)
+- 📧 [Email Support](mailto:support@kodia.dev)
+
+---
+
+## 🙏 Acknowledgments
+
+Kodia is inspired by the best practices from:
+- **Laravel** - PHP's most elegant framework
+- **Rails** - Ruby's convention over configuration
+- **Next.js** - Modern fullstack development
+- **Spring Boot** - Enterprise Java patterns
+- **Django** - Python's batteries-included philosophy
+
+---
+
+**Ready to build something amazing? [Get Started Now!](docs/GETTING_STARTED.md)**
+
+---
+
+Made with ❤️ by the Kodia Team

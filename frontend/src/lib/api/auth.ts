@@ -6,17 +6,13 @@ import { authStore } from '../stores/auth.store';
 export const authApi = {
 	register: async (data: RegisterRequest) => {
 		const res = await api.post<AuthResponse>('/auth/register', data);
-		if (res.success && res.data) {
-			authStore.login(res.data.user, res.data.access_token);
-		}
+		authStore.login(res.user, res.access_token);
 		return res;
 	},
 
 	login: async (data: LoginRequest) => {
 		const res = await api.post<AuthResponse>('/auth/login', data);
-		if (res.success && res.data) {
-			authStore.login(res.data.user, res.data.access_token);
-		}
+		authStore.login(res.user, res.access_token);
 		return res;
 	},
 

@@ -1,14 +1,21 @@
-export interface ApiResponse<T = any> {
-	success: boolean;
-	message: string;
-	data?: T;
-	errors?: Record<string, string[]>;
-	meta?: PaginationMeta;
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status: string;
 }
 
-export interface PaginationMeta {
-	page: number;
-	per_page: number;
-	total: number;
-	total_pages: number;
+export interface ApiError {
+  error: string;
+  message: string;
+  code?: string;
+  details?: Record<string, any>;
+}
+
+export interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }

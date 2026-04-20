@@ -13,13 +13,14 @@ import (
 
 // Config holds all application configuration.
 type Config struct {
-	App      AppConfig      `mapstructure:"app"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
-	CORS     CORSConfig     `mapstructure:"cors"`
-	Storage  StorageConfig  `mapstructure:"storage"`
-	Mail     MailConfig     `mapstructure:"mail"`
+	App           AppConfig           `mapstructure:"app"`
+	Database      DatabaseConfig      `mapstructure:"database"`
+	Redis         RedisConfig         `mapstructure:"redis"`
+	JWT           JWTConfig           `mapstructure:"jwt"`
+	CORS          CORSConfig          `mapstructure:"cors"`
+	Storage       StorageConfig       `mapstructure:"storage"`
+	Mail          MailConfig          `mapstructure:"mail"`
+	Observability ObservabilityConfig `mapstructure:"observability"`
 }
 
 // AppConfig holds general application settings.
@@ -108,6 +109,17 @@ type MailConfig struct {
 	FromName string `mapstructure:"from_name"`
 }
 
+// ObservabilityConfig holds monitoring and telemetry settings.
+type ObservabilityConfig struct {
+	TracingEnabled  bool    `mapstructure:"tracing_enabled"`
+	MetricsEnabled  bool    `mapstructure:"metrics_enabled"`
+	SentryDSN       string  `mapstructure:"sentry_dsn"`
+	PrometheusPort  int     `mapstructure:"prometheus_port"`
+	SamplingRate    float64 `mapstructure:"sampling_rate"`
+	OTLPEndpoint    string  `mapstructure:"otlp_endpoint"` // e.g. localhost:4317
+	ServiceName     string  `mapstructure:"service_name"`
+}
+
 // Load reads the application configuration from environment variables and/or config.yaml.
 // Environment variables take precedence over file values.
 // Example: APP_PORT=8080 overrides app.port in the file.
@@ -136,9 +148,9 @@ func Load() (*Config, error) {
 	v.SetDefault("database.name", "kodia_db")
 	v.SetDefault("database.ssl_mode", "disable")
 	v.SetDefault("database.timezone", "UTC")
-	v.SetDefault("database.max_open_conns", 25)
+	v.SetDefault("database.max_open_conns", 50)
 	v.SetDefault("database.max_idle_conns", 10)
-	v.SetDefault("database.conn_max_lifetime", "30m")
+	v.SetDefault("database.conn_max_lifetime", "1h")
 
 	v.SetDefault("redis.host", "localhost")
 	v.SetDefault("redis.port", 6379)
@@ -163,6 +175,13 @@ func Load() (*Config, error) {
 	v.SetDefault("mail.password", "")
 	v.SetDefault("mail.from_addr", "no-reply@kodia.studio")
 	v.SetDefault("mail.from_name", "Kodia App")
+	
+	v.SetDefault("observability.tracing_enabled", false)
+	v.SetDefault("observability.metrics_enabled", true)
+	v.SetDefault("observability.prometheus_port", 9090)
+	v.SetDefault("observability.sampling_rate", 1.0)
+	v.SetDefault("observability.otlp_endpoint", "localhost:4317")
+	v.SetDefault("observability.service_name", "kodia-api")
 
 	// Config file
 	v.SetConfigName("config")

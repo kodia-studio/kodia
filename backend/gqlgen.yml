@@ -1,0 +1,45 @@
+# Where are all the schema files located? globs are supported eg  src/**/*.graphqls
+schema:
+  - graph/*.graphqls
+
+# Where should the generated server code go?
+exec:
+  filename: graph/generated.go
+  package: graph
+
+# Where should any generated models go?
+model:
+  filename: graph/model/models_gen.go
+  package: model
+
+# Where should the resolver implementations go?
+resolver:
+  layout: follow-schema
+  dir: graph
+  package: graph
+  filename_template: "{name}.resolvers.go"
+
+# Optional: turn on use `gqlgen` to generate models that interface with existing types
+autobind:
+  - "github.com/kodia-studio/kodia/internal/core/domain"
+
+# Optional: turn on to skip generation of unused models
+# skip_validation: true
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.String
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+  User:
+    model:
+      - github.com/kodia-studio/kodia/internal/core/domain.User
+  AuthResponse:
+    model:
+      - github.com/kodia-studio/kodia/internal/core/ports.AuthResponse

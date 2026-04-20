@@ -1,0 +1,85 @@
+
+> frontend@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: /Users/andiaryatno/Kodia/Framework/kodia/frontend
+Getting Svelte diagnostics...
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/lib/api/auth.ts:9:11
+Error: Property 'success' does not exist on type 'AuthResponse'. 
+		const res = await api.post<AuthResponse>('/auth/register', data);
+		if (res.success && res.data) {
+			authStore.login(res.data.user, res.data.access_token);
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/lib/api/auth.ts:9:26
+Error: Property 'data' does not exist on type 'AuthResponse'. 
+		const res = await api.post<AuthResponse>('/auth/register', data);
+		if (res.success && res.data) {
+			authStore.login(res.data.user, res.data.access_token);
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/lib/api/auth.ts:10:24
+Error: Property 'data' does not exist on type 'AuthResponse'. 
+		if (res.success && res.data) {
+			authStore.login(res.data.user, res.data.access_token);
+		}
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/lib/api/auth.ts:10:39
+Error: Property 'data' does not exist on type 'AuthResponse'. 
+		if (res.success && res.data) {
+			authStore.login(res.data.user, res.data.access_token);
+		}
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/lib/api/auth.ts:17:11
+Error: Property 'success' does not exist on type 'AuthResponse'. 
+		const res = await api.post<AuthResponse>('/auth/login', data);
+		if (res.success && res.data) {
+			authStore.login(res.data.user, res.data.access_token);
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/lib/api/auth.ts:17:26
+Error: Property 'data' does not exist on type 'AuthResponse'. 
+		const res = await api.post<AuthResponse>('/auth/login', data);
+		if (res.success && res.data) {
+			authStore.login(res.data.user, res.data.access_token);
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/lib/api/auth.ts:18:24
+Error: Property 'data' does not exist on type 'AuthResponse'. 
+		if (res.success && res.data) {
+			authStore.login(res.data.user, res.data.access_token);
+		}
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/lib/api/auth.ts:18:39
+Error: Property 'data' does not exist on type 'AuthResponse'. 
+		if (res.success && res.data) {
+			authStore.login(res.data.user, res.data.access_token);
+		}
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/lib/components/forms/DatePicker.svelte:110:28
+Error: Object literal may only specify known properties, and 'date' does not exist in type 'Omit<{}, "children" | "child"> & { child?: Snippet<[CalendarDaySnippetProps & { props: Record<string, unknown>; }]> | undefined; children?: Snippet<...> | undefined; style?: any; ref?: HTMLElement | ... 1 more ... | undefined; } & Without<...>'. (ts)
+                        <DatePickerPrimitive.Day
+                          {date}
+                          month={month.value}
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/routes/+error.svelte:53:63
+Error: Property 'stack' does not exist on type 'Error'. (ts)
+
+		{#if process.env.NODE_ENV === 'development' && $page.error?.stack}
+			<div class="mt-12 text-left bg-slate-100 dark:bg-slate-900 p-4 rounded-xl overflow-x-auto border border-red-200 dark:border-red-900/30">
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/routes/+error.svelte:56:84
+Error: Property 'stack' does not exist on type 'Error'. (ts)
+				<p class="text-xs font-bold text-red-500 mb-2 uppercase tracking-wider">Error Stack (Dev Only)</p>
+				<pre class="text-xs text-slate-600 dark:text-slate-400 font-mono">{$page.error.stack}</pre>
+			</div>
+
+/Users/andiaryatno/Kodia/Framework/kodia/frontend/src/routes/(app)/+layout.svelte:83:5
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+			<header class="sticky top-0 z-30 h-16 glass border-b px-8 flex items-center justify-between">
+				<button class="md:hidden text-slate-500">
+					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+					</svg>
+				</button>
+
+====================================
+svelte-check found 11 errors and 1 warning in 4 files

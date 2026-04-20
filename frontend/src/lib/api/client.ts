@@ -1,10 +1,12 @@
 import { PUBLIC_API_URL } from '$env/static/public';
-import type { ApiResponse } from '../types/api.types';
+import type { ApiResponse, ApiError } from '../types/api.types';
 import { authStore } from '../stores/auth.store';
 import { get } from 'svelte/store';
 
 class ApiClient {
 	private baseUrl: string;
+	isLoading = $state(false);
+	error = $state<ApiError | null>(null);
 
 	constructor() {
 		this.baseUrl = PUBLIC_API_URL || 'http://localhost:8080/api';
@@ -13,7 +15,10 @@ class ApiClient {
 	private async request<T>(
 		path: string,
 		options: RequestInit = {}
-	): Promise<ApiResponse<T>> {
+	): Promise<T> {
+		this.isLoading = true;
+		this.error = null;
+
 		const url = `${this.baseUrl}${path}`;
 		const headers = new Headers(options.headers);
 
@@ -27,22 +32,32 @@ class ApiClient {
 			headers.set('Authorization', `Bearer ${token}`);
 		}
 
-		const response = await fetch(url, {
-			...options,
-			headers
-		});
+		try {
+			const response = await fetch(url, {
+				...options,
+				headers
+			});
 
-		const result = await response.json();
+			const result = await response.json();
 
-		if (!response.ok) {
-			// Handle 401 Unauthorized - could trigger refresh token logic here
-			if (response.status === 401 && token) {
-				// Potential refresh token logic
+			if (!response.ok) {
+				const apiError = result as ApiError;
+				this.error = apiError;
+				throw apiError;
 			}
-			throw result;
-		}
 
-		return result;
+			return (result as ApiResponse<T>).data;
+		} catch (err) {
+			if (!this.error) {
+				this.error = {
+					error: 'Network Error',
+					message: err instanceof Error ? err.message : 'Unknown error occurred'
+				};
+			}
+			throw this.error;
+		} finally {
+			this.isLoading = false;
+		}
 	}
 
 	get<T>(path: string, options?: RequestInit) {

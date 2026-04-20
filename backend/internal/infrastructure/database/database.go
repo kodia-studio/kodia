@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kodia-studio/kodia/pkg/config"
+	"github.com/kodia-studio/kodia/pkg/performance"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -76,6 +77,18 @@ func New(cfg *config.Config, log *zap.Logger) (*gorm.DB, error) {
 		zap.String("driver", cfg.Database.Driver),
 		zap.String("database", cfg.Database.Name),
 	)
+
+	// Register Performance Plugins
+	n1Plugin := performance.NewNPlusOnePlugin(performance.DefaultNPlusOneThreshold)
+	n1Plugin.OnWarning = func(tableName string, count int) {
+		log.Warn("Potential N+1 query detected",
+			zap.String("table", tableName),
+			zap.Int("count", count),
+		)
+	}
+	if err := db.Use(n1Plugin); err != nil {
+		return nil, fmt.Errorf("failed to register nplusone plugin: %w", err)
+	}
 
 	return db, nil
 }

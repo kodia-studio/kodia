@@ -21,11 +21,23 @@ const (
 
 // Claims represents the JWT payload for Kodia Framework.
 type Claims struct {
-	UserID    string    `json:"user_id"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	TokenType TokenType `json:"token_type"`
+	UserID      string    `json:"user_id"`
+	Email       string    `json:"email"`
+	Role        string    `json:"role"`
+	Permissions []string  `json:"permissions"`
+	TokenType   TokenType `json:"token_type"`
 	jwt.RegisteredClaims
+}
+
+// TokenStore defines the interface for tracking token lifecycle (revocation and reuse).
+type TokenStore interface {
+	// IsRevoked checks if a token ID has been explicitly revoked.
+	IsRevoked(jti string) (bool, error)
+	// MarkUsed marks a refresh token as used and detects if it was already used (Reuse Detection).
+	// Returns (alreadyUsed, error).
+	MarkUsed(jti string, userID string, expiry time.Duration) (bool, error)
+	// Revoke sets a token (or all tokens for a user) as invalid.
+	Revoke(jti string, expiry time.Duration) error
 }
 
 // Manager manages JWT creation and verification.
@@ -34,10 +46,10 @@ type Manager struct {
 	refreshSecret      []byte
 	accessExpiryHours  time.Duration
 	refreshExpiryHours time.Duration
+	store              TokenStore
 }
 
 // NewManager creates a new JWT Manager.
-// accessSecret and refreshSecret should be different strong secrets (32+ chars).
 func NewManager(accessSecret, refreshSecret string, accessExpiryHours, refreshExpiryDays int) *Manager {
 	return &Manager{
 		accessSecret:       []byte(accessSecret),
@@ -47,23 +59,29 @@ func NewManager(accessSecret, refreshSecret string, accessExpiryHours, refreshEx
 	}
 }
 
+// SetStore sets the token store for revocation and rotation support.
+func (m *Manager) SetStore(store TokenStore) {
+	m.store = store
+}
+
 // GenerateAccessToken creates a short-lived access token.
-func (m *Manager) GenerateAccessToken(userID, email, role string) (string, error) {
-	return m.generate(userID, email, role, AccessToken, m.accessSecret, m.accessExpiryHours)
+func (m *Manager) GenerateAccessToken(userID, email, role string, permissions []string) (string, error) {
+	return m.generate(userID, email, role, permissions, AccessToken, m.accessSecret, m.accessExpiryHours)
 }
 
 // GenerateRefreshToken creates a long-lived refresh token.
-func (m *Manager) GenerateRefreshToken(userID, email, role string) (string, error) {
-	return m.generate(userID, email, role, RefreshToken, m.refreshSecret, m.refreshExpiryHours)
+func (m *Manager) GenerateRefreshToken(userID, email, role string, permissions []string) (string, error) {
+	return m.generate(userID, email, role, permissions, RefreshToken, m.refreshSecret, m.refreshExpiryHours)
 }
 
-func (m *Manager) generate(userID, email, role string, tokenType TokenType, secret []byte, expiry time.Duration) (string, error) {
+func (m *Manager) generate(userID, email, role string, permissions []string, tokenType TokenType, secret []byte, expiry time.Duration) (string, error) {
 	now := time.Now()
 	claims := Claims{
-		UserID:    userID,
-		Email:     email,
-		Role:      role,
-		TokenType: tokenType,
+		UserID:      userID,
+		Email:       email,
+		Role:        role,
+		Permissions: permissions,
+		TokenType:   tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.NewString(),
 			Subject:   userID,
@@ -84,8 +102,36 @@ func (m *Manager) ValidateAccessToken(tokenString string) (*Claims, error) {
 }
 
 // ValidateRefreshToken verifies a refresh token and returns its claims.
+// This method also handles rotation and reuse detection if a Store is configured.
 func (m *Manager) ValidateRefreshToken(tokenString string) (*Claims, error) {
-	return m.validate(tokenString, m.refreshSecret, RefreshToken)
+	claims, err := m.validate(tokenString, m.refreshSecret, RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// If a store is configured, check for revocation and reuse
+	if m.store != nil {
+		// 1. Check if revoked
+		revoked, _ := m.store.IsRevoked(claims.ID)
+		if revoked {
+			return nil, errors.New("token has been revoked")
+		}
+
+		// 2. Mark as used and detect reuse
+		// The caller should ideally handle the "rotate" part, but we provide the detection here.
+		alreadyUsed, err := m.store.MarkUsed(claims.ID, claims.UserID, claims.ExpiresAt.Time.Sub(time.Now()))
+		if err != nil {
+			return nil, err
+		}
+		if alreadyUsed {
+			// REUSE DETECTED: This is a critical security event.
+			// Standard behavior: Invalidate all of the user's refresh tokens.
+			_ = m.store.Revoke(claims.UserID, m.refreshExpiryHours) // Assuming store supports revoking by UserID
+			return nil, errors.New("refresh token reuse detected - all sessions invalidated")
+		}
+	}
+
+	return claims, nil
 }
 
 func (m *Manager) validate(tokenString string, secret []byte, expectedType TokenType) (*Claims, error) {

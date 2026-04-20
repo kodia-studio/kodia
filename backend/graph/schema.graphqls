@@ -1,0 +1,41 @@
+# Kodia Framework GraphQL Schema
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  role: String!
+  isActive: Boolean!
+  avatarUrl: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type AuthResponse {
+  accessToken: String!
+  refreshToken: String!
+  user: User!
+}
+
+type Query {
+  me: User!
+  users(page: Int, perPage: Int): PaginatedUsers!
+  user(id: ID!): User!
+}
+
+type PaginatedUsers {
+  users: [User!]!
+  total: Int!
+  page: Int!
+  perPage: Int!
+}
+
+input UpdateUserInput {
+  name: String
+  avatarUrl: String
+}
+
+type Mutation {
+  updateMe(input: UpdateUserInput!): User!
+  deleteUser(id: ID!): Boolean!
+}

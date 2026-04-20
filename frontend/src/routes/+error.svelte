@@ -50,10 +50,10 @@
 			</a>
 		</div>
 
-		{#if process.env.NODE_ENV === 'development' && $page.error?.stack}
+		{#if process.env.NODE_ENV === 'development' && ($page.error as any)?.stack}
 			<div class="mt-12 text-left bg-slate-100 dark:bg-slate-900 p-4 rounded-xl overflow-x-auto border border-red-200 dark:border-red-900/30">
 				<p class="text-xs font-bold text-red-500 mb-2 uppercase tracking-wider">Error Stack (Dev Only)</p>
-				<pre class="text-xs text-slate-600 dark:text-slate-400 font-mono">{$page.error.stack}</pre>
+				<pre class="text-xs text-slate-600 dark:text-slate-400 font-mono">{($page.error as any).stack}</pre>
 			</div>
 		{/if}
 	</div>
