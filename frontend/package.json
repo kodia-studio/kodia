@@ -39,7 +39,7 @@
 	},
 	"dependencies": {
 		"@internationalized/date": "^3.12.1",
-		"@tanstack/svelte-table": "^8.21.3",
+		"@tanstack/table-core": "^8.20.5",
 		"bits-ui": "^2.18.0",
 		"clsx": "^2.1.1",
 		"d3": "^7.9.0",
@@ -52,6 +52,7 @@
 		"zod": "^4.3.6"
 	},
 	"overrides": {
-		"svelte": "^5.55.2"
+		"svelte": "^5.55.2",
+		"cookie": "^0.7.0"
 	}
 }
