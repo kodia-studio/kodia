@@ -119,7 +119,7 @@ func (m *Manager) ValidateRefreshToken(tokenString string) (*Claims, error) {
 
 		// 2. Mark as used and detect reuse
 		// The caller should ideally handle the "rotate" part, but we provide the detection here.
-		alreadyUsed, err := m.store.MarkUsed(claims.ID, claims.UserID, claims.ExpiresAt.Time.Sub(time.Now()))
+		alreadyUsed, err := m.store.MarkUsed(claims.ID, claims.UserID, time.Until(claims.ExpiresAt.Time))
 		if err != nil {
 			return nil, err
 		}
