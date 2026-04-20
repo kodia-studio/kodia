@@ -18,10 +18,15 @@ Built with the power of **Go/Gin** on the backend, **SvelteKit** on the frontend
 |---------|-------------|
 | 🏗️ **Clean Architecture** | Backend follows SOLID principles with clear separation of concerns |
 | 🔐 **Enterprise Security** | 2FA (TOTP), RBAC & ABAC Policy Engine, Token Rotation, CSRF, XSS protection |
+| 📊 **Kodia UI Component Suite** | Pre-wired Svelte 5 components (`<KForm />`, `<KDataTable />`) with auto-validation |
+| 🔍 **Kodia Search** | Official Meilisearch plugin with asynchronous background indexing via `Asynq` |
+| 🌍 **Localization & Multi-tenancy** | SaaS-ready with automated database isolation (GORM Scopes) and reactive Svelte 5 i18n |
 | 📊 **Full Observability** | OpenTelemetry Traces, Prometheus Metrics, Sentry integration, pprof profiling |
 | 🏥 **Health Monitoring** | Real-time system vitals (CPU, RAM, Disk, DB, Redis) via CLI & API |
-| ⚡ **Developer Experience** | `kodia` CLI for instant feature scaffolding (like Laravel's `artisan`) |
+| ⚡ **Developer Experience** | `kodia` CLI for instant feature scaffolding and development ecosystem management |
 | 📦 **Batteries Included** | Auth, CRUD, middleware, validation, file uploads, email—all out-of-the-box |
+| 🛳️ **Kodia Sail** | One-command Docker infrastructure (Postgres, Redis, Meilisearch, Mailpit) |
+| 📊 **Kodia Pulse** | Real-time administrative monitoring dashboard (CPU, RAM, Logs via WS) |
 | 🗄️ **Multi-DB Support** | PostgreSQL & MySQL via GORM ORM |
 | 💾 **File Storage** | Local, S3, and cloud storage support |
 | 📧 **Email** | Built-in SMTP mailer with templating |
@@ -56,32 +61,35 @@ Like Laravel, Kodia provides a highly structured framework with best practices b
 
 ### 1️⃣ Installation
 
+The easiest way to get started is by installing our CLI:
+
 ```bash
-# Clone the repository
-git clone https://github.com/kodia-studio/kodia my-app
+# Install Kodia CLI
+go install github.com/kodia-studio/cli/kodia@latest
+
+# Create a new project
+kodia new my-app
 cd my-app
-
-# Setup environment files
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-
-# Install dependencies
-cd backend && go mod download
-cd ../frontend && npm install
 ```
 
-### 2️⃣ Run with Docker
+### 2️⃣ Run Infrastructure (Sail)
+
+Launch your entire development stack with zero local configuration:
 
 ```bash
-# Start all services (PostgreSQL, Redis, Backend, Frontend)
-make docker-up
+# Start PostgreSQL, Redis, Meilisearch, and Mailpit
+kodia sail up
 
-# Run migrations
-make migrate
+# In separate terminals:
+kodia dev
+```
 
-# Check services are healthy
-curl http://localhost:3000     # Frontend
-curl http://localhost:8080/api/health  # Backend
+### 3️⃣ Check Health
+
+```bash
+curl http://localhost:5173              # Frontend (SvelteKit)
+curl http://localhost:8080/api/health   # Backend (Gin)
+curl http://localhost:8025              # Mailpit Dashboard
 ```
 
 ### 3️⃣ Development
@@ -396,13 +404,14 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ## 📦 Kodia Ecosystem
 
-### Official Packages
+### Official Plugins
 
-Coming soon:
-- 💳 `@kodia/payment` - Stripe, PayPal integration
-- 📧 `@kodia/notifications` - Email, SMS, Push notifications
-- 🗂️ `@kodia/storage` - AWS S3, Google Cloud Storage
-- 🔍 `@kodia/search` - Elasticsearch, Meilisearch
+Kodia is infinitely extensible. Install official plugins via CLI:
+
+- 💳 `payment` - Stripe & Midtrans integration (Trial: `kodia plugin install payment`)
+- 📧 `notifications` - Email, SMS, Push notifications
+- 🗂️ `storage` - AWS S3, Google Cloud Storage
+- 🔍 `search` - Elasticsearch, Meilisearch
 - 📊 `@kodia/analytics` - Google Analytics, Mixpanel
 - 🌐 `@kodia/i18n` - Internationalization support
 

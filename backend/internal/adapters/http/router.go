@@ -28,6 +28,7 @@ type Router struct {
 	wsHandler      *websocket.Handler
 	graphqlHandler *handlers.GraphQLHandler
 	obsManager     *observability.Manager
+	pulseHandler   *handlers.PulseHandler
 }
 
 // NewRouter creates a new Router instance.
@@ -41,6 +42,7 @@ func NewRouter(
 	wsHandler *websocket.Handler,
 	graphqlHandler *handlers.GraphQLHandler,
 	obsManager *observability.Manager,
+	pulseHandler *handlers.PulseHandler,
 ) *Router {
 	return &Router{
 		cfg:            cfg,
@@ -52,6 +54,7 @@ func NewRouter(
 		wsHandler:      wsHandler,
 		graphqlHandler: graphqlHandler,
 		obsManager:     obsManager,
+		pulseHandler:   pulseHandler,
 	}
 }
 
@@ -175,6 +178,14 @@ func (r *Router) Setup() *gin.Engine {
 			ws.GET("", r.wsHandler.ServeWS)
 			ws.GET("/room/:room", r.wsHandler.ServeRoom)
 			ws.GET("/status", r.wsHandler.GetStatus)
+		}
+
+		// Pulse (Monitoring) routes
+		pulse := api.Group("/pulse")
+		pulse.Use(r.jwtManagerAuthMiddleware())
+		pulse.Use(middleware.RequireRole("admin"))
+		{
+			pulse.GET("/stream", r.pulseHandler.Stream)
 		}
 
 		// GraphQL routes

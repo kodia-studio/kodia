@@ -347,6 +347,6 @@ func setupTestRouter(_ *testing.T, testDB *tests.TestDatabase) *gin.Engine {
 	graphqlHandler := handlers.NewGraphQLHandler(authService, userService, logger)
 
 	// Create router
-	router := kodia_http.NewRouter(config, logger, jwtManager, authHandler, userHandler, nil, nil, graphqlHandler, nil)
+	router := kodia_http.NewRouter(config, logger, jwtManager, authHandler, userHandler, nil, nil, graphqlHandler, nil, nil)
 	return router.Setup()
 }

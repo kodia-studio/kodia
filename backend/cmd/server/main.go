@@ -44,6 +44,7 @@ func main() {
 		providers.NewUserProvider(),
 		providers.NewWebSocketProvider(),
 		providers.NewGraphQLProvider(),
+		providers.NewPulseProvider(), // Broadcaster for real-time monitoring
 		// Third-party plugins would be added here
 	)
 	if err != nil {

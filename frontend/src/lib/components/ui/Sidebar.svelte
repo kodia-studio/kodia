@@ -8,7 +8,8 @@
     BarChart3, 
     Layers,
     ChevronLeft,
-    LogOut
+    LogOut,
+    Activity
   } from "lucide-svelte";
   import { page } from "$app/state";
 
@@ -16,6 +17,7 @@
 
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/admin" },
+    { name: "Pulse", icon: Activity, href: "/admin/pulse" },
     { name: "Users", icon: Users, href: "/admin/users" },
     { name: "Analytics", icon: BarChart3, href: "/admin/analytics" },
     { name: "Security", icon: ShieldCheck, href: "/admin/security" },

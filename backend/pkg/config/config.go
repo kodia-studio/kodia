@@ -31,6 +31,7 @@ type AppConfig struct {
 	Debug       bool   `mapstructure:"debug"`
 	BaseURL     string `mapstructure:"base_url"`
 	FrontendURL string `mapstructure:"frontend_url"`
+	Locale      string `mapstructure:"locale"`
 }
 
 // DatabaseConfig holds database connection settings.
@@ -139,6 +140,7 @@ func Load() (*Config, error) {
 	v.SetDefault("app.debug", true)
 	v.SetDefault("app.base_url", "http://localhost:8080")
 	v.SetDefault("app.frontend_url", "http://localhost:3000")
+	v.SetDefault("app.locale", "en")
 
 	v.SetDefault("database.driver", "postgres")
 	v.SetDefault("database.host", "localhost")
