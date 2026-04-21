@@ -9,6 +9,7 @@ import (
 
 	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/pkg/pagination"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -22,6 +23,13 @@ type gormUser struct {
 	Password  string     `gorm:"column:password;not null"`
 	Role      string     `gorm:"column:role;not null;default:'user'"`
 	IsActive  bool       `gorm:"column:is_active;not null;default:true"`
+	IsVerified bool       `gorm:"column:is_verified;not null;default:false"`
+	
+	// 2FA Security
+	TwoFactorEnabled      bool           `gorm:"column:two_factor_enabled;not null;default:false"`
+	TwoFactorSecret       string         `gorm:"column:two_factor_secret"`
+	TwoFactorRecoveryCodes pq.StringArray `gorm:"column:two_factor_recovery_codes;type:text[]"`
+
 	AvatarURL *string    `gorm:"column:avatar_url"`
 	CreatedAt time.Time  `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt time.Time  `gorm:"column:updated_at;autoUpdateTime"`
@@ -39,6 +47,10 @@ func (g *gormUser) toDomain() *domain.User {
 		Password:  g.Password,
 		Role:      domain.UserRole(g.Role),
 		IsActive:  g.IsActive,
+		IsVerified: g.IsVerified,
+		TwoFactorEnabled: g.TwoFactorEnabled,
+		TwoFactorSecret: g.TwoFactorSecret,
+		TwoFactorRecoveryCodes: []string(g.TwoFactorRecoveryCodes),
 		AvatarURL: g.AvatarURL,
 		CreatedAt: g.CreatedAt,
 		UpdatedAt: g.UpdatedAt,
@@ -55,6 +67,10 @@ func fromDomainUser(u *domain.User) *gormUser {
 		Password:  u.Password,
 		Role:      string(u.Role),
 		IsActive:  u.IsActive,
+		IsVerified: u.IsVerified,
+		TwoFactorEnabled: u.TwoFactorEnabled,
+		TwoFactorSecret: u.TwoFactorSecret,
+		TwoFactorRecoveryCodes: pq.StringArray(u.TwoFactorRecoveryCodes),
 		AvatarURL: u.AvatarURL,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
@@ -70,6 +86,11 @@ type UserRepository struct {
 // NewUserRepository creates a new GORM-backed UserRepository.
 func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
+}
+
+// AutoMigrate runs the GORM auto-migration for the user and auth models.
+func AutoMigrate(db *gorm.DB) error {
+	return db.AutoMigrate(&gormUser{}, &gormRefreshToken{})
 }
 
 func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
@@ -112,6 +133,11 @@ func (r *UserRepository) FindAll(ctx context.Context, params *pagination.Params)
 		return nil, 0, err
 	}
 
+	// Guard: use safe defaults when params is nil (e.g. called for count-only checks)
+	if params == nil {
+		params = &pagination.Params{Page: 1, PerPage: pagination.MaxPerPage}
+	}
+
 	if err := baseQuery.Offset(params.Offset()).Limit(params.Limit()).Find(&models).Error; err != nil {
 		return nil, 0, err
 	}
@@ -144,4 +170,13 @@ func (r *UserRepository) ExistsByEmail(ctx context.Context, email string) (bool,
 		Where("email = ? AND deleted_at IS NULL", email).
 		Count(&count).Error
 	return count > 0, err
+}
+
+func (r *UserRepository) CountByRole(ctx context.Context, role string) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&gormUser{}).
+		Where("role = ? AND deleted_at IS NULL", role).
+		Count(&count).Error
+	return count, err
 }

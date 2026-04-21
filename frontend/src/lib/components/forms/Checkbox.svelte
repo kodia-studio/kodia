@@ -33,7 +33,7 @@
   <CheckboxPrimitive.Root
     checked={checked === true}
     indeterminate={checked === "indeterminate"}
-    {onCheckedChange}
+    onCheckedChange={handleCheckedChange}
     {disabled}
     {id}
     class="peer group h-5 w-5 shrink-0 rounded-md border border-input ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:border-primary transition-all duration-200"

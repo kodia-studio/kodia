@@ -9,12 +9,17 @@ import (
 
 // MapUserToResponse converts a domain.User to the public-safe UserResponse DTO.
 func MapUserToResponse(u *domain.User) UserResponse {
+	if u == nil {
+		return UserResponse{}
+	}
 	return UserResponse{
 		ID:        u.ID,
 		Name:      u.Name,
 		Email:     u.Email,
 		Role:      string(u.Role),
 		IsActive:  u.IsActive,
+		IsVerified: u.IsVerified,
+		TwoFactorEnabled: u.TwoFactorEnabled,
 		AvatarURL: u.AvatarURL,
 		CreatedAt: u.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: u.UpdatedAt.Format(time.RFC3339),
@@ -23,12 +28,19 @@ func MapUserToResponse(u *domain.User) UserResponse {
 
 // MapAuthToResponse converts a ports.AuthResponse to the HTTP AuthResponse DTO.
 func MapAuthToResponse(r *ports.AuthResponse) AuthResponse {
-	return AuthResponse{
+	resp := AuthResponse{
 		AccessToken:  r.AccessToken,
 		RefreshToken: r.RefreshToken,
 		TokenType:    "Bearer",
-		User:         MapUserToResponse(r.User),
+		MFARequired:  r.MFARequired,
+		MFAToken:     r.MFAToken,
 	}
+
+	if r.User != nil {
+		resp.User = MapUserToResponse(r.User)
+	}
+
+	return resp
 }
 
 // MapUsersToResponse converts a slice of domain.User to a slice of UserResponse DTOs.

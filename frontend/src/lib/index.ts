@@ -11,5 +11,5 @@ export { default as DataTable } from './components/data/DataTable.svelte';
 
 // Constants & Utilities
 export * from './utils/errors';
-export * from './api/client';
-export { localeStore, t } from './stores/locale.store';
+export * from './api/client.svelte';
+export { localeStore, t } from './stores/locale.store.svelte';

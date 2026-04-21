@@ -15,7 +15,7 @@ type AuthService interface {
 	// Register creates a new user account.
 	Register(ctx context.Context, input RegisterInput) (*AuthResponse, error)
 
-	// Login authenticates a user and returns JWT tokens.
+	// Login authenticates a user and returns JWT tokens or MFA requirement.
 	Login(ctx context.Context, input LoginInput) (*AuthResponse, error)
 
 	// RefreshToken generates a new access token from a valid refresh token.
@@ -26,6 +26,25 @@ type AuthService interface {
 
 	// LogoutAll revokes all refresh tokens for a user.
 	LogoutAll(ctx context.Context, userID string) error
+
+	// Email Verification
+	VerifyEmail(ctx context.Context, token string) error
+	SendVerificationEmail(ctx context.Context, userID string) error
+
+	// Password Recovery
+	ForgotPassword(ctx context.Context, email string) error
+	ResetPassword(ctx context.Context, token string, newPassword string) error
+
+	// 2FA Security
+	Enable2FA(ctx context.Context, userID string) (*TwoFactorSetup, error)
+	Verify2FA(ctx context.Context, userID string, code string) ([]string, error)
+	Disable2FA(ctx context.Context, userID string) error
+	LoginVerify2FA(ctx context.Context, mfaToken string, code string) (*AuthResponse, error)
+}
+
+type TwoFactorSetup struct {
+	Secret string
+	QRCode string // Base64 or URL
 }
 
 // UserService defines user management business operations.
@@ -81,6 +100,8 @@ type AuthResponse struct {
 	AccessToken  string
 	RefreshToken string
 	User         *domain.User
+	MFARequired  bool   `json:"mfa_required,omitempty"`
+	MFAToken     string `json:"mfa_token,omitempty"`
 }
 
 type UpdateUserInput struct {

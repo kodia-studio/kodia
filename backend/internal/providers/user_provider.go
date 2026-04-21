@@ -8,6 +8,7 @@ import (
 	"github.com/kodia-studio/kodia/internal/core/services"
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	"github.com/kodia-studio/kodia/pkg/kodia"
+	"go.uber.org/zap"
 )
 
 type UserProvider struct{}
@@ -23,6 +24,12 @@ func (p *UserProvider) Name() string {
 func (p *UserProvider) Register(app *kodia.App) error {
 	// 1. Repositories
 	userRepo := postgres.NewUserRepository(app.DB)
+
+	// Auto-Migrate user models (Professional Framework standard)
+	if err := postgres.AutoMigrate(app.DB); err != nil {
+		app.Log.Error("Failed to auto-migrate user models", zap.Error(err))
+		return err
+	}
 
 	// 2. Services
 	userService := services.NewUserService(userRepo, app.Log)

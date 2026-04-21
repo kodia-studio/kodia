@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Search, Loader2, X } from "lucide-svelte";
   import { onMount } from "svelte";
-  import { api } from "$lib/api/client";
+  import { api } from "$lib/api/client.svelte";
   import { cn } from "$lib/utils/styles";
 
   interface Props {

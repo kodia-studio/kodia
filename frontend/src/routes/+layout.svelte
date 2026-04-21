@@ -8,7 +8,7 @@
   let { children } = $props();
 
   onMount(() => {
-    authStore.init();
+    // Auth store is now hydrated immediately upon module import
   });
 </script>
 

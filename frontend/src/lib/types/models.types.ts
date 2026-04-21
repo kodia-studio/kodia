@@ -5,6 +5,7 @@ export interface User {
   avatar?: string;
   role: 'user' | 'admin' | 'moderator';
   permissions: string[];
+  twoFactorEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import DataTable from "./DataTable.svelte";
-  import { api } from "$lib/api/client";
+  import { api } from "$lib/api/client.svelte";
   import type { PaginatedResponse } from "$lib/types/api.types";
-  import type { ColumnDef } from "@tanstack/svelte-table";
+  import type { ColumnDef } from "@tanstack/table-core";
   import { Loader2 } from "lucide-svelte";
 
   interface Props {

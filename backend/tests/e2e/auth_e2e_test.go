@@ -2,11 +2,13 @@ package e2e
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kodia-studio/kodia/internal/adapters/http/dto"
@@ -338,7 +340,18 @@ func setupTestRouter(_ *testing.T, testDB *tests.TestDatabase) *gin.Engine {
 	refreshTokenRepo := postgres.NewRefreshTokenRepository(testDB.DB)
 
 	// Create services
-	authService := services.NewAuthService(userRepo, refreshTokenRepo, jwtManager, logger)
+	mockCache := new(MockCacheProvider)
+	mockMailer := new(MockMailer)
+	authService := services.NewAuthService(
+		userRepo,
+		refreshTokenRepo,
+		jwtManager,
+		mockCache,
+		mockMailer,
+		"http://localhost:8080",
+		"http://localhost:3000",
+		logger,
+	)
 	userService := services.NewUserService(userRepo, logger)
 
 	// Create handlers
@@ -350,3 +363,16 @@ func setupTestRouter(_ *testing.T, testDB *tests.TestDatabase) *gin.Engine {
 	router := kodia_http.NewRouter(config, logger, jwtManager, authHandler, userHandler, nil, nil, graphqlHandler, nil, nil)
 	return router.Setup()
 }
+
+// MockCacheProvider is a simple mock for E2E tests
+type MockCacheProvider struct{}
+func (m *MockCacheProvider) Get(ctx context.Context, key string, dest interface{}) error { return nil }
+func (m *MockCacheProvider) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error { return nil }
+func (m *MockCacheProvider) Delete(ctx context.Context, key string) error { return nil }
+func (m *MockCacheProvider) Remember(ctx context.Context, key string, ttl time.Duration, fn func() (interface{}, error), dest interface{}) error { return nil }
+
+// MockMailer is a simple mock for E2E tests
+type MockMailer struct{}
+func (m *MockMailer) Send(ctx context.Context, to []string, subject string, body string) error { return nil }
+func (m *MockMailer) SendHTML(ctx context.Context, to []string, subject string, htmlBody string) error { return nil }
+func (m *MockMailer) SendWithTemplate(ctx context.Context, to []string, subject string, templatePath string, data interface{}) error { return nil }

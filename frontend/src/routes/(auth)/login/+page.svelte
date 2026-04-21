@@ -3,8 +3,8 @@
   import FormField from "$lib/components/forms/FormField.svelte";
   import Input from "$lib/components/forms/Input.svelte";
   import Checkbox from "$lib/components/forms/Checkbox.svelte";
-  import { Mail, Lock, LogIn, Loader2 } from "lucide-svelte";
-  import { api } from "$lib/api/client";
+  import { Mail, Lock, LogIn, Loader2, ArrowRight } from "lucide-svelte";
+  import { api } from "$lib/api/client.svelte";
   import { authStore } from "$lib/stores/auth.store";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
@@ -19,11 +19,19 @@
     isLoading = true;
 
     try {
-      // In a real app, we'd use superforms. For this template:
-      const response = await api.post<import("$lib/types/auth.types").AuthResponse>("/auth/login", { email, password });
-      authStore.login(response.user, response.access_token);
-      toast.success("Welcome back, " + response.user.name);
-      goto("/admin");
+      const response = await api.post<any>("/auth/login", { email, password });
+      
+      if (response.mfa_required) {
+        sessionStorage.setItem("mfa_token", response.mfa_token);
+        toast.info("Two-Factor Authentication Required");
+        goto("/2fa");
+        return;
+      }
+
+      const { user, access_token } = response;
+      authStore.login(user, access_token);
+      toast.success("Welcome back, " + user.name);
+      goto("/dashboard");
     } catch (err: any) {
       toast.error(err.message || "Invalid credentials");
     } finally {
@@ -34,40 +42,42 @@
 
 <AuthLayout>
   <form onsubmit={handleLogin} class="space-y-6">
-    <div class="text-center mb-8">
-      <h1 class="text-2xl font-bold tracking-tight">Sign in to Account</h1>
-      <p class="text-sm text-muted-foreground mt-2">Enter your credentials to access your dashboard</p>
+    <div class="text-center mb-10">
+      <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Sign In.</h1>
+      <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Enter your colony credentials to access the hub.</p>
     </div>
 
-    <FormField label="Email Address" required>
-      <Input 
-        type="email" 
-        bind:value={email} 
-        placeholder="name@example.com"
-        required
-      >
-        {#snippet icon()}
-          <Mail class="w-5 h-5" />
-        {/snippet}
-      </Input>
-    </FormField>
+    <div class="space-y-4">
+      <FormField label="Email Address">
+        <Input 
+          type="email" 
+          bind:value={email} 
+          placeholder="name@example.com"
+          required
+        >
+          {#snippet icon()}
+            <Mail size={18} />
+          {/snippet}
+        </Input>
+      </FormField>
 
-    <FormField label="Password" required>
-      <Input 
-        type="password" 
-        bind:value={password} 
-        placeholder="••••••••"
-        required
-      >
-        {#snippet icon()}
-          <Lock class="w-5 h-5" />
-        {/snippet}
-      </Input>
-    </FormField>
+      <FormField label="Password">
+        <Input 
+          type="password" 
+          bind:value={password} 
+          placeholder="••••••••"
+          required
+        >
+          {#snippet icon()}
+            <Lock size={18} />
+          {/snippet}
+        </Input>
+      </FormField>
+    </div>
 
     <div class="flex items-center justify-between">
       <Checkbox bind:checked={rememberMe} label="Remember me" />
-      <a href="/auth/reset" class="text-sm font-semibold text-primary hover:underline">
+      <a href="/forgot-password" class="text-xs font-bold text-primary hover:text-primary/80 transition-colors">
         Forgot password?
       </a>
     </div>
@@ -75,20 +85,23 @@
     <button
       type="submit"
       disabled={isLoading}
-      class="btn-primary w-full py-3 flex items-center justify-center gap-2 group"
+      class="btn-premium w-full py-4 flex items-center justify-center gap-3 group text-lg"
     >
       {#if isLoading}
-        <Loader2 class="w-5 h-5 animate-spin" />
+        <Loader2 class="w-6 h-6 animate-spin text-white" />
       {:else}
-        <LogIn class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+        <LogIn size={20} class="group-hover:translate-x-1 transition-transform" />
       {/if}
-      Sign In
+      Sign In to Hive
     </button>
 
-    <div class="text-center mt-6">
-      <p class="text-sm text-muted-foreground">
-        Don't have an account? 
-        <a href="/auth/register" class="font-semibold text-primary hover:underline">Create one</a>
+    <div class="pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+      <p class="text-xs font-bold text-slate-500 dark:text-slate-400">
+        Don't have an account yet? 
+        <a href="/register" class="inline-flex items-center gap-1 text-primary hover:underline ml-1">
+          Create One
+          <ArrowRight size={10} />
+        </a>
       </p>
     </div>
   </form>

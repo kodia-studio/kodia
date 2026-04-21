@@ -22,7 +22,14 @@ type User struct {
 	Password  string // hashed
 	Role      UserRole
 	Permissions []string
-	IsActive  bool
+	IsActive    bool
+	IsVerified  bool
+	
+	// 2FA Security
+	TwoFactorEnabled      bool
+	TwoFactorSecret       string
+	TwoFactorRecoveryCodes []string
+
 	AvatarURL *string
 	CreatedAt time.Time
 	UpdatedAt time.Time

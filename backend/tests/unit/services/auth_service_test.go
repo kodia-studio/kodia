@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/internal/core/ports"
@@ -61,6 +62,11 @@ func (m *MockUserRepository) ExistsByEmail(ctx context.Context, email string) (b
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockUserRepository) CountByRole(ctx context.Context, role string) (int64, error) {
+	args := m.Called(ctx, role)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 // MockRefreshTokenRepository is a mock implementation
 type MockRefreshTokenRepository struct {
 	mock.Mock
@@ -94,6 +100,51 @@ func (m *MockRefreshTokenRepository) DeleteExpired(ctx context.Context) error {
 	return args.Error(0)
 }
 
+// MockCacheProvider is a mock implementation
+type MockCacheProvider struct {
+	mock.Mock
+}
+
+func (m *MockCacheProvider) Get(ctx context.Context, key string, dest interface{}) error {
+	args := m.Called(ctx, key, dest)
+	return args.Error(0)
+}
+
+func (m *MockCacheProvider) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	args := m.Called(ctx, key, value, ttl)
+	return args.Error(0)
+}
+
+func (m *MockCacheProvider) Delete(ctx context.Context, key string) error {
+	args := m.Called(ctx, key)
+	return args.Error(0)
+}
+
+func (m *MockCacheProvider) Remember(ctx context.Context, key string, ttl time.Duration, fn func() (interface{}, error), dest interface{}) error {
+	args := m.Called(ctx, key, ttl, fn, dest)
+	return args.Error(0)
+}
+
+// MockMailer is a mock implementation
+type MockMailer struct {
+	mock.Mock
+}
+
+func (m *MockMailer) Send(ctx context.Context, to []string, subject string, body string) error {
+	args := m.Called(ctx, to, subject, body)
+	return args.Error(0)
+}
+
+func (m *MockMailer) SendHTML(ctx context.Context, to []string, subject string, htmlBody string) error {
+	args := m.Called(ctx, to, subject, htmlBody)
+	return args.Error(0)
+}
+
+func (m *MockMailer) SendWithTemplate(ctx context.Context, to []string, subject string, templatePath string, data interface{}) error {
+	args := m.Called(ctx, to, subject, templatePath, data)
+	return args.Error(0)
+}
+
 // TestAuthServiceRegister tests user registration
 func TestAuthServiceRegister(t *testing.T) {
 	mockUserRepo := new(MockUserRepository)
@@ -101,7 +152,9 @@ func TestAuthServiceRegister(t *testing.T) {
 	logger := zap.NewNop()
 	jwtManager := jwt.NewManager("access-secret-32-chars-long-at-least", "refresh-secret-32-chars-long-at-least", 1, 7)
 
-	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, jwtManager, logger)
+	mockCache := new(MockCacheProvider)
+	mockMailer := new(MockMailer)
+	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, jwtManager, mockCache, mockMailer, "http://localhost:8080", "http://localhost:3000", logger)
 
 	input := ports.RegisterInput{
 		Name:     "Test User",
@@ -110,6 +163,7 @@ func TestAuthServiceRegister(t *testing.T) {
 	}
 
 	mockUserRepo.On("ExistsByEmail", mock.Anything, "test@example.com").Return(false, nil)
+	mockUserRepo.On("FindAll", mock.Anything, (*pagination.Params)(nil)).Return([]*domain.User{}, int64(0), nil)
 	mockUserRepo.On("Create", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
 		return u.Email == "test@example.com" && u.Name == "Test User"
 	})).Return(nil)
@@ -135,7 +189,9 @@ func TestAuthServiceLogin(t *testing.T) {
 	logger := zap.NewNop()
 	jwtManager := jwt.NewManager("access-secret-32-chars-long-at-least", "refresh-secret-32-chars-long-at-least", 1, 7)
 
-	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, jwtManager, logger)
+	mockCache := new(MockCacheProvider)
+	mockMailer := new(MockMailer)
+	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, jwtManager, mockCache, mockMailer, "http://localhost:8080", "http://localhost:3000", logger)
 
 	password := "password123"
 	hashedPassword, _ := hash.Make(password)
@@ -154,6 +210,7 @@ func TestAuthServiceLogin(t *testing.T) {
 	}
 
 	mockUserRepo.On("FindByEmail", mock.Anything, "test@example.com").Return(user, nil)
+	mockUserRepo.On("CountByRole", mock.Anything, string(domain.RoleAdmin)).Return(int64(1), nil)
 	mockRefreshRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 
 	ctx := context.Background()
@@ -175,7 +232,9 @@ func TestAuthServiceLogout(t *testing.T) {
 	logger := zap.NewNop()
 	jwtManager := jwt.NewManager("access-secret-32-chars-long-at-least", "refresh-secret-32-chars-long-at-least", 1, 7)
 
-	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, jwtManager, logger)
+	mockCache := new(MockCacheProvider)
+	mockMailer := new(MockMailer)
+	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, jwtManager, mockCache, mockMailer, "http://localhost:8080", "http://localhost:3000", logger)
 
 	token := "some-refresh-token"
 	mockRefreshRepo.On("RevokeByToken", mock.Anything, token).Return(nil)

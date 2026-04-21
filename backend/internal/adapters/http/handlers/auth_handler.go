@@ -191,6 +191,114 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	})
 }
 
+// ForgotPassword handles requesting a password reset link.
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	var req dto.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request body", nil)
+		return
+	}
+
+	if err := h.authService.ForgotPassword(c.Request.Context(), req.Email); err != nil {
+		h.log.Error("Forgot password error", zap.Error(err))
+	}
+
+	response.OK(c, "If your email is registered, you will receive a reset link.", nil)
+}
+
+// ResetPassword handles resetting a password using a token.
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	var req dto.ResetPasswordRequest
+	if err := h.validate.Struct(req); err != nil {
+		response.BadRequest(c, "Validation failed", formatValidationErrors(err))
+		return
+	}
+
+	if err := h.authService.ResetPassword(c.Request.Context(), req.Token, req.NewPassword); err != nil {
+		response.BadRequest(c, err.Error(), nil)
+		return
+	}
+
+	response.OK(c, "Password reset successfully", nil)
+}
+
+// VerifyEmail handles email verification using a token.
+func (h *AuthHandler) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		response.BadRequest(c, "Token is required", nil)
+		return
+	}
+
+	if err := h.authService.VerifyEmail(c.Request.Context(), token); err != nil {
+		response.BadRequest(c, err.Error(), nil)
+		return
+	}
+
+	response.OK(c, "Email verified successfully", nil)
+}
+
+// Enable2FA generates TOTP secret and QR code.
+func (h *AuthHandler) Enable2FA(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	setup, err := h.authService.Enable2FA(c.Request.Context(), userID)
+	if err != nil {
+		response.InternalServerError(c, "Failed to initiate 2FA setup")
+		return
+	}
+
+	response.OK(c, "2FA setup initiated", dto.TwoFactorSetupResponse{
+		Secret: setup.Secret,
+		QRCode: setup.QRCode,
+	})
+}
+
+// Verify2FA verifies the initial TOTP setup and returns recovery codes.
+func (h *AuthHandler) Verify2FA(c *gin.Context) {
+	var req dto.Verify2FARequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request body", nil)
+		return
+	}
+
+	userID := middleware.GetUserID(c)
+	recovery, err := h.authService.Verify2FA(c.Request.Context(), userID, req.Code)
+	if err != nil {
+		response.BadRequest(c, err.Error(), nil)
+		return
+	}
+
+	response.OK(c, "2FA enabled successfully. Save your recovery codes.", gin.H{"recovery_codes": recovery})
+}
+
+// Disable2FA disables TOTP for the user.
+func (h *AuthHandler) Disable2FA(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	if err := h.authService.Disable2FA(c.Request.Context(), userID); err != nil {
+		response.InternalServerError(c, "Failed to disable 2FA")
+		return
+	}
+
+	response.OK(c, "2FA disabled successfully", nil)
+}
+
+// LoginVerify2FA handles TOTP verification during login using a temporary token.
+func (h *AuthHandler) LoginVerify2FA(c *gin.Context) {
+	var req dto.LoginVerify2FARequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request body", nil)
+		return
+	}
+
+	result, err := h.authService.LoginVerify2FA(c.Request.Context(), req.MFAToken, req.Code)
+	if err != nil {
+		response.Unauthorized(c, err.Error())
+		return
+	}
+
+	response.OK(c, "Login successful", dto.MapAuthToResponse(result))
+}
+
 // handleAuthError maps domain errors to appropriate HTTP responses.
 func (h *AuthHandler) handleAuthError(c *gin.Context, err error) {
 	switch {

@@ -5,6 +5,7 @@ export interface UserResponse {
 	role: 'admin' | 'user';
 	is_active: boolean;
 	avatar_url: string | null;
+	two_factor_enabled: boolean;
 	created_at: string;
 	updated_at: string;
 }

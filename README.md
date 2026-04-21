@@ -12,27 +12,32 @@ Built with the power of **Go/Gin** on the backend, **SvelteKit** on the frontend
 
 ---
 
-## ✨ Key Features
-
 | Feature | Description |
 |---------|-------------|
 | 🏗️ **Clean Architecture** | Backend follows SOLID principles with clear separation of concerns |
 | 🔐 **Enterprise Security** | 2FA (TOTP), RBAC & ABAC Policy Engine, Token Rotation, CSRF, XSS protection |
-| 📊 **Kodia UI Component Suite** | Pre-wired Svelte 5 components (`<KForm />`, `<KDataTable />`) with auto-validation |
-| 🔍 **Kodia Search** | Official Meilisearch plugin with asynchronous background indexing via `Asynq` |
-| 🌍 **Localization & Multi-tenancy** | SaaS-ready with automated database isolation (GORM Scopes) and reactive Svelte 5 i18n |
-| 📊 **Full Observability** | OpenTelemetry Traces, Prometheus Metrics, Sentry integration, pprof profiling |
-| 🏥 **Health Monitoring** | Real-time system vitals (CPU, RAM, Disk, DB, Redis) via CLI & API |
-| ⚡ **Developer Experience** | `kodia` CLI for instant feature scaffolding and development ecosystem management |
+| 🎨 **Elite Design System** | High-fidelity glassmorphism, **bg-hive** patterns, and Tailwind v4 |
+| 📊 **Kodia UI Suite v2** | Pre-wired Svelte 5 components with artisanal focus and premium animations |
+| 🔍 **Kodia Search** | Official Meilisearch plugin with async background indexing |
+| 🌍 **Localization & Tenancy** | SaaS-ready with automated database isolation and reactive i18n |
+| 📊 **Full Observability** | OpenTelemetry, Prometheus, Sentry, pprof profiling |
+| ⚡ **Developer Experience** | `kodia` CLI for instant feature scaffolding and ecosystem management |
 | 📦 **Batteries Included** | Auth, CRUD, middleware, validation, file uploads, email—all out-of-the-box |
 | 🛳️ **Kodia Sail** | One-command Docker infrastructure (Postgres, Redis, Meilisearch, Mailpit) |
-| 📊 **Kodia Pulse** | Real-time administrative monitoring dashboard (CPU, RAM, Logs via WS) |
-| 🗄️ **Multi-DB Support** | PostgreSQL & MySQL via GORM ORM |
-| 💾 **File Storage** | Local, S3, and cloud storage support |
-| 📧 **Email** | Built-in SMTP mailer with templating |
-| 🔄 **Background Jobs** | Async job queue with Asynq |
-| 🎨 **Modern Frontend** | SvelteKit 5, Tailwind CSS v4, component library included |
+| 📊 **Kodia Pulse** | Real-time administrative monitoring dashboard (CPU, RAM, Logs) |
+| 🎨 **Modern Frontend** | SvelteKit 5, Tailwind CSS v4, premium component library included |
 | 🐳 **Production Ready** | Docker, CI/CD templates, health checks, structured logging |
+
+---
+
+## 🎨 Elite Design System
+
+Kodia v2 introduces the **Elite Design System**, a high-fidelity visual language meticulously synchronized with the `kodia.id` design authority.
+
+- **Artisanal Glassmorphism**: Advanced `backdrop-blur` and artisanal border transitions for a premium, institutional feel.
+- **Hive Architecture**: Signature `bg-hive` patterns and holographic radial glows across all layouts.
+- **Premium Auth Suite**: Redesigned Login, Register, and 2FA stages that prioritize security without sacrificing "wow" factor.
+- **Standardized Navigation**: All internal documentation and community links are synchronized to the central `kodia.id` portal.
 
 ---
 

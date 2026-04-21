@@ -1,4 +1,4 @@
-import { api } from "$lib/api/client";
+import { api } from "$lib/api/client.svelte";
 
 export function createQuery<T>(fetcher: () => Promise<T>) {
   let data = $state<T | null>(null);

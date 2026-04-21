@@ -22,7 +22,13 @@ function createThemeStore() {
 		init: () => {
 			if (browser) {
 				const theme = (localStorage.getItem('theme') as Theme) || 'system';
-				createThemeStore().set(theme);
+				themeStore.set(theme);
+			}
+		},
+		toggle: () => {
+			if (browser) {
+				const current = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+				themeStore.set(current);
 			}
 		}
 	};

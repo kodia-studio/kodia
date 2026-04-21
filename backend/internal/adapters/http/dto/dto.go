@@ -60,6 +60,55 @@ type AuthResponse struct {
 	RefreshToken string       `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 	TokenType    string       `json:"token_type"    example:"Bearer"`
 	User         UserResponse `json:"user"`
+	MFARequired  bool         `json:"mfa_required,omitempty"`
+	MFAToken     string       `json:"mfa_token,omitempty"`
+}
+
+// ForgotPasswordRequest is the request body for POST /api/auth/forgot-password.
+// @swagger:model
+type ForgotPasswordRequest struct {
+	// User email address
+	// @required
+	Email string `json:"email" validate:"required,email" example:"user@example.com"`
+}
+
+// ResetPasswordRequest is the request body for POST /api/auth/reset-password.
+// @swagger:model
+type ResetPasswordRequest struct {
+	// Reset token from email
+	// @required
+	Token string `json:"token" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`
+
+	// New password
+	// @required
+	NewPassword string `json:"new_password" validate:"required,min=8,max=72" example:"NewSecurePassword456!"`
+}
+
+// Verify2FARequest is the request body for POST /api/auth/2fa/verify.
+// @swagger:model
+type Verify2FARequest struct {
+	// 6-digit TOTP code
+	// @required
+	Code string `json:"code" validate:"required,len=6" example:"123456"`
+}
+
+// TwoFactorSetupResponse is the response for enabling 2FA.
+// @swagger:model
+type TwoFactorSetupResponse struct {
+	Secret string `json:"secret" example:"JBSWY3DPEHPK3PXP"`
+	QRCode string `json:"qr_code" example:"otpauth://totp/Kodia%20Framework:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Kodia%20Framework"`
+}
+
+// LoginVerify2FARequest is the request body for POST /api/auth/2fa/login-verify.
+// @swagger:model
+type LoginVerify2FARequest struct {
+	// Temporary MFA token from login response
+	// @required
+	MFAToken string `json:"mfa_token" validate:"required" example:"550e8400-e29b-41d4-a716-446655440000"`
+
+	// 6-digit TOTP code
+	// @required
+	Code string `json:"code" validate:"required,len=6" example:"123456"`
 }
 
 // --- User DTOs ---
@@ -82,6 +131,12 @@ type UserResponse struct {
 
 	// User account status
 	IsActive bool `json:"is_active" example:"true"`
+
+	// Email verification status
+	IsVerified bool `json:"is_verified" example:"false"`
+
+	// 2FA status
+	TwoFactorEnabled bool `json:"two_factor_enabled" example:"false"`
 
 	// User avatar image URL
 	AvatarURL *string `json:"avatar_url" example:"https://example.com/avatar.jpg"`

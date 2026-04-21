@@ -1,5 +1,5 @@
 <script lang="ts">
-	// import { api } from '$lib/api/client';
+	// import { api } from '$lib/api/client.svelte';
 	// import { toastStore } from '$lib/stores/toast.store';
 	
 	let data = $state({

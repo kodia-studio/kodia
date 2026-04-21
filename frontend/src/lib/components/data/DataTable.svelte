@@ -1,15 +1,13 @@
 <script lang="ts">
   import { 
-    createSvelteTable, 
-    flexRender, 
     getCoreRowModel, 
     getPaginationRowModel,
     getSortedRowModel,
     getFilteredRowModel,
     type ColumnDef, 
     type SortingState,
-    type TableOptions 
-  } from "@tanstack/svelte-table";
+  } from "@tanstack/table-core";
+  import { createSvelteTable } from "$lib/components/ui/table/table.svelte";
   import { cn } from "$lib/utils/styles";
   import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from "lucide-svelte";
 
@@ -52,11 +50,20 @@
   });
 </script>
 
+{#snippet flexRender(content: any, context: any)}
+  {#if typeof content === "function"}
+    {@const Rendered = content}
+    <Rendered {...context} />
+  {:else}
+    {@html content ?? ""}
+  {/if}
+{/snippet}
+
 <div class={cn("w-full space-y-4", className)}>
   <div class="rounded-2xl border bg-card overflow-hidden shadow-sm">
     <table class="w-full text-sm">
       <thead class="bg-muted/50 border-b">
-        {#each $table.getHeaderGroups() as headerGroup}
+        {#each table.getHeaderGroups() as headerGroup}
           <tr>
             {#each headerGroup.headers as header}
               <th class="h-12 px-4 text-left align-middle font-semibold text-muted-foreground">
@@ -68,7 +75,7 @@
                     )}
                     onclick={header.column.getToggleSortingHandler()}
                   >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {@render flexRender(header.column.columnDef.header, header.getContext())}
                     {#if header.column.getCanSort()}
                       <ArrowUpDown class="w-3.5 h-3.5" />
                     {/if}
@@ -80,11 +87,11 @@
         {/each}
       </thead>
       <tbody class="divide-y">
-        {#each $table.getRowModel().rows as row}
+        {#each table.getRowModel().rows as row}
           <tr class="hover:bg-muted/30 transition-colors">
             {#each row.getVisibleCells() as cell}
               <td class="p-4 align-middle">
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                {@render flexRender(cell.column.columnDef.cell, cell.getContext())}
               </td>
             {/each}
           </tr>
@@ -102,34 +109,34 @@
   <!-- Pagination -->
   <div class="flex items-center justify-between px-2">
     <div class="text-sm text-muted-foreground">
-      Page {pagination.pageIndex + 1} of {$table.getPageCount()}
+      Page {pagination.pageIndex + 1} of {table.getPageCount()}
     </div>
     <div class="flex items-center gap-2">
       <button
         class="p-2 border rounded-xl hover:bg-muted disabled:opacity-50 transition-colors"
-        onclick={() => $table.setPageIndex(0)}
-        disabled={!$table.getCanPreviousPage()}
+        onclick={() => table.setPageIndex(0)}
+        disabled={!table.getCanPreviousPage()}
       >
         <ChevronsLeft class="w-4 h-4" />
       </button>
       <button
         class="p-2 border rounded-xl hover:bg-muted disabled:opacity-50 transition-colors"
-        onclick={() => $table.previousPage()}
-        disabled={!$table.getCanPreviousPage()}
+        onclick={() => table.previousPage()}
+        disabled={!table.getCanPreviousPage()}
       >
         <ChevronLeft class="w-4 h-4" />
       </button>
       <button
         class="p-2 border rounded-xl hover:bg-muted disabled:opacity-50 transition-colors"
-        onclick={() => $table.nextPage()}
-        disabled={!$table.getCanNextPage()}
+        onclick={() => table.nextPage()}
+        disabled={!table.getCanNextPage()}
       >
         <ChevronRight class="w-4 h-4" />
       </button>
       <button
         class="p-2 border rounded-xl hover:bg-muted disabled:opacity-50 transition-colors"
-        onclick={() => $table.setPageIndex($table.getPageCount() - 1)}
-        disabled={!$table.getCanNextPage()}
+        onclick={() => table.setPageIndex(table.getPageCount() - 1)}
+        disabled={!table.getCanNextPage()}
       >
         <ChevronsRight class="w-4 h-4" />
       </button>

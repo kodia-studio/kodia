@@ -35,6 +35,9 @@ type UserRepository interface {
 
 	// ExistsByEmail returns true if a user with the given email exists.
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
+
+	// CountByRole returns the total number of users with a specific role.
+	CountByRole(ctx context.Context, role string) (int64, error)
 }
 
 // RefreshTokenRepository defines all database operations for refresh tokens.
