@@ -173,7 +173,7 @@
 							</div>
 						</div>
 
-						<p class="text-slate-400 text-sm mt-4 text-center">
+						<p class="text-slate-600 dark:text-slate-400 text-sm mt-4 text-center">
 							The entire project setup in seconds. No configuration hell.
 						</p>
 					</div>
