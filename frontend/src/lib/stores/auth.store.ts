@@ -17,7 +17,23 @@ const initialState: AuthState = {
 };
 
 function createAuthStore() {
-	const { subscribe, set, update } = writable<AuthState>(initialState);
+	let initialData: AuthState = { ...initialState, isLoading: false };
+
+	if (browser) {
+		const token = localStorage.getItem('access_token');
+		const userJson = localStorage.getItem('user');
+		if (token && userJson) {
+			try {
+				const user = JSON.parse(userJson);
+				initialData = { user, accessToken: token, isAuthenticated: true, isLoading: false };
+			} catch {
+				localStorage.removeItem('access_token');
+				localStorage.removeItem('user');
+			}
+		}
+	}
+
+	const { subscribe, set, update } = writable<AuthState>(initialData);
 
 	return {
 		subscribe,
@@ -27,6 +43,10 @@ function createAuthStore() {
 			if (browser) {
 				localStorage.setItem('access_token', token);
 				localStorage.setItem('user', JSON.stringify(user));
+				// Set cookie for server-side auth
+				const expiryDate = new Date();
+				expiryDate.setTime(expiryDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+				document.cookie = `access_token=${token}; path=/; expires=${expiryDate.toUTCString()}; SameSite=Strict`;
 			}
 			set({ user, accessToken: token, isAuthenticated: true, isLoading: false });
 		},
@@ -34,25 +54,15 @@ function createAuthStore() {
 			if (browser) {
 				localStorage.removeItem('access_token');
 				localStorage.removeItem('user');
+				// Clear cookie
+				const expiryDate = new Date();
+				expiryDate.setTime(expiryDate.getTime() - 1);
+				document.cookie = `access_token=; path=/; expires=${expiryDate.toUTCString()}; SameSite=Strict`;
 			}
 			set({ ...initialState, isLoading: false });
 		},
 		init: () => {
-			if (browser) {
-				const token = localStorage.getItem('access_token');
-				const userJson = localStorage.getItem('user');
-				if (token && userJson) {
-					try {
-						const user = JSON.parse(userJson);
-						set({ user, accessToken: token, isAuthenticated: true, isLoading: false });
-						return;
-					} catch {
-						localStorage.removeItem('access_token');
-						localStorage.removeItem('user');
-					}
-				}
-			}
-			set({ ...initialState, isLoading: false });
+			// Now a no-op as hydration is immediate
 		}
 	};
 }
