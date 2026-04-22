@@ -40,6 +40,7 @@ func main() {
 		providers.NewDatabaseProvider(),
 		providers.NewInfraProvider(),
 		providers.NewHttpProvider(),
+		providers.NewStaticProvider(), // Handles frontend embedding
 		providers.NewAuthProvider(),
 		providers.NewUserProvider(),
 		providers.NewNotificationProvider(),
