@@ -21,6 +21,7 @@ type Config struct {
 	Storage       StorageConfig       `mapstructure:"storage"`
 	Mail          MailConfig          `mapstructure:"mail"`
 	Observability ObservabilityConfig `mapstructure:"observability"`
+	Notification  NotificationConfig  `mapstructure:"notification"`
 }
 
 // AppConfig holds general application settings.
@@ -121,6 +122,20 @@ type ObservabilityConfig struct {
 	ServiceName     string  `mapstructure:"service_name"`
 }
 
+// NotificationConfig holds settings for all notification channels.
+type NotificationConfig struct {
+	// Twilio SMS
+	TwilioAccountSID string `mapstructure:"twilio_account_sid"`
+	TwilioAuthToken  string `mapstructure:"twilio_auth_token"`
+	TwilioFromNumber string `mapstructure:"twilio_from_number"`
+
+	// Slack
+	SlackWebhookURL string `mapstructure:"slack_webhook_url"`
+
+	// Firebase Cloud Messaging
+	FCMServerKey string `mapstructure:"fcm_server_key"`
+}
+
 // Load reads the application configuration from environment variables and/or config.yaml.
 // Environment variables take precedence over file values.
 // Example: APP_PORT=8080 overrides app.port in the file.
@@ -184,6 +199,12 @@ func Load() (*Config, error) {
 	v.SetDefault("observability.sampling_rate", 1.0)
 	v.SetDefault("observability.otlp_endpoint", "localhost:4317")
 	v.SetDefault("observability.service_name", "kodia-api")
+
+	v.SetDefault("notification.twilio_account_sid", "")
+	v.SetDefault("notification.twilio_auth_token", "")
+	v.SetDefault("notification.twilio_from_number", "")
+	v.SetDefault("notification.slack_webhook_url", "")
+	v.SetDefault("notification.fcm_server_key", "")
 
 	// Config file
 	v.SetConfigName("config")

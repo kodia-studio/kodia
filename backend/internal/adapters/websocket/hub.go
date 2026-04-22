@@ -3,6 +3,7 @@ package websocket
 import (
 	"encoding/json"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -17,6 +18,9 @@ type Hub struct {
 	// User-based connections: user ID -> slice of connections
 	userConns map[string][]*Connection
 
+	// Named channel registry (for broadcasting system)
+	channels map[string]*Channel
+
 	// Inbound messages from clients
 	broadcast chan *Message
 
@@ -25,6 +29,9 @@ type Hub struct {
 
 	// Unregister requests from clients
 	unregister chan *Connection
+
+	// Metrics
+	totalMessages atomic.Int64
 
 	mu sync.RWMutex
 }
@@ -38,6 +45,7 @@ func NewHub() *Hub {
 		clients:    make(map[*Connection]bool),
 		rooms:      make(map[string]map[*Connection]bool),
 		userConns:  make(map[string][]*Connection),
+		channels:   make(map[string]*Channel),
 	}
 }
 
@@ -98,6 +106,7 @@ func (h *Hub) Run() {
 			h.mu.Unlock()
 
 		case message := <-h.broadcast:
+			h.totalMessages.Add(1)
 			h.mu.RLock()
 			for client := range h.clients {
 				select {
@@ -220,4 +229,88 @@ func (h *Hub) SendJSON(data interface{}) (*Message, error) {
 
 	h.broadcast <- msg
 	return msg, nil
+}
+
+// GetOnlineUsers returns the list of user IDs that have at least one active connection.
+func (h *Hub) GetOnlineUsers() []string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	users := make([]string, 0, len(h.userConns))
+	for uid := range h.userConns {
+		users = append(users, uid)
+	}
+	return users
+}
+
+// GetRoomPresence returns the user IDs of users connected to a room.
+func (h *Hub) GetRoomPresence(roomID string) []string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	clients, ok := h.rooms[roomID]
+	if !ok {
+		return nil
+	}
+	seen := make(map[string]bool)
+	members := make([]string, 0)
+	for c := range clients {
+		if c.UserID != "" && !seen[c.UserID] {
+			seen[c.UserID] = true
+			members = append(members, c.UserID)
+		}
+	}
+	return members
+}
+
+// GetOrCreateChannel returns an existing channel or creates a new one.
+func (h *Hub) GetOrCreateChannel(name string) *Channel {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if ch, ok := h.channels[name]; ok {
+		return ch
+	}
+	ch := NewChannel(name, ParseChannelType(name))
+	h.channels[name] = ch
+	return ch
+}
+
+// BroadcastToChannel delivers a message to a named channel.
+func (h *Hub) BroadcastToChannel(channelName string, msg *Message) {
+	h.mu.RLock()
+	ch, ok := h.channels[channelName]
+	h.mu.RUnlock()
+	if !ok {
+		return
+	}
+	msg.Channel = channelName
+	msg.Timestamp = time.Now().Unix()
+	ch.Broadcast(msg)
+}
+
+// ActiveRooms returns a list of room names that currently have connections.
+func (h *Hub) ActiveRooms() []string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	rooms := make([]string, 0, len(h.rooms))
+	for r := range h.rooms {
+		rooms = append(rooms, r)
+	}
+	return rooms
+}
+
+// TotalMessages returns the total number of messages broadcast since startup.
+func (h *Hub) TotalMessages() int64 {
+	return h.totalMessages.Load()
+}
+
+// Metrics returns a snapshot of Hub metrics.
+func (h *Hub) Metrics() map[string]interface{} {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return map[string]interface{}{
+		"total_clients":   len(h.clients),
+		"total_users":     len(h.userConns),
+		"total_rooms":     len(h.rooms),
+		"total_channels":  len(h.channels),
+		"total_messages":  h.totalMessages.Load(),
+	}
 }
