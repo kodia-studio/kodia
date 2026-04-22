@@ -23,11 +23,22 @@ type SoftDeleteModel struct {
 }
 
 // BeforeSave generates a UUID for the ID field if it's empty.
-// This hook is called before every save operation (Create, Update).
 func (m *BaseModel) BeforeSave(tx *gorm.DB) error {
 	if m.ID == "" {
 		m.ID = uuid.New().String()
 	}
+	return nil
+}
+
+// AfterUpdate is a placeholder for post-update logic.
+func (m *BaseModel) AfterUpdate(tx *gorm.DB) error {
+	// Custom post-update logic here
+	return nil
+}
+
+// BeforeDelete is a placeholder for pre-deletion logic.
+func (m *BaseModel) BeforeDelete(tx *gorm.DB) error {
+	// Custom pre-deletion logic here (e.g. cascading deletes)
 	return nil
 }
 

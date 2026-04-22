@@ -10,6 +10,7 @@ import (
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/internal/core/ports"
+	"github.com/kodia-studio/kodia/pkg/binder"
 	"github.com/kodia-studio/kodia/pkg/response"
 	"github.com/kodia-studio/kodia/pkg/validation"
 	"go.uber.org/zap"
@@ -41,10 +42,10 @@ func NewAuthHandler(authService ports.AuthService, validate *validation.Validato
 // @Success      201 {object} response.Response{data=dto.AuthResponse}
 // @Failure      400 {object} response.Response
 // @Failure      409 {object} response.Response
-// @Router       /api/auth/register [post]
+// @Router       /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
-	if !validation.BindAndValidate(c, h.validate, &req) {
+	if err := binder.Bind(c, &req); err != nil {
 		return
 	}
 
@@ -71,10 +72,10 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Success      200 {object} response.Response{data=dto.AuthResponse}
 // @Failure      400 {object} response.Response
 // @Failure      401 {object} response.Response
-// @Router       /api/auth/login [post]
+// @Router       /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
-	if !validation.BindAndValidate(c, h.validate, &req) {
+	if err := binder.Bind(c, &req); err != nil {
 		return
 	}
 

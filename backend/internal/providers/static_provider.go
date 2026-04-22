@@ -1,19 +1,15 @@
 package providers
 
 import (
-	"embed"
 	"io/fs"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kodia-studio/kodia/internal/infrastructure/static"
 	"github.com/kodia-studio/kodia/pkg/kodia"
 )
 
-// distFS is the embedded file system containing the frontend build.
-// Note: This matches the path used in 'kodia build'
-//go:embed all:infrastructure/static/dist/*
-var distFS embed.FS
-
+// StaticProvider manages serving embedded frontend assets.
 type StaticProvider struct{}
 
 func NewStaticProvider() *StaticProvider {
@@ -30,7 +26,7 @@ func (p *StaticProvider) Register(app *kodia.App) error {
 		app.Log.Info("Frontend embedding enabled (Production Mode)")
 		
 		// Create subfilesystem for the dist folder
-		sub, err := fs.Sub(distFS, "infrastructure/static/dist")
+		sub, err := fs.Sub(static.DistFS, "dist")
 		if err != nil {
 			return err
 		}

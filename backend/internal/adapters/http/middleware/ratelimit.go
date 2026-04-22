@@ -36,11 +36,14 @@ func NewRateLimiter(client *redis.Client, maxRequests int64, windowSecs int64, l
 // Middleware returns a Gin middleware function for rate limiting.
 func (rl *RateLimiter) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get client IP address
-		ip := getClientIP(c)
+		// Identify the requester: User ID (if authenticated) or IP address
+		key := getClientIP(c)
+		if userID, exists := c.Get("user_id"); exists {
+			key = fmt.Sprintf("user:%v", userID)
+		}
 
 		// Check rate limit
-		allowed, remaining, retryAfter := rl.checkRateLimit(c.Request.Context(), ip)
+		allowed, remaining, retryAfter := rl.checkRateLimit(c.Request.Context(), key)
 
 		// Set rate limit headers
 		c.Header("X-RateLimit-Limit", strconv.FormatInt(rl.maxRequests, 10))
@@ -52,7 +55,7 @@ func (rl *RateLimiter) Middleware() gin.HandlerFunc {
 		if !allowed {
 			rl.log.Warn(
 				"Rate limit exceeded",
-				zap.String("ip", ip),
+				zap.String("key", key),
 				zap.Int64("limit", rl.maxRequests),
 				zap.Int64("window_secs", rl.windowSecs),
 				zap.Int64("retry_after", retryAfter),

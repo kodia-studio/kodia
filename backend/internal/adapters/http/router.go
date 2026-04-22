@@ -14,6 +14,9 @@ import (
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	"github.com/kodia-studio/kodia/pkg/observability"
 	"github.com/redis/go-redis/v9"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "github.com/kodia-studio/kodia/docs" // Swagger docs
 	"go.uber.org/zap"
 )
 
@@ -114,84 +117,92 @@ func (r *Router) Setup() *gin.Engine {
 	// API grouped routes
 	api := engine.Group("/api")
 	{
-		// Health check (Enhanced)
-		api.GET("/health", func(c *gin.Context) {
-			stats, err := health.Gather(c.Request.Context())
-			if err != nil {
-				c.JSON(500, gin.H{"success": false, "error": err.Error()})
-				return
-			}
-			c.JSON(200, gin.H{
-				"success": true,
-				"data":    stats,
-			})
-		})
-
-		// Auth routes with rate limiting
-		auth := api.Group("/auth")
-		{
-			// Apply rate limiting middleware to auth endpoints if Redis is available
-			if r.redisClient != nil {
-				authLimiter := middleware.AuthEndpointRateLimiter(r.redisClient, r.log)
-				auth.POST("/register", authLimiter.Middleware(), r.authHandler.Register)
-				auth.POST("/login", authLimiter.Middleware(), r.authHandler.Login)
-				auth.POST("/refresh", authLimiter.Middleware(), r.authHandler.RefreshToken)
-			} else {
-				// No rate limiting if Redis is not available
-				r.log.Warn("Redis client not available, rate limiting disabled for auth endpoints")
-				auth.POST("/register", r.authHandler.Register)
-				auth.POST("/login", r.authHandler.Login)
-				auth.POST("/refresh", r.authHandler.RefreshToken)
-			}
-			auth.POST("/logout", r.jwtManagerAuthMiddleware(), r.authHandler.Logout)
-
-			// Protected auth routes
-			protectedAuth := auth.Group("")
-			protectedAuth.Use(r.jwtManagerAuthMiddleware())
-			{
-				protectedAuth.POST("/logout-all", r.authHandler.LogoutAll)
-				protectedAuth.GET("/me", r.authHandler.Me)
-			}
-		}
-
-		// User routes
-		users := api.Group("/users")
-		users.Use(r.jwtManagerAuthMiddleware())
-		{
-			users.GET("/me", r.userHandler.GetMe)
-			users.POST("/me/change-password", r.userHandler.ChangePassword)
-
-			// Admin only routes
-			adminUsers := users.Group("")
-			adminUsers.Use(middleware.RequireRole("admin"))
-			{
-				adminUsers.GET("", r.userHandler.GetAll)
-				adminUsers.GET("/:id", r.userHandler.GetByID)
-				adminUsers.PATCH("/:id", r.userHandler.Update)
-				adminUsers.DELETE("/:id", r.userHandler.Delete)
-			}
-		}
-
-		// WebSocket routes
-		ws := api.Group("ws")
-		{
-			ws.GET("", r.wsHandler.ServeWS)
-			ws.GET("/room/:room", r.wsHandler.ServeRoom)
-			ws.GET("/status", r.wsHandler.GetStatus)
-		}
-
-		// Pulse (Monitoring) routes
-		pulse := api.Group("/pulse")
-		pulse.Use(r.jwtManagerAuthMiddleware())
-		pulse.Use(middleware.RequireRole("admin"))
-		{
-			pulse.GET("/stream", r.pulseHandler.Stream)
-		}
-
-		// GraphQL routes
-		api.POST("/query", middleware.GraphQLContextMiddleware(), r.graphqlHandler.QueryHandler())
+		// API Documentation (Swagger) - Development only
 		if !r.cfg.IsProduction() {
-			api.GET("/playground", r.graphqlHandler.PlaygroundHandler())
+			api.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+		}
+
+		v1 := api.Group("/v1")
+		{
+			// Health check (Enhanced)
+			v1.GET("/health", func(c *gin.Context) {
+				stats, err := health.Gather(c.Request.Context())
+				if err != nil {
+					c.JSON(500, gin.H{"success": false, "error": err.Error()})
+					return
+				}
+				c.JSON(200, gin.H{
+					"success": true,
+					"data":    stats,
+				})
+			})
+
+			// Auth routes with rate limiting
+			auth := v1.Group("/auth")
+			{
+				// Apply rate limiting middleware to auth endpoints if Redis is available
+				if r.redisClient != nil {
+					authLimiter := middleware.AuthEndpointRateLimiter(r.redisClient, r.log)
+					auth.POST("/register", authLimiter.Middleware(), r.authHandler.Register)
+					auth.POST("/login", authLimiter.Middleware(), r.authHandler.Login)
+					auth.POST("/refresh", authLimiter.Middleware(), r.authHandler.RefreshToken)
+				} else {
+					// No rate limiting if Redis is not available
+					r.log.Warn("Redis client not available, rate limiting disabled for auth endpoints")
+					auth.POST("/register", r.authHandler.Register)
+					auth.POST("/login", r.authHandler.Login)
+					auth.POST("/refresh", r.authHandler.RefreshToken)
+				}
+				auth.POST("/logout", r.jwtManagerAuthMiddleware(), r.authHandler.Logout)
+
+				// Protected auth routes
+				protectedAuth := auth.Group("")
+				protectedAuth.Use(r.jwtManagerAuthMiddleware())
+				{
+					protectedAuth.POST("/logout-all", r.authHandler.LogoutAll)
+					protectedAuth.GET("/me", r.authHandler.Me)
+				}
+			}
+
+			// User routes
+			users := v1.Group("/users")
+			users.Use(r.jwtManagerAuthMiddleware())
+			{
+				users.GET("/me", r.userHandler.GetMe)
+				users.POST("/me/change-password", r.userHandler.ChangePassword)
+
+				// Admin only routes
+				adminUsers := users.Group("")
+				adminUsers.Use(middleware.RequireRole("admin"))
+				{
+					adminUsers.GET("", r.userHandler.GetAll)
+					adminUsers.GET("/:id", r.userHandler.GetByID)
+					adminUsers.PATCH("/:id", r.userHandler.Update)
+					adminUsers.DELETE("/:id", r.userHandler.Delete)
+				}
+			}
+
+			// WebSocket routes
+			ws := v1.Group("ws")
+			{
+				ws.GET("", r.wsHandler.ServeWS)
+				ws.GET("/room/:room", r.wsHandler.ServeRoom)
+				ws.GET("/status", r.wsHandler.GetStatus)
+			}
+
+			// Pulse (Monitoring) routes
+			pulse := v1.Group("/pulse")
+			pulse.Use(r.jwtManagerAuthMiddleware())
+			pulse.Use(middleware.RequireRole("admin"))
+			{
+				pulse.GET("/stream", r.pulseHandler.Stream)
+			}
+
+			// GraphQL routes
+			v1.POST("/query", middleware.GraphQLContextMiddleware(), r.graphqlHandler.QueryHandler())
+			if !r.cfg.IsProduction() {
+				v1.GET("/playground", r.graphqlHandler.PlaygroundHandler())
+			}
 		}
 	}
 
