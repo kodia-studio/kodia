@@ -6,24 +6,24 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/kodia-studio/kodia/internal/adapters/http/dto"
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/pkg/response"
+	"github.com/kodia-studio/kodia/pkg/validation"
 	"go.uber.org/zap"
 )
 
 // AuthHandler handles all authentication-related HTTP requests.
 type AuthHandler struct {
 	authService ports.AuthService
-	validate    *validator.Validate
+	validate    *validation.Validator
 	log         *zap.Logger
 }
 
 // NewAuthHandler creates a new AuthHandler.
-func NewAuthHandler(authService ports.AuthService, validate *validator.Validate, log *zap.Logger) *AuthHandler {
+func NewAuthHandler(authService ports.AuthService, validate *validation.Validator, log *zap.Logger) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		validate:    validate,
@@ -44,13 +44,7 @@ func NewAuthHandler(authService ports.AuthService, validate *validator.Validate,
 // @Router       /api/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request body", nil)
-		return
-	}
-
-	if err := h.validate.Struct(req); err != nil {
-		response.BadRequest(c, "Validation failed", formatValidationErrors(err))
+	if !validation.BindAndValidate(c, h.validate, &req) {
 		return
 	}
 
@@ -80,13 +74,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Router       /api/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request body", nil)
-		return
-	}
-
-	if err := h.validate.Struct(req); err != nil {
-		response.BadRequest(c, "Validation failed", formatValidationErrors(err))
+	if !validation.BindAndValidate(c, h.validate, &req) {
 		return
 	}
 
@@ -209,8 +197,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 // ResetPassword handles resetting a password using a token.
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req dto.ResetPasswordRequest
-	if err := h.validate.Struct(req); err != nil {
-		response.BadRequest(c, "Validation failed", formatValidationErrors(err))
+	if !validation.BindAndValidate(c, h.validate, &req) {
 		return
 	}
 
@@ -256,8 +243,7 @@ func (h *AuthHandler) Enable2FA(c *gin.Context) {
 // Verify2FA verifies the initial TOTP setup and returns recovery codes.
 func (h *AuthHandler) Verify2FA(c *gin.Context) {
 	var req dto.Verify2FARequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request body", nil)
+	if !validation.BindAndValidate(c, h.validate, &req) {
 		return
 	}
 
@@ -285,8 +271,7 @@ func (h *AuthHandler) Disable2FA(c *gin.Context) {
 // LoginVerify2FA handles TOTP verification during login using a temporary token.
 func (h *AuthHandler) LoginVerify2FA(c *gin.Context) {
 	var req dto.LoginVerify2FARequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request body", nil)
+	if !validation.BindAndValidate(c, h.validate, &req) {
 		return
 	}
 
@@ -318,30 +303,3 @@ func (h *AuthHandler) handleAuthError(c *gin.Context, err error) {
 	}
 }
 
-// formatValidationErrors converts go-playground/validator errors to a user-friendly map.
-func formatValidationErrors(err error) map[string][]string {
-	var ve validator.ValidationErrors
-	if !errors.As(err, &ve) {
-		return map[string][]string{"error": {err.Error()}}
-	}
-
-	errs := make(map[string][]string)
-	for _, fe := range ve {
-		field := fe.Field()
-		switch fe.Tag() {
-		case "required":
-			errs[field] = append(errs[field], field+" is required")
-		case "email":
-			errs[field] = append(errs[field], field+" must be a valid email address")
-		case "min":
-			errs[field] = append(errs[field], field+" is too short (min "+fe.Param()+" chars)")
-		case "max":
-			errs[field] = append(errs[field], field+" is too long (max "+fe.Param()+" chars)")
-		case "url":
-			errs[field] = append(errs[field], field+" must be a valid URL")
-		default:
-			errs[field] = append(errs[field], field+" is invalid")
-		}
-	}
-	return errs
-}

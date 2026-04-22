@@ -1,13 +1,13 @@
 package providers
 
 import (
-	"github.com/go-playground/validator/v10"
 	"github.com/kodia-studio/kodia/internal/adapters/http/handlers"
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/adapters/repository/postgres"
 	"github.com/kodia-studio/kodia/internal/core/services"
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	"github.com/kodia-studio/kodia/pkg/kodia"
+	"github.com/kodia-studio/kodia/pkg/validation"
 	"go.uber.org/zap"
 )
 
@@ -36,7 +36,7 @@ func (p *UserProvider) Register(app *kodia.App) error {
 	app.Set("user_service", userService)
 
 	// 3. Handlers
-	validate := validator.New()
+	validate := validation.New()
 	userHandler := handlers.NewUserHandler(userService, validate, app.Log)
 	app.Set("user_handler", userHandler)
 

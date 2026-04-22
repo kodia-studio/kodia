@@ -167,3 +167,23 @@ type ChangePasswordRequest struct {
 type PaginatedUsersResponse struct {
 	Users []UserResponse `json:"users"`
 }
+
+// --- Notification DTOs ---
+
+// NotificationResponse is the response for a notification.
+// @swagger:model
+type NotificationResponse struct {
+	ID        string                 `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Type      string                 `json:"type" example:"info"`
+	Title     string                 `json:"title" example:"Welcome!"`
+	Message   string                 `json:"message" example:"Welcome to Kodia Framework"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+	IsRead    bool                   `json:"is_read" example:"false"`
+	CreatedAt string                 `json:"created_at" example:"2024-04-19T10:00:00Z"`
+}
+
+// UnreadCountResponse is the response for unread notification count.
+// @swagger:model
+type UnreadCountResponse struct {
+	Count int64 `json:"count" example:"5"`
+}

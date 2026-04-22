@@ -5,22 +5,22 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/pkg/pagination"
 	"github.com/kodia-studio/kodia/pkg/response"
+	"github.com/kodia-studio/kodia/pkg/validation"
 	"go.uber.org/zap"
 )
 
 // ProductHandler handles HTTP requests for Product.
 type ProductHandler struct {
 	service  ports.ProductService
-	validate *validator.Validate
+	validate *validation.Validator
 	log      *zap.Logger
 }
 
-func NewProductHandler(service ports.ProductService, validate *validator.Validate, log *zap.Logger) *ProductHandler {
+func NewProductHandler(service ports.ProductService, validate *validation.Validator, log *zap.Logger) *ProductHandler {
 	return &ProductHandler{
 		service:  service,
 		validate: validate,

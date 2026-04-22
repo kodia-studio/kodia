@@ -113,3 +113,34 @@ type ChangePasswordInput struct {
 	CurrentPassword string
 	NewPassword     string
 }
+
+// NotificationService defines notification business operations.
+type NotificationService interface {
+	// Send creates, persists, and pushes a notification to the user.
+	Send(ctx context.Context, input SendNotificationInput) (*domain.Notification, error)
+
+	// GetAll returns paginated notifications for a user.
+	GetAll(ctx context.Context, userID string, params *pagination.Params) ([]*domain.Notification, int64, error)
+
+	// MarkAsRead marks a single notification as read.
+	MarkAsRead(ctx context.Context, id string, userID string) error
+
+	// MarkAllAsRead marks all notifications for a user as read.
+	MarkAllAsRead(ctx context.Context, userID string) error
+
+	// Delete removes a notification.
+	Delete(ctx context.Context, id string, userID string) error
+
+	// CountUnread returns the number of unread notifications.
+	CountUnread(ctx context.Context, userID string) (int64, error)
+}
+
+// SendNotificationInput is the input for sending a notification.
+type SendNotificationInput struct {
+	UserID    string
+	Type      domain.NotificationType
+	Title     string
+	Message   string
+	Data      map[string]interface{}
+	SendEmail bool
+}

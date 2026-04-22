@@ -76,3 +76,27 @@ type ProductRepository interface {
 	Delete(ctx context.Context, id string) error
 }
 
+// NotificationRepository defines all database operations for the Notification entity.
+type NotificationRepository interface {
+	// Create persists a new notification to the database.
+	Create(ctx context.Context, n *domain.Notification) error
+
+	// FindByID retrieves a notification by its unique ID.
+	FindByID(ctx context.Context, id string) (*domain.Notification, error)
+
+	// FindByUserID retrieves paginated notifications for a specific user.
+	FindByUserID(ctx context.Context, userID string, params *pagination.Params) ([]*domain.Notification, int64, error)
+
+	// MarkAsRead marks a single notification as read.
+	MarkAsRead(ctx context.Context, id string, userID string) error
+
+	// MarkAllAsRead marks all notifications for a user as read.
+	MarkAllAsRead(ctx context.Context, userID string) error
+
+	// Delete removes a notification (ownership checked via userID).
+	Delete(ctx context.Context, id string, userID string) error
+
+	// CountUnread returns the number of unread notifications for a user.
+	CountUnread(ctx context.Context, userID string) (int64, error)
+}
+

@@ -4,24 +4,24 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/kodia-studio/kodia/internal/adapters/http/dto"
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/pkg/pagination"
 	"github.com/kodia-studio/kodia/pkg/response"
+	"github.com/kodia-studio/kodia/pkg/validation"
 	"go.uber.org/zap"
 )
 
 // UserHandler handles user management HTTP requests.
 type UserHandler struct {
 	userService ports.UserService
-	validate    *validator.Validate
+	validate    *validation.Validator
 	log         *zap.Logger
 }
 
-func NewUserHandler(userService ports.UserService, validate *validator.Validate, log *zap.Logger) *UserHandler {
+func NewUserHandler(userService ports.UserService, validate *validation.Validator, log *zap.Logger) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 		validate:    validate,
@@ -109,13 +109,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 	}
 
 	var req dto.UpdateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request body", nil)
-		return
-	}
-
-	if err := h.validate.Struct(req); err != nil {
-		response.BadRequest(c, "Validation failed", formatValidationErrors(err))
+	if !validation.BindAndValidate(c, h.validate, &req) {
 		return
 	}
 
@@ -164,13 +158,7 @@ func (h *UserHandler) Delete(c *gin.Context) {
 // @Router       /api/users/me/change-password [post]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
 	var req dto.ChangePasswordRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request body", nil)
-		return
-	}
-
-	if err := h.validate.Struct(req); err != nil {
-		response.BadRequest(c, "Validation failed", formatValidationErrors(err))
+	if !validation.BindAndValidate(c, h.validate, &req) {
 		return
 	}
 

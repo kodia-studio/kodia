@@ -42,6 +42,7 @@ func main() {
 		providers.NewHttpProvider(),
 		providers.NewAuthProvider(),
 		providers.NewUserProvider(),
+		providers.NewNotificationProvider(),
 		providers.NewWebSocketProvider(),
 		providers.NewGraphQLProvider(),
 		providers.NewPulseProvider(), // Broadcaster for real-time monitoring

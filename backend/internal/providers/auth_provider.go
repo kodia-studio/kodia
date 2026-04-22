@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"github.com/go-playground/validator/v10"
 	"github.com/kodia-studio/kodia/internal/adapters/http/handlers"
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/adapters/repository/postgres"
@@ -9,6 +8,7 @@ import (
 	"github.com/kodia-studio/kodia/internal/core/services"
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	"github.com/kodia-studio/kodia/pkg/kodia"
+	"github.com/kodia-studio/kodia/pkg/validation"
 )
 
 type AuthProvider struct{}
@@ -53,7 +53,7 @@ func (p *AuthProvider) Register(app *kodia.App) error {
 	app.Set("auth_service", authService)
 
 	// 4. Handlers
-	validate := validator.New()
+	validate := validation.New()
 	authHandler := handlers.NewAuthHandler(authService, validate, app.Log)
 	app.Set("auth_handler", authHandler)
 

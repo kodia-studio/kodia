@@ -71,3 +71,26 @@ func (rt *RefreshToken) IsExpired() bool {
 func (rt *RefreshToken) IsValid() bool {
 	return !rt.IsRevoked && !rt.IsExpired()
 }
+
+// NotificationType represents the type of notification.
+type NotificationType string
+
+const (
+	NotificationTypeInfo    NotificationType = "info"
+	NotificationTypeSuccess NotificationType = "success"
+	NotificationTypeWarning NotificationType = "warning"
+	NotificationTypeError   NotificationType = "error"
+)
+
+// Notification is the core notification entity.
+type Notification struct {
+	ID        string
+	UserID    string
+	Type      NotificationType
+	Title     string
+	Message   string
+	Data      map[string]interface{}
+	IsRead    bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}

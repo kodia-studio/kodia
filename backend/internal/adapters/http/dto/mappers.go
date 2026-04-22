@@ -51,3 +51,28 @@ func MapUsersToResponse(users []*domain.User) []UserResponse {
 	}
 	return result
 }
+
+// MapNotificationToResponse converts a domain.Notification to NotificationResponse DTO.
+func MapNotificationToResponse(n *domain.Notification) NotificationResponse {
+	if n == nil {
+		return NotificationResponse{}
+	}
+	return NotificationResponse{
+		ID:        n.ID,
+		Type:      string(n.Type),
+		Title:     n.Title,
+		Message:   n.Message,
+		Data:      n.Data,
+		IsRead:    n.IsRead,
+		CreatedAt: n.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+// MapNotificationsToResponse converts a slice of domain.Notification to NotificationResponse DTOs.
+func MapNotificationsToResponse(notifications []*domain.Notification) []NotificationResponse {
+	result := make([]NotificationResponse, len(notifications))
+	for i, n := range notifications {
+		result[i] = MapNotificationToResponse(n)
+	}
+	return result
+}
