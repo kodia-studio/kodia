@@ -17,6 +17,10 @@ type QueueProvider interface {
 	Enqueue(ctx context.Context, task Task, opts ...interface{}) error
 	// EnqueueAt schedules a task to be executed at a specific time.
 	EnqueueAt(ctx context.Context, task Task, at time.Time, opts ...interface{}) error
+	// EnqueueChain enqueues a sequence of tasks to be executed one after another.
+	EnqueueChain(ctx context.Context, tasks ...Task) error
+	// EnqueueBatch enqueues a group of tasks to be processed as a single unit.
+	EnqueueBatch(ctx context.Context, tasks []Task) error
 	// Close closes the queue provider connection.
 	Close() error
 }

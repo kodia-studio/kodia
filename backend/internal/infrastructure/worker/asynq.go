@@ -50,6 +50,27 @@ func (p *AsynqProvider) EnqueueAt(ctx context.Context, task ports.Task, at time.
 	return nil
 }
 
+func (p *AsynqProvider) EnqueueChain(ctx context.Context, tasks ...ports.Task) error {
+	// Fallback implementation: Enqueue tasks sequentially.
+	// In a world-class framework, we eventually upgrade to native Chaining.
+	for _, task := range tasks {
+		if err := p.Enqueue(ctx, task); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *AsynqProvider) EnqueueBatch(ctx context.Context, tasks []ports.Task) error {
+	// Fallback implementation: Enqueue tasks sequentially.
+	for _, task := range tasks {
+		if err := p.Enqueue(ctx, task); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (p *AsynqProvider) Close() error {
 	return p.client.Close()
 }

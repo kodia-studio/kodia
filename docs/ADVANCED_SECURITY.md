@@ -124,3 +124,34 @@ evaluator.AddPolicy(policy.Policy{
     },
 })
 ```
+
+---
+
+## 9. Social Authentication (OAuth2)
+
+Kodia supports world-class social login providers out of the box. This allows users to register and login using their existing accounts from trusted platforms.
+
+- **Providers**: Google, GitHub, and **Discord**.
+- **Security**: State-based CSRF protection and automatic user account linking.
+- **Implementation**: Easily add new providers by implementing the `AuthProvider` port.
+
+---
+
+## 10. Passkeys (WebAuthn)
+
+Stay ahead of the curve with **Passkeys**. Kodia supports WebAuthn, allowing users to login using biometrics (FaceID, TouchID) or security keys without needing a password.
+
+- **Phishing Resistant**: Cryptographically tied to your specific domain.
+- **Seamless UX**: One-touch login for mobile and desktop users.
+- **Enterprise Ready**: Full support for multi-device credential synchronization.
+
+---
+
+## 11. Scoped API Keys
+
+For programmatic access, Kodia provides a robust API Key management system with granular scoping.
+
+- **Granular Scopes**: Define exactly what an API Key can do (e.g., `posts:read`, `users:write`).
+- **Rotation**: Easily generate and revoke keys from the administrative dashboard.
+- **Audit Trail**: Every request made with an API Key is tied back to the owner for full accountability.
+

@@ -94,17 +94,33 @@ Write reliable, tested code:
 Build secure applications:
 
 - **[Security Best Practices](SECURITY.md)** - General security guidelines
-- **[Advanced Security Features](ADVANCED_SECURITY.md)** - 2FA, ABAC, Audit Logs, and more.
-  - Authentication (JWT)
+- **[Advanced Security Features](ADVANCED_SECURITY.md)** - 2FA, ABAC, Audit Logs, **Social Auth, Passkeys, and API Keys**.
+  - Authentication (JWT & Sessions)
+  - Social Login (OAuth2)
+  - Passkeys (WebAuthn)
   - Authorization (RBAC/ABAC)
   - Input validation & sanitization
   - SQL injection prevention
   - CORS & CSRF protection
   - Rate limiting
+  - Scoped API Keys
   - Secrets management
   - Security headers
   - Audit logging
   - Production checklist
+
+---
+
+## 🏗️ Advanced Features
+
+Scale your application with world-class background processing:
+
+- **[Background Workers](WORKERS.md)** - Task Queues & Scheduling
+  - **Scheduled Jobs** (Fluent API)
+  - **Job Chaining**
+  - **Job Batching**
+  - **Queue Monitoring Dashboard**
+  - Audit Logging
 
 ---
 
