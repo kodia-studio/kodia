@@ -93,6 +93,18 @@ func (b *Blueprint) Boolean(name string) *Column {
 	return &b.Columns[len(b.Columns)-1]
 }
 
+func (b *Blueprint) Binary(name string) *Column {
+	c := Column{Name: name, Type: "BYTEA"} // Postgres BYTEA for binary
+	b.Columns = append(b.Columns, c)
+	return &b.Columns[len(b.Columns)-1]
+}
+
+func (b *Blueprint) Timestamp(name string) *Column {
+	c := Column{Name: name, Type: "TIMESTAMP WITH TIME ZONE"}
+	b.Columns = append(b.Columns, c)
+	return &b.Columns[len(b.Columns)-1]
+}
+
 func (b *Blueprint) Timestamps() {
 	b.Columns = append(b.Columns, Column{Name: "created_at", Type: "TIMESTAMP WITH TIME ZONE", Nullable: false})
 	b.Columns = append(b.Columns, Column{Name: "updated_at", Type: "TIMESTAMP WITH TIME ZONE", Nullable: false})
@@ -109,6 +121,11 @@ func (c *Column) NotNull() *Column {
 
 func (c *Column) Unique() *Column {
 	c.IsUnique = true
+	return c
+}
+
+func (c *Column) Index() *Column {
+	// For now, we'll mark it but in a real implementation we'd generate a separate CREATE INDEX SQL.
 	return c
 }
 

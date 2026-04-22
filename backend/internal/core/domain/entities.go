@@ -52,6 +52,53 @@ func (u *User) IsAdmin() bool {
 	return u.Role == RoleAdmin
 }
 
+// Can checks if the user has the specified permission.
+// Admins have all permissions automatically.
+func (u *User) Can(permission string) bool {
+	if u.IsAdmin() {
+		return true
+	}
+	for _, p := range u.Permissions {
+		if p == permission || p == "*" {
+			return true
+		}
+	}
+	return false
+}
+
+// ApiKey represents a programmatic access key.
+type ApiKey struct {
+	ID        string
+	UserID    string
+	Name      string
+	Key       string // hashed
+	Scopes    []string
+	LastUsedAt *time.Time
+	ExpiresAt *time.Time
+	CreatedAt time.Time
+}
+
+// WebAuthnCredential represents a Passkey/WebAuthn credential.
+type WebAuthnCredential struct {
+	ID              []byte
+	UserID          string
+	PublicKey       []byte
+	AttestationType string
+	Transport       []string
+	SignCount       uint32
+	CreatedAt       time.Time
+}
+
+// Session represents a stateful user session.
+type Session struct {
+	ID        string
+	UserID    string
+	UserAgent string
+	IPAddress string
+	ExpiresAt time.Time
+	CreatedAt time.Time
+}
+
 // RefreshToken represents a persisted refresh token.
 type RefreshToken struct {
 	ID        string

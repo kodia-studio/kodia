@@ -161,3 +161,63 @@ func (p *GitHubProvider) GetUser(ctx context.Context, token *oauth2.Token) (*Use
 
 	return user, nil
 }
+
+// DiscordProvider handles Discord OAuth2.
+type DiscordProvider struct {
+	config *oauth2.Config
+}
+
+func NewDiscordProvider(cfg Config) *DiscordProvider {
+	return &DiscordProvider{
+		config: &oauth2.Config{
+			ClientID:     cfg.ClientID,
+			ClientSecret: cfg.ClientSecret,
+			RedirectURL:  cfg.RedirectURL,
+			Scopes:       cfg.Scopes,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  "https://discord.com/api/oauth2/authorize",
+				TokenURL: "https://discord.com/api/oauth2/token",
+			},
+		},
+	}
+}
+
+func (p *DiscordProvider) GetAuthURL(state string) string {
+	return p.config.AuthCodeURL(state)
+}
+
+func (p *DiscordProvider) Exchange(ctx context.Context, code string) (*oauth2.Token, error) {
+	return p.config.Exchange(ctx, code)
+}
+
+func (p *DiscordProvider) GetUser(ctx context.Context, token *oauth2.Token) (*User, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://discord.com/api/users/@me", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var data map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return nil, err
+	}
+
+	avatarURL := ""
+	if data["avatar"] != nil {
+		avatarURL = fmt.Sprintf("https://cdn.discordapp.com/avatars/%v/%v.png", data["id"], data["avatar"])
+	}
+
+	return &User{
+		ID:        fmt.Sprintf("%v", data["id"]),
+		Email:     fmt.Sprintf("%v", data["email"]),
+		Name:      fmt.Sprintf("%v", data["username"]),
+		AvatarURL: avatarURL,
+		RawData:   data,
+	}, nil
+}

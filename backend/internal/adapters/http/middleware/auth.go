@@ -98,9 +98,16 @@ func RequirePermission(permissions ...string) gin.HandlerFunc {
 			return
 		}
 
+		// Admins have all permissions
+		userRole, _ := c.Get(userRoleKey)
+		if r, ok := userRole.(string); ok && strings.EqualFold(r, "admin") {
+			c.Next()
+			return
+		}
+
 		for _, required := range permissions {
 			for _, userPerm := range perms {
-				if strings.EqualFold(required, userPerm) {
+				if userPerm == "*" || strings.EqualFold(required, userPerm) {
 					c.Next()
 					return
 				}
