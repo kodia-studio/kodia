@@ -25,6 +25,9 @@ type App struct {
 	
 	// Map to store services/dependencies that can be shared across providers
 	container map[string]interface{}
+
+	// List of tasks to execute during graceful shutdown
+	cleanupTasks []func(context.Context) error
 }
 
 func NewApp(cfg *config.Config, log *zap.Logger) *App {
@@ -78,6 +81,12 @@ func (a *App) MustGet(key string) interface{} {
 	return val
 }
 
+// RegisterCleanupTask adds a function to be called during graceful shutdown.
+func (a *App) RegisterCleanupTask(task func(context.Context) error) {
+	a.cleanupTasks = append(a.cleanupTasks, task)
+}
+
+
 // Run starts the HTTP server with graceful shutdown.
 func (a *App) Run() error {
 	if a.Router == nil {
@@ -104,11 +113,19 @@ func (a *App) Run() error {
 
 	a.Log.Info("Shutting down application...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	// 1. Shutdown HTTP Server first to stop receiving new requests
 	if err := server.Shutdown(ctx); err != nil {
-		return fmt.Errorf("server forced to shutdown: %w", err)
+		a.Log.Error("Server forced to shutdown", zap.Error(err))
+	}
+
+	// 2. Execute all registered cleanup tasks (DB, Redis, Tracing, etc.)
+	for i := len(a.cleanupTasks) - 1; i >= 0; i-- {
+		if err := a.cleanupTasks[i](ctx); err != nil {
+			a.Log.Error("Cleanup task failed", zap.Error(err))
+		}
 	}
 
 	a.Log.Info("Application stopped gracefully")

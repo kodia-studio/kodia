@@ -39,6 +39,7 @@ func main() {
 	err = app.RegisterProviders(
 		providers.NewDatabaseProvider(),
 		providers.NewInfraProvider(),
+		providers.NewObservabilityProvider(), // New provider
 		providers.NewHttpProvider(),
 		providers.NewStaticProvider(), // Handles frontend embedding
 		providers.NewAuthProvider(),

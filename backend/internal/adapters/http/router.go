@@ -10,7 +10,6 @@ import (
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/adapters/websocket"
 	"github.com/kodia-studio/kodia/pkg/config"
-	"github.com/kodia-studio/kodia/pkg/health"
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	"github.com/kodia-studio/kodia/pkg/observability"
 	"github.com/redis/go-redis/v9"
@@ -32,6 +31,7 @@ type Router struct {
 	graphqlHandler *handlers.GraphQLHandler
 	obsManager     *observability.Manager
 	pulseHandler   *handlers.PulseHandler
+	healthHandler  *handlers.HealthHandler
 }
 
 // NewRouter creates a new Router instance.
@@ -46,6 +46,7 @@ func NewRouter(
 	graphqlHandler *handlers.GraphQLHandler,
 	obsManager *observability.Manager,
 	pulseHandler *handlers.PulseHandler,
+	healthHandler *handlers.HealthHandler,
 ) *Router {
 	return &Router{
 		cfg:            cfg,
@@ -58,6 +59,7 @@ func NewRouter(
 		graphqlHandler: graphqlHandler,
 		obsManager:     obsManager,
 		pulseHandler:   pulseHandler,
+		healthHandler:  healthHandler,
 	}
 }
 
@@ -125,17 +127,9 @@ func (r *Router) Setup() *gin.Engine {
 		v1 := api.Group("/v1")
 		{
 			// Health check (Enhanced)
-			v1.GET("/health", func(c *gin.Context) {
-				stats, err := health.Gather(c.Request.Context())
-				if err != nil {
-					c.JSON(500, gin.H{"success": false, "error": err.Error()})
-					return
-				}
-				c.JSON(200, gin.H{
-					"success": true,
-					"data":    stats,
-				})
-			})
+			v1.GET("/health", r.healthHandler.Ready)
+			v1.GET("/health/live", r.healthHandler.Live)
+			v1.GET("/health/ready", r.healthHandler.Ready)
 
 			// Auth routes with rate limiting
 			auth := v1.Group("/auth")

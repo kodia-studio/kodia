@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"context"
 	"strings"
 
 	"github.com/kodia-studio/kodia/internal/infrastructure/cache"
@@ -8,6 +9,7 @@ import (
 	"github.com/kodia-studio/kodia/internal/infrastructure/mailer"
 	"github.com/kodia-studio/kodia/internal/infrastructure/storage"
 	"github.com/kodia-studio/kodia/internal/infrastructure/worker"
+	audit_infra "github.com/kodia-studio/kodia/internal/infrastructure/audit"
 	core_events "github.com/kodia-studio/kodia/internal/core/events"
 	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/pkg/kodia"
@@ -39,12 +41,20 @@ func (p *InfraProvider) Register(app *kodia.App) error {
 	}
 	app.Set("storage", storageProvider)
 
-	// 2. Cache
+	// 2. Cache & Redis Cleanup
 	cacheProvider, err := cache.New(app.Config, app.Log)
 	if err != nil {
 		app.Log.Warn("Cache initialization failed", zap.Error(err))
 	} else {
 		app.Set("cache", cacheProvider)
+		
+		// Register Redis cleanup if it's a RedisProvider
+		if rp, ok := cacheProvider.(*cache.RedisProvider); ok {
+			app.RegisterCleanupTask(func(ctx context.Context) error {
+				app.Log.Info("Closing Redis connection...")
+				return rp.GetClient().Close()
+			})
+		}
 	}
 
 	// 3. Mailer
@@ -58,6 +68,13 @@ func (p *InfraProvider) Register(app *kodia.App) error {
 	queueProvider := worker.NewAsynqProvider(app.Config, app.Log)
 	dispatcher := events.NewDispatcher(queueProvider, app.Log)
 	app.Set("events", dispatcher)
+
+	// 5. Audit Logging
+	auditManager := audit_infra.NewManager(app.Log)
+	if app.DB != nil {
+		auditManager.AddLogger(audit_infra.NewGormLogger(app.DB))
+	}
+	app.Set("audit", auditManager)
 
 	return nil
 }

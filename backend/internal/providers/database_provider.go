@@ -5,8 +5,6 @@ import (
 
 	"github.com/kodia-studio/kodia/internal/infrastructure/database"
 	"github.com/kodia-studio/kodia/pkg/kodia"
-	"github.com/kodia-studio/kodia/pkg/observability"
-	"go.uber.org/zap"
 )
 
 type DatabaseProvider struct{}
@@ -25,13 +23,16 @@ func (p *DatabaseProvider) Register(app *kodia.App) error {
 		return err
 	}
 	app.DB = db
-	
-	// Observability init
-	obsManager := observability.NewManager(app.Config, app.Log)
-	if err := obsManager.Init(context.Background()); err != nil {
-		app.Log.Warn("Observability init failed", zap.Error(err))
-	}
-	app.Set("observability", obsManager)
+
+	// Register DB cleanup
+	app.RegisterCleanupTask(func(ctx context.Context) error {
+		sqlDB, err := db.DB()
+		if err != nil {
+			return err
+		}
+		app.Log.Info("Closing database connection...")
+		return sqlDB.Close()
+	})
 	
 	return nil
 }

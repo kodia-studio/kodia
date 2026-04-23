@@ -7,18 +7,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// GormLogger implements audit.Logger using a database via GORM.
 type GormLogger struct {
 	db *gorm.DB
 }
 
-// NewGormLogger creates a new audit logger that persists to database via GORM.
+// NewGormLogger creates a new GormLogger instance.
 func NewGormLogger(db *gorm.DB) *GormLogger {
-	// AutoMigrate the audit entry table
-	_ = db.AutoMigrate(&audit.Entry{})
-	
 	return &GormLogger{db: db}
 }
 
+// Log records an audit entry to the database.
 func (l *GormLogger) Log(entry audit.Entry) error {
 	if entry.Timestamp.IsZero() {
 		entry.Timestamp = time.Now()
@@ -26,6 +25,7 @@ func (l *GormLogger) Log(entry audit.Entry) error {
 	return l.db.Create(&entry).Error
 }
 
+// LogAction is a convenience method to record an action with its details.
 func (l *GormLogger) LogAction(actorID, actor, resource string, action audit.Action, status audit.Status, details string, ip, ua string) error {
 	entry := audit.Entry{
 		Timestamp: time.Now(),

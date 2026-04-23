@@ -1,72 +1,129 @@
-# Observability & Monitoring
+# Observability & DevOps
 
-Kodia provides a state-of-the-art observability stack that gives you deep visibility into your application's performance, health, and errors.
-
-## Overview
-
-The Kodia observability stack is built on four pillars:
-
-1.  **Distributed Tracing**: Powered by OpenTelemetry (OTEL).
-2.  **Metrics Collection**: Powered by Prometheus.
-3.  **Real-time Health Monitoring**: Built-in system stats gatherer.
-4.  **Error Tracking**: Native Sentry integration.
+Kodia provides a production-grade suite for monitoring, diagnostics, and reliable deployments. It includes health checks, distributed tracing, metrics, structured audit logging, and graceful shutdown out of the box.
 
 ---
 
-## 1. Distributed Tracing
+## 1. Health Checks (Liveness & Readiness)
 
-Tracing allows you to see the lifecycle of a request as it moves through your system. Kodia uses OpenTelemetry to automatically instrument every HTTP request.
+Kodia follows Kubernetes standards for health checks with modular checkers for your dependencies.
+
+### Endpoints
+- `GET /api/v1/health/live` — Returns 200 if the process is running.
+- `GET /api/v1/health/ready` — Checks database, redis, and other critical dependencies.
 
 ### Configuration
-Enable tracing in your `config.yaml` or via environment variables:
+Health checks are managed via `ObservabilityProvider`. It automatically detects if Database or Redis is registered and adds the corresponding checkers.
 
-```yaml
-observability:
-  tracing_enabled: true
-  service_name: "my-kodia-api"
-  otlp_endpoint: "localhost:4317" # Jaeger, Datadog, or New Relic OTLP collector
-  sampling_rate: 1.0 # 100% of traces
+### Adding Custom Checkers
+You can implement the `health.Checker` interface and add it to your custom provider:
+
+```go
+type MyServiceChecker struct{}
+func (c *MyServiceChecker) Name() string { return "my_service" }
+func (c *MyServiceChecker) Check(ctx context.Context) error {
+    // Check if your service is healthy
+    return nil
+}
 ```
 
 ---
 
-## 2. Metrics (Prometheus)
+## 2. Distributed Tracing (OpenTelemetry)
 
-Kodia collects real-time metrics for your application, including request counts and latency histograms.
+Kodia integrates **OpenTelemetry (OTEL)** to trace requests as they move through your application services.
 
-### Scraping Metrics
-By default, Kodia starts a dedicated metrics server on port `9090`. You can scrape it using Prometheus at the `/metrics` endpoint.
+### How it works
+- **Middleware**: Automatically creates a trace span for every incoming HTTP request.
+- **Propagation**: Injects `X-Trace-ID` into response headers.
+- **Exporting**: By default, Kodia uses the `stdout` exporter with pretty-print for high visibility during development.
 
----
+### Production Setup
+To export to an external collector (like Jaeger, Honeycomb, or Tempo), swap the exporter in `pkg/observability/manager.go` to `otlptracehttp`.
 
-## 3. Health Checks
-
-Kodia monitors the physical health of its environment, including CPU, Memory, and Disk usage.
-
-### CLI Health Command
-For a quick check from your terminal, use the Kodia CLI:
-```bash
-kodia health
+### Environment Variables
+```env
+APP_OBSERVABILITY_TRACING_ENABLED=true
+APP_OBSERVABILITY_OTLP_ENDPOINT=localhost:4318
+APP_OBSERVABILITY_SAMPLING_RATE=1.0
 ```
 
 ---
 
-## 4. Error Tracking (Sentry)
+## 3. Metrics (Prometheus)
 
-If an unexpected crash occurs, Kodia automatically captures the stack trace and reports it to Sentry.
+Kodia exposes a Prometheus-compatible metrics endpoint for scraping.
 
-### Configuration
-```yaml
-observability:
-  sentry_dsn: "https://your-dsn-here@sentry.io/123"
+### Endpoint
+- `GET :9090/metrics` (Default port)
+
+### Available Metrics
+- **Go Runtime**: Memory usage, goroutine count, GC stats.
+- **HTTP**: Request count, duration, status codes (via middleware).
+- **Custom**: You can register your own counters and gauges via `prometheus` package.
+
+---
+
+## 4. Structured Audit Log
+
+Kodia provides an enterprise-grade audit logging system that records every important action.
+
+### Multi-Sink Support
+The `AuditManager` broadcasts logs to multiple destinations:
+1. **Database**: Saved to the `audit_logs` table (GORM).
+2. **Structured Log**: Output to system logs as JSON (Zap).
+
+### Usage
+```go
+auditManager := app.MustGet("audit").(*audit.Manager)
+
+auditManager.LogAction(
+    userID, 
+    userEmail, 
+    "Order #123", 
+    audit.ActionUpdate, 
+    audit.StatusSuccess, 
+    "Changed status to shipped", 
+    ipAddress, 
+    userAgent,
+)
 ```
 
 ---
 
-## 5. Performance Profiling (pprof)
+## 5. Graceful Shutdown
 
-In development mode, Kodia exposes profiling endpoints at `/debug/pprof`.
+Zero-downtime deployment is achieved by handling OS signals and orchestrating resource cleanup.
 
-```bash
-go tool pprof http://localhost:8080/debug/pprof/profile
+### How it works
+When the application receives `SIGINT` or `SIGTERM`:
+1. The HTTP server stops accepting new connections but finishes active ones (30s timeout).
+2. **Cleanup Tasks** are executed in reverse order of registration:
+    - Closing Database connections.
+    - Closing Redis connections.
+    - Flushing Sentry and OpenTelemetry tracers.
+
+### Registering Cleanup Tasks
+You can add your own cleanup logic in any provider:
+```go
+app.RegisterCleanupTask(func(ctx context.Context) error {
+    app.Log.Info("Cleaning up my resource...")
+    return myResource.Close()
+})
+```
+
+---
+
+## 6. Provider Setup
+
+Ensure `ObservabilityProvider` is registered in your `main.go`:
+
+```go
+app.RegisterProviders(
+    providers.NewDatabaseProvider(),
+    providers.NewInfraProvider(),
+    providers.NewObservabilityProvider(), // Required
+    providers.NewHttpProvider(),
+    // ...
+)
 ```

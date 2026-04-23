@@ -37,6 +37,8 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.32
 	github.com/wneessen/go-mail v0.7.2
 	go.opentelemetry.io/otel v1.43.0
+	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.43.0
+	go.opentelemetry.io/otel/sdk v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.50.0
@@ -106,7 +108,6 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
@@ -178,8 +179,8 @@ require (
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.43.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230724170836-66ad5b6ff146 // indirect
-	google.golang.org/grpc v1.56.3 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
+	google.golang.org/grpc v1.80.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -192,3 +193,5 @@ exclude (
 )
 
 replace cloud.google.com/go/compute/metadata => cloud.google.com/go/compute/metadata v0.9.0
+
+replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20230706204954-ccb25ca9f130

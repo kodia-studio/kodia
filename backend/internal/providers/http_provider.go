@@ -58,11 +58,5 @@ func (p *HttpProvider) Register(app *kodia.App) error {
 }
 
 func (p *HttpProvider) Boot(app *kodia.App) error {
-	// Add global health check
-	api := app.Router.Group("/api")
-	api.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok", "app": app.Config.App.Name})
-	})
-	
 	return nil
 }
