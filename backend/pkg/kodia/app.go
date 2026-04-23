@@ -28,6 +28,9 @@ type App struct {
 	// Map to store services/dependencies that can be shared across providers
 	container map[string]interface{}
 
+	// Hooks manages application-wide event listeners
+	Hooks *HookManager
+
 	// List of tasks to execute during graceful shutdown
 	cleanupTasks []func(context.Context) error
 }
@@ -37,6 +40,7 @@ func NewApp(cfg *config.Config, log *zap.Logger) *App {
 		Config:    cfg,
 		Log:       log,
 		container: make(map[string]interface{}),
+		Hooks:     NewHookManager(),
 	}
 }
 

@@ -20,6 +20,22 @@ type ServiceProvider interface {
 	Boot(app *App) error
 }
 
+// PluginMetadata contains information about a third-party plugin.
+type PluginMetadata struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Version     string   `json:"version"`
+	Author      string   `json:"author"`
+	Description string   `json:"description"`
+	Dependencies []string `json:"dependencies"`
+}
+
+// Plugin defines a more structured contract for third-party extensions.
+type Plugin interface {
+	ServiceProvider
+	Metadata() PluginMetadata
+}
+
 // RouterProvider is an optional interface for providers that need to register routes.
 type RouterProvider interface {
 	RegisterRoutes(router *gin.Engine, app *App) error
