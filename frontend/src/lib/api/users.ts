@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api } from './client.svelte';
 import type { UserResponse, UpdateUserRequest, ChangePasswordRequest } from '../types/user.types';
 import type { ApiResponse } from '../types/api.types';
 

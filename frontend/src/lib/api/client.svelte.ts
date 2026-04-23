@@ -50,7 +50,8 @@ class ApiClient {
 		} catch (err) {
 			if (!this.error) {
 				this.error = {
-					error: 'Network Error',
+					success: false,
+					code: 'Network Error',
 					message: err instanceof Error ? err.message : 'Unknown error occurred'
 				};
 			}

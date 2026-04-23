@@ -1,56 +1,32 @@
 <script lang="ts">
-  import { cn } from "$lib/utils/styles";
-  import { fade } from "svelte/transition";
+	import { cn } from "$lib/utils";
 
-  interface Props {
-    label?: string;
-    error?: string;
-    description?: string;
-    required?: boolean;
-    class?: string;
-    id?: string;
-    children?: import('svelte').Snippet<[{ id: string }]>;
-  }
+	interface Props {
+		label?: string;
+		error?: string;
+		id?: string;
+		class?: string;
+		children?: import('svelte').Snippet;
+	}
 
-  let { 
-    label, 
-    error, 
-    description, 
-    required = false, 
-    class: className, 
-    id = "field-" + Math.random().toString(36).substring(2, 9),
-    children 
-  }: Props = $props();
+	let { label, error, id, class: className, children }: Props = $props();
 </script>
 
-<div class={cn("space-y-2 w-full", className)}>
-  {#if label}
-    <div class="flex items-center justify-between">
-      <label for={id} class="text-sm font-semibold tracking-tight text-foreground/90 cursor-pointer">
-        {label}
-        {#if required}
-          <span class="text-destructive ml-0.5">*</span>
-        {/if}
-      </label>
-    </div>
-  {/if}
+<div class={cn("flex flex-col gap-1.5", className)}>
+	{#if label}
+		<label 
+			for={id}
+			class="text-xs font-black uppercase tracking-widest text-slate-500 ml-1"
+		>
+			{label}
+		</label>
+	{/if}
+	
+	{@render children?.()}
 
-  <div class="relative">
-    {@render children?.({ id })}
-  </div>
-
-  {#if description && !error}
-    <p class="text-xs text-muted-foreground leading-relaxed">
-      {description}
-    </p>
-  {/if}
-
-  {#if error}
-    <p 
-      class="text-xs font-medium text-destructive animate-in fade-in slide-in-from-top-1 duration-200" 
-      in:fade={{ duration: 150 }}
-    >
-      {error}
-    </p>
-  {/if}
+	{#if error}
+		<span class="text-[10px] font-bold text-red-500 ml-1 uppercase tracking-tight">
+			{error}
+		</span>
+	{/if}
 </div>

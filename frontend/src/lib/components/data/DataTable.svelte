@@ -1,145 +1,143 @@
-<script lang="ts">
-  import { 
-    getCoreRowModel, 
-    getPaginationRowModel,
-    getSortedRowModel,
-    getFilteredRowModel,
-    type ColumnDef, 
-    type SortingState,
-  } from "@tanstack/table-core";
-  import { createSvelteTable } from "$lib/components/ui/table/table.svelte";
-  import { cn } from "$lib/utils/styles";
-  import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown } from "lucide-svelte";
-
-  interface Props<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[];
-    data: TData[];
-    class?: string;
-  }
-
-  let { columns, data, class: className }: Props<any, any> = $props();
-
-  let sorting = $state<SortingState>([]);
-  let pagination = $state({ pageIndex: 0, pageSize: 10 });
-
-  const table = createSvelteTable({
-    get data() { return data; },
-    get columns() { return columns; },
-    state: {
-      get sorting() { return sorting; },
-      get pagination() { return pagination; },
-    },
-    onSortingChange: (updater) => {
-      if (typeof updater === "function") {
-        sorting = updater(sorting);
-      } else {
-        sorting = updater;
-      }
-    },
-    onPaginationChange: (updater) => {
-      if (typeof updater === "function") {
-        pagination = updater(pagination);
-      } else {
-        pagination = updater;
-      }
-    },
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
+<script lang="ts" module>
+	import {
+		createSvelteTable,
+		flexRender,
+		getCoreRowModel,
+		getPaginationRowModel,
+		getSortedRowModel,
+		type ColumnDef,
+		type TableOptions,
+		type SortingState,
+		type OnChangeFn
+	} from "@tanstack/svelte-table";
 </script>
 
-{#snippet flexRender(content: any, context: any)}
-  {#if typeof content === "function"}
-    {@const Rendered = content}
-    <Rendered {...context} />
-  {:else}
-    {@html content ?? ""}
-  {/if}
-{/snippet}
+<script lang="ts">
+	import { cn } from "$lib/utils";
+	import Button from "../ui/Button.svelte";
+	import { ChevronLeft, ChevronRight, ChevronsUpDown, ChevronUp, ChevronDown } from "lucide-svelte";
+	import { writable } from "svelte/store";
 
-<div class={cn("w-full space-y-4", className)}>
-  <div class="rounded-2xl border bg-card overflow-hidden shadow-sm">
-    <table class="w-full text-sm">
-      <thead class="bg-muted/50 border-b">
-        {#each table.getHeaderGroups() as headerGroup}
-          <tr>
-            {#each headerGroup.headers as header}
-              <th class="h-12 px-4 text-left align-middle font-semibold text-muted-foreground">
-                {#if !header.isPlaceholder}
-                  <button
-                    class={cn(
-                      "flex items-center gap-2 hover:text-foreground transition-colors",
-                      header.column.getCanSort() && "cursor-pointer select-none"
-                    )}
-                    onclick={header.column.getToggleSortingHandler()}
-                  >
-                    {@render flexRender(header.column.columnDef.header, header.getContext())}
-                    {#if header.column.getCanSort()}
-                      <ArrowUpDown class="w-3.5 h-3.5" />
-                    {/if}
-                  </button>
-                {/if}
-              </th>
-            {/each}
-          </tr>
-        {/each}
-      </thead>
-      <tbody class="divide-y">
-        {#each table.getRowModel().rows as row}
-          <tr class="hover:bg-muted/30 transition-colors">
-            {#each row.getVisibleCells() as cell}
-              <td class="p-4 align-middle">
-                {@render flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            {/each}
-          </tr>
-        {:else}
-          <tr>
-            <td colspan={columns.length} class="h-24 text-center text-muted-foreground">
-              No results found.
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
+	interface Props<TData, TValue> {
+		columns: ColumnDef<TData, TValue>[];
+		data: TData[];
+		class?: string;
+	}
 
-  <!-- Pagination -->
-  <div class="flex items-center justify-between px-2">
-    <div class="text-sm text-muted-foreground">
-      Page {pagination.pageIndex + 1} of {table.getPageCount()}
-    </div>
-    <div class="flex items-center gap-2">
-      <button
-        class="p-2 border rounded-xl hover:bg-muted disabled:opacity-50 transition-colors"
-        onclick={() => table.setPageIndex(0)}
-        disabled={!table.getCanPreviousPage()}
-      >
-        <ChevronsLeft class="w-4 h-4" />
-      </button>
-      <button
-        class="p-2 border rounded-xl hover:bg-muted disabled:opacity-50 transition-colors"
-        onclick={() => table.previousPage()}
-        disabled={!table.getCanPreviousPage()}
-      >
-        <ChevronLeft class="w-4 h-4" />
-      </button>
-      <button
-        class="p-2 border rounded-xl hover:bg-muted disabled:opacity-50 transition-colors"
-        onclick={() => table.nextPage()}
-        disabled={!table.getCanNextPage()}
-      >
-        <ChevronRight class="w-4 h-4" />
-      </button>
-      <button
-        class="p-2 border rounded-xl hover:bg-muted disabled:opacity-50 transition-colors"
-        onclick={() => table.setPageIndex(table.getPageCount() - 1)}
-        disabled={!table.getCanNextPage()}
-      >
-        <ChevronsRight class="w-4 h-4" />
-      </button>
-    </div>
-  </div>
+	let { data, columns, class: className }: Props<any, any> = $props();
+
+	let sorting = $state<SortingState>([]);
+
+	const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
+		if (typeof updater === "function") {
+			sorting = updater(sorting);
+		} else {
+			sorting = updater;
+		}
+	};
+
+	const options = writable<TableOptions<any>>({
+		data: [],
+		columns: [],
+		state: {
+			sorting: []
+		},
+		onSortingChange: handleSortingChange,
+		getCoreRowModel: getCoreRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+	});
+
+	$effect(() => {
+		options.set({
+			data,
+			columns,
+			state: { sorting },
+			onSortingChange: handleSortingChange,
+			getCoreRowModel: getCoreRowModel(),
+			getPaginationRowModel: getPaginationRowModel(),
+			getSortedRowModel: getSortedRowModel(),
+		});
+	});
+
+	const table = createSvelteTable(options);
+</script>
+
+<div class={cn("flex flex-col gap-4", className)}>
+	<div class="rounded-kodia-lg border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-hidden shadow-kodia">
+		<table class="w-full text-left text-sm border-collapse">
+			<thead>
+				{#each $table.getHeaderGroups() as headerGroup}
+					<tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/80">
+						{#each headerGroup.headers as header}
+							<th class="px-4 py-4 font-black uppercase tracking-widest text-[10px] text-slate-500">
+								{#if !header.isPlaceholder}
+									<button
+										class={cn(
+											"flex items-center gap-1 hover:text-primary transition-colors uppercase tracking-widest",
+											header.column.getCanSort() && "cursor-pointer select-none"
+										)}
+										onclick={header.column.getToggleSortingHandler()}
+									>
+										{flexRender(header.column.columnDef.header, header.getContext())}
+										{#if header.column.getCanSort()}
+											{#if header.column.getIsSorted() === "asc"}
+												<ChevronUp class="w-3 h-3 text-primary" />
+											{:else if header.column.getIsSorted() === "desc"}
+												<ChevronDown class="w-3 h-3 text-primary" />
+											{:else}
+												<ChevronsUpDown class="w-3 h-3 opacity-30" />
+											{/if}
+										{/if}
+									</button>
+								{/if}
+							</th>
+						{/each}
+					</tr>
+				{/each}
+			</thead>
+			<tbody>
+				{#each $table.getRowModel().rows as row}
+					<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-primary/5 transition-colors">
+						{#each row.getVisibleCells() as cell}
+							<td class="px-4 py-4 text-slate-700 dark:text-slate-300 font-medium">
+								{flexRender(cell.column.columnDef.cell, cell.getContext())}
+							</td>
+						{/each}
+					</tr>
+				{:else}
+					<tr>
+						<td colspan={columns.length} class="px-4 py-12 text-center text-slate-400 font-bold uppercase tracking-widest italic">
+							No results found.
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
+
+	<!-- Pagination Controls -->
+	<div class="flex items-center justify-between px-2">
+		<div class="text-[10px] font-black uppercase tracking-widest text-slate-500">
+			Page {$table.getState().pagination.pageIndex + 1} of {$table.getPageCount()}
+		</div>
+		<div class="flex items-center gap-2">
+			<Button
+				variant="outline"
+				size="icon"
+				onclick={() => $table.previousPage()}
+				disabled={!$table.getCanPreviousPage()}
+			>
+				<ChevronLeft class="w-4 h-4" />
+			</Button>
+			<Button
+				variant="outline"
+				size="icon"
+				onclick={() => $table.nextPage()}
+				disabled={!$table.getCanNextPage()}
+			>
+				<ChevronRight class="w-4 h-4" />
+			</Button>
+		</div>
+	</div>
 </div>

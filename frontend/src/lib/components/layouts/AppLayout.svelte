@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Navbar from "../ui/Navbar.svelte";
+  import Navbar from "../Navbar.svelte";
   import { fade } from "svelte/transition";
 
   let { children } = $props();

@@ -13,7 +13,11 @@
 
 	let { form, onsuccess, onerror, class: className, children }: Props = $props();
 
-	const { enhance, errors, message, tainted, submitting } = form;
+	const enhance = $derived(form.enhance);
+	const errors = $derived(form.errors);
+	const message = $derived(form.message);
+	const tainted = $derived(form.tainted);
+	const submitting = $derived(form.submitting);
 
 	// Enhanced form handling
 	function handleResult({ result }: any) {

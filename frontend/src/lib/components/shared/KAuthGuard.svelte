@@ -15,7 +15,7 @@
     if (!$authStore.isAuthenticated) return false;
     
     const userRole = $authStore.user?.role;
-    const userPerms = $authStore.user?.permissions || [];
+    const userPerms = ($authStore.user as any)?.permissions || [];
 
     // Check Role
     if (role) {

@@ -1,42 +1,64 @@
-# sv
+# Kodia UI Library 🐨💎
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+**Kodia UI** is an elite, institutional-grade Svelte 5 component library designed for high-velocity, premium web development. It is meticulously engineered to work seamlessly with the Kodia Framework backend, utilizing modern Svelte 5 Runes for maximum reactivity and performance.
 
-## Creating a project
+## ✨ Features
+- **Svelte 5 First**: Built from the ground up using `$state`, `$derived`, and `$props`.
+- **Premium Aesthetics**: Glassmorphism, institutional-grade typography, and smooth transitions.
+- **Dark Mode Native**: Support for dark mode out of the box with tailored color palettes.
+- **Accessible (a11y)**: Built on top of `bits-ui` and standard ARIA practices.
+- **Tailwind v4 Optimized**: Utilizes the latest Tailwind CSS features for styling.
+- **Smart Components**: Pre-wired for Kodia Framework's backend error structures and pagination.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## 📦 Component Suite
 
-```sh
-# create a new project
-npx sv create my-app
+### 🧩 Core UI
+- **Button**: Premium action components with multiple variants (`premium`, `primary`, `danger`, etc.) and built-in loading states.
+- **Input**: Smart input fields with integrated label and error handling.
+- **Badge**: Distinctive status indicators for Enterprise ecosystems.
+- **Avatar**: Professional user representation with fallback support.
+- **Modal**: Glassmorphic dialogs with smooth scaling transitions.
+- **Dropdown**: Elegant menu systems with fly-in animations.
+- **Toast**: Sophisticated notifications using `svelte-sonner`.
+
+### 📝 Form System
+- **SuperFormField**: A declarative field component that automatically binds to Superforms proxies.
+- **Form (KForm)**: A smart container that handles backend validation error mapping (`422 Unprocessable Entity`) automatically.
+
+### 📊 Data & Media
+- **DataTable (KDataTable)**: Advanced table system with TanStack Table integration, supporting server-side sorting and pagination.
+- **Uploader**: Professional drag-and-drop file uploader with progress tracking and image previews.
+- **Editor**: Elite WYSIWYG editor powered by Tiptap.
+- **BarChart**: High-fidelity data visualization built on LayerChart (D3).
+
+## 🚀 Getting Started
+
+### Installation
+All components are available via the `$lib/components/ui` and `$lib/components/forms` directories.
+
+### Basic Usage
+```svelte
+<script lang="ts">
+  import { Button, Input, Modal } from '$lib/components/ui';
+  let showModal = $state(false);
+</script>
+
+<Button variant="premium" onclick={() => showModal = true}>
+  Unlock Potential
+</Button>
+
+<Modal bind:open={showModal} title="System Activation">
+  <p>Ready to deploy the Kodia ecosystem?</p>
+</Modal>
 ```
 
-To recreate this project with the same configuration:
+## 🛠️ Utils
+- **cn()**: A professional utility for merging Tailwind classes safely using `clsx` and `tailwind-merge`.
 
-```sh
-# recreate this project
-npx sv@0.15.1 create --template minimal --types ts --add prettier eslint tailwindcss="plugins:none" --no-download-check --install npm ./
-```
+## 📜 Principles
+> "Build like a user, code like a pro."
 
-## Developing
+Every component is designed to be responsive, secure, and visually stunning across all devices.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+---
+© 2026 Kodia Studio. All rights reserved.
