@@ -11,7 +11,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"codegen": "mkdir -p src/lib/types/generated && npx swagger2openapi ../../kodia/backend/docs/swagger.yaml -o src/lib/types/generated/openapi.yaml --patch && npx openapi-typescript src/lib/types/generated/openapi.yaml -o src/lib/types/generated/api.d.ts"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.4",
@@ -28,15 +29,18 @@
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.17.0",
 		"globals": "^17.4.0",
+		"openapi-typescript": "^7.13.0",
 		"prettier": "^3.8.1",
 		"prettier-plugin-svelte": "^3.5.1",
 		"prettier-plugin-tailwindcss": "^0.7.2",
 		"svelte": "^5.55.2",
 		"svelte-check": "^4.4.6",
+		"swagger2openapi": "^7.0.8",
 		"tailwindcss": "^4.2.2",
 		"typescript": "^6.0.2",
 		"typescript-eslint": "^8.58.1",
-		"vite": "^8.0.7"
+		"vite": "^8.0.7",
+		"vite-plugin-pwa": "^1.2.0"
 	},
 	"dependencies": {
 		"@internationalized/date": "^3.12.1",

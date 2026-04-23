@@ -40,6 +40,7 @@
             <!-- Desktop Links -->
             <div class="hidden md:flex items-center gap-8">
                 <a href="https://kodia.id/docs/prologue/getting-started" class="text-sm font-medium hover:text-primary transition-colors">Documentation</a>
+                <a href="/state-management-demo" class="text-sm font-medium hover:text-primary transition-colors">Data Layer</a>
                 <a href="https://kodia.id/features" class="text-sm font-medium hover:text-primary transition-colors">Features</a>
                 <a href="https://github.com/kodia-studio/kodia" target="_blank" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-2" aria-label="GitHub">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

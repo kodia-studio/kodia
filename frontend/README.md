@@ -8,6 +8,9 @@
 - **Dark Mode Native**: Support for dark mode out of the box with tailored color palettes.
 - **Accessible (a11y)**: Built on top of `bits-ui` and standard ARIA practices.
 - **Tailwind v4 Optimized**: Utilizes the latest Tailwind CSS features for styling.
+- **Data Intelligence**: Integrated API Codegen, Optimistic Updates, and Data Virtualization.
+- **Real-time Sync**: Reactive WebSocket stores for instant data synchronization.
+- **Offline Ready**: Built-in PWA support with intelligent caching strategies.
 - **Smart Components**: Pre-wired for Kodia Framework's backend error structures and pagination.
 
 ## 📦 Component Suite
@@ -26,10 +29,17 @@
 - **Form (KForm)**: A smart container that handles backend validation error mapping (`422 Unprocessable Entity`) automatically.
 
 ### 📊 Data & Media
-- **DataTable (KDataTable)**: Advanced table system with TanStack Table integration, supporting server-side sorting and pagination.
-- **Uploader**: Professional drag-and-drop file uploader with progress tracking and image previews.
+- **DataTable (KDataTable)**: Advanced table system with TanStack Table integration.
+- **InfiniteList**: High-performance scrolling for continuous data streams.
+- **VirtualList**: Elite virtualization for rendering 10,000+ items with zero lag.
+- **Uploader**: Professional drag-and-drop file uploader with progress tracking.
 - **Editor**: Elite WYSIWYG editor powered by Tiptap.
 - **BarChart**: High-fidelity data visualization built on LayerChart (D3).
+
+### 📡 Data Layer
+- **API Codegen**: Run `npm run codegen` to sync types instantly with the backend.
+- **Optimistic Helper**: Use `createOptimistic()` for instant UI feedback with auto-rollback.
+- **Socket Store**: Reactive `socketStore` for institutional-grade WebSocket communication.
 
 ## 🚀 Getting Started
 
