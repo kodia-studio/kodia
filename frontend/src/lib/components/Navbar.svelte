@@ -31,9 +31,7 @@
     <div class="container mx-auto px-6 flex items-center justify-between">
             <!-- Logo -->
             <a href="/" class="flex items-center gap-2 group">
-                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black group-hover:rotate-12 transition-transform shadow-lg shadow-primary/20">
-                    <Zap size={18} fill="currentColor" />
-                </div>
+                <img src="/logo.png" alt="Kodia Logo" class="h-8 w-auto group-hover:scale-105 transition-transform" />
                 <span class="text-xl font-black tracking-tighter">KODIA</span>
             </a>
 

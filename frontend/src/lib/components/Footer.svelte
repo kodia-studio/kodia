@@ -8,9 +8,7 @@
             <!-- Brand Column -->
             <div class="col-span-2">
                 <a href="/" class="flex items-center gap-3 mb-6 group">
-                    <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-black group-hover:rotate-12 transition-transform shadow-lg shadow-primary/20">
-                        <Zap size={22} fill="currentColor" />
-                    </div>
+                    <img src="/logo.png" alt="Kodia Logo" class="h-10 w-auto group-hover:scale-105 transition-transform" />
                     <span class="text-2xl font-black tracking-tighter">KODIA</span>
                 </a>
                 <p class="text-sm text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
@@ -79,7 +77,7 @@
             <div class="flex items-center gap-2">
                 <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Built with</span>
                 <div class="flex items-center gap-1.5 px-2 py-1 bg-primary/5 rounded border border-primary/10">
-                    <Zap size={10} class="text-primary fill-primary" />
+                    <img src="/logo.png" alt="Kodia Logo" class="h-3 w-auto" />
                     <span class="text-[9px] font-black text-primary uppercase">Kodia Framework</span>
                 </div>
             </div>

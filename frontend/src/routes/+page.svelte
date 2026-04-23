@@ -41,7 +41,7 @@
                             <!-- Inner Hive Pattern -->
                             <div class="absolute inset-0 bg-hive opacity-20"></div>
                             <div class="relative z-10 w-24 h-24 md:w-32 md:h-32 bg-primary rounded-full flex items-center justify-center text-white font-black shadow-[0_0_50px_rgba(59,130,246,0.5)]">
-                                <Zap size={48} fill="currentColor" class="animate-pulse" />
+                                <img src="/logo.png" alt="Kodia Hive" class="w-16 h-auto animate-pulse" />
                             </div>
                         </div>
 

@@ -37,7 +37,7 @@
                                 <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <Zap size={12} class="text-amber-400 fill-amber-400" />
+                                <img src="/logo.png" alt="Kodia CLI" class="h-3 w-auto" />
                                 <span class="text-[10px] text-slate-500 font-bold font-mono uppercase tracking-tighter">Kodia CLI v1.0</span>
                             </div>
                         </div>
