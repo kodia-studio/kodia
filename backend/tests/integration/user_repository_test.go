@@ -40,7 +40,7 @@ func TestUserRepositorySave(t *testing.T) {
 	retrieved, err := repo.FindByEmail(ctx, "test@example.com")
 	require.NoError(t, err)
 	assert.Equal(t, "test@example.com", retrieved.Email)
-	assert.Equal(t, "user", retrieved.Role)
+	assert.Equal(t, domain.UserRole("user"), retrieved.Role)
 }
 
 // TestUserRepositoryFindByID tests finding user by ID
@@ -54,7 +54,10 @@ func TestUserRepositoryFindByID(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test user
-	user := tests.CreateTestUser(t, testDB.DB, "findme@example.com")
+	factory := tests.NewFactory(t, testDB.DB)
+	user := factory.CreateUser(func(u *domain.User) {
+		u.Email = "findme@example.com"
+	})
 
 	// Act
 	found, err := repo.FindByID(ctx, user.ID)
@@ -94,7 +97,10 @@ func TestUserRepositoryFindByEmail(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test user
-	tests.CreateTestUser(t, testDB.DB, "email@example.com")
+	factory := tests.NewFactory(t, testDB.DB)
+	factory.CreateUser(func(u *domain.User) {
+		u.Email = "email@example.com"
+	})
 
 	// Act
 	user, err := repo.FindByEmail(ctx, "email@example.com")
@@ -115,9 +121,10 @@ func TestUserRepositoryFindAll(t *testing.T) {
 	ctx := context.Background()
 
 	// Create multiple test users
-	tests.CreateTestUser(t, testDB.DB, "user1@example.com")
-	tests.CreateTestUser(t, testDB.DB, "user2@example.com")
-	tests.CreateTestUser(t, testDB.DB, "user3@example.com")
+	factory := tests.NewFactory(t, testDB.DB)
+	factory.CreateUser(func(u *domain.User) { u.Email = "user1@example.com" })
+	factory.CreateUser(func(u *domain.User) { u.Email = "user2@example.com" })
+	factory.CreateUser(func(u *domain.User) { u.Email = "user3@example.com" })
 
 	// Act
 	users, _, err := repo.FindAll(ctx, &pagination.Params{Page: 1, PerPage: 10})
@@ -138,7 +145,10 @@ func TestUserRepositoryUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test user
-	user := tests.CreateTestUser(t, testDB.DB, "update@example.com")
+	factory := tests.NewFactory(t, testDB.DB)
+	user := factory.CreateUser(func(u *domain.User) {
+		u.Email = "update@example.com"
+	})
 
 	// Act - Update user
 	user.Role = "admin"
@@ -164,7 +174,10 @@ func TestUserRepositoryDelete(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test user
-	user := tests.CreateTestUser(t, testDB.DB, "delete@example.com")
+	factory := tests.NewFactory(t, testDB.DB)
+	user := factory.CreateUser(func(u *domain.User) {
+		u.Email = "delete@example.com"
+	})
 
 	// Act
 	err := repo.Delete(ctx, user.ID)
@@ -271,7 +284,10 @@ func BenchmarkUserRepositoryFindByID(b *testing.B) {
 	repo := postgres.NewUserRepository(testDB.DB)
 	ctx := context.Background()
 
-	user := tests.CreateTestUser(nil, testDB.DB, "benchmark@example.com")
+	factory := tests.NewFactory(nil, testDB.DB)
+	user := factory.CreateUser(func(u *domain.User) {
+		u.Email = "benchmark@example.com"
+	})
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

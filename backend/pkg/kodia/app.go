@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"testing"
 	"os/signal"
 	"syscall"
 	"time"
@@ -131,3 +133,30 @@ func (a *App) Run() error {
 	a.Log.Info("Application stopped gracefully")
 	return nil
 }
+
+// NewTestServer starts the app in a test environment and returns a test server.
+func (a *App) NewTestServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	
+	// Boot the app (RegisterProviders must be called before NewTestServer)
+	if err := a.Boot(); err != nil {
+		t.Fatalf("failed to boot app for testing: %v", err)
+	}
+	
+	// Use the router as the handler
+	ts := httptest.NewServer(a.Router)
+	
+	// Register cleanup to shutdown the app and stop the server
+	t.Cleanup(func() {
+		ts.Close()
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		
+		for i := len(a.cleanupTasks) - 1; i >= 0; i-- {
+			_ = a.cleanupTasks[i](ctx)
+		}
+	})
+	
+	return ts
+}
+

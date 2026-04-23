@@ -15,6 +15,7 @@ import (
 	"github.com/kodia-studio/kodia/internal/adapters/http/handlers"
 	kodia_http "github.com/kodia-studio/kodia/internal/adapters/http"
 	"github.com/kodia-studio/kodia/internal/adapters/repository/postgres"
+	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/internal/core/services"
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	tests "github.com/kodia-studio/kodia/tests"
@@ -66,7 +67,10 @@ func TestAuthRegisterDuplicateEmail(t *testing.T) {
 	defer testDB.Cleanup()
 
 	// Create existing user
-	tests.CreateTestUser(t, testDB.DB, "existing@example.com")
+	factory := tests.NewFactory(t, testDB.DB)
+	factory.CreateUser(func(u *domain.User) {
+		u.Email = "existing@example.com"
+	})
 
 	router := setupTestRouter(t, testDB)
 
@@ -96,14 +100,17 @@ func TestAuthLoginFlow(t *testing.T) {
 	defer testDB.Cleanup()
 
 	// Create test user
-	user := tests.CreateTestUser(t, testDB.DB, "login@example.com")
+	factory := tests.NewFactory(t, testDB.DB)
+	user := factory.CreateUser(func(u *domain.User) {
+		u.Email = "login@example.com"
+	})
 
 	router := setupTestRouter(t, testDB)
 
 	// Create login request
 	loginReq := dto.LoginRequest{
 		Email:    user.Email,
-		Password: "hashed_password", // The helper uses "hashed_password" for password
+		Password: "password123", // The factory uses "password123" by default
 	}
 
 	body, _ := json.Marshal(loginReq)
@@ -134,7 +141,10 @@ func TestAuthLoginInvalidCredentials(t *testing.T) {
 	testDB := tests.NewTestDatabase(t)
 	defer testDB.Cleanup()
 
-	tests.CreateTestUser(t, testDB.DB, "user@example.com")
+	factory := tests.NewFactory(t, testDB.DB)
+	factory.CreateUser(func(u *domain.User) {
+		u.Email = "user@example.com"
+	})
 
 	router := setupTestRouter(t, testDB)
 
@@ -188,7 +198,11 @@ func TestAuthProtectedEndpoint(t *testing.T) {
 	testDB := tests.NewTestDatabase(t)
 	defer testDB.Cleanup()
 
-	user := tests.CreateTestUser(t, testDB.DB, "protected@example.com")
+	factory := tests.NewFactory(t, testDB.DB)
+	user := factory.CreateUser(func(u *domain.User) {
+		u.Email = "protected@example.com"
+	})
+	
 	jwtManager := jwt.NewManager(
 		"test-secret-key-minimum-32-characters-long!!!",
 		"test-refresh-secret-minimum-32-characters-long!",
@@ -261,7 +275,11 @@ func TestAuthRefreshToken(t *testing.T) {
 	testDB := tests.NewTestDatabase(t)
 	defer testDB.Cleanup()
 
-	user := tests.CreateTestUser(t, testDB.DB, "refresh@example.com")
+	factory := tests.NewFactory(t, testDB.DB)
+	user := factory.CreateUser(func(u *domain.User) {
+		u.Email = "refresh@example.com"
+	})
+	
 	jwtManager := jwt.NewManager(
 		"test-secret-key-minimum-32-characters-long!!!",
 		"test-refresh-secret-minimum-32-characters-long!",
@@ -305,12 +323,16 @@ func BenchmarkAuthLogin(b *testing.B) {
 	testDB := tests.NewTestDatabase(&testing.T{})
 	defer testDB.Cleanup()
 
-	tests.CreateTestUser(nil, testDB.DB, "bench@example.com")
+	factory := tests.NewFactory(nil, testDB.DB)
+	factory.CreateUser(func(u *domain.User) {
+		u.Email = "bench@example.com"
+	})
+	
 	router := setupTestRouter(nil, testDB)
 
 	loginReq := dto.LoginRequest{
 		Email:    "bench@example.com",
-		Password: "password",
+		Password: "password123",
 	}
 
 	body, _ := json.Marshal(loginReq)
@@ -358,9 +380,12 @@ func setupTestRouter(_ *testing.T, testDB *tests.TestDatabase) *gin.Engine {
 	authHandler := handlers.NewAuthHandler(authService, nil, logger)
 	userHandler := handlers.NewUserHandler(userService, nil, logger)
 	graphqlHandler := handlers.NewGraphQLHandler(authService, userService, logger)
+	healthHandler := handlers.NewHealthHandler(testDB.DB, nil, logger)
+	pulseHandler := handlers.NewPulseHandler(nil, logger) // Mock or nil for E2E if not needed
 
 	// Create router
-	router := kodia_http.NewRouter(config, logger, jwtManager, authHandler, userHandler, nil, nil, graphqlHandler, nil, nil)
+	// want (*Config, *Logger, *jwt.Manager, *AuthHandler, *UserHandler, *redis.Client, *websocket.Handler, *GraphQLHandler, *observability.Manager, *PulseHandler, *HealthHandler)
+	router := kodia_http.NewRouter(config, logger, jwtManager, authHandler, userHandler, nil, nil, graphqlHandler, nil, pulseHandler, healthHandler)
 	return router.Setup()
 }
 

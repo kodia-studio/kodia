@@ -1,8 +1,12 @@
 package tests
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -91,15 +95,17 @@ func (td *TestDatabase) Cleanup() {
 	}
 }
 
-// Reset clears all data from database
+// Reset clears all data from database using TRUNCATE for speed
 func (td *TestDatabase) Reset() {
-	tables := []string{"users", "refresh_tokens"}
+	// List tables to truncate
+	tables := []string{"users", "refresh_tokens", "audit_logs"}
 	for _, table := range tables {
-		if err := td.DB.Migrator().DropTable(table); err != nil {
-			td.t.Logf("failed to drop table %s: %v", table, err)
+		if td.DB.Migrator().HasTable(table) {
+			if err := td.DB.Exec(fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", table)).Error; err != nil {
+				td.t.Logf("failed to truncate table %s: %v", table, err)
+			}
 		}
 	}
-	runMigrations(td.t, td.DB)
 }
 
 // NewTestCache creates a test Redis cache using testcontainers
@@ -198,24 +204,69 @@ func runMigrations(t *testing.T, db *gorm.DB) {
 	if err := db.AutoMigrate(
 		&domain.User{},
 		&domain.RefreshToken{},
+		&auditEntry{}, // Internal for audit logging tests
 	); err != nil {
 		t.Fatalf("failed to run migrations: %v", err)
 	}
 }
 
-// CreateTestUser creates a user for testing
-func CreateTestUser(t *testing.T, db *gorm.DB, email string) *domain.User {
-	user := &domain.User{
-		Email:    email,
-		Password: "hashed_password",
-		Role:     "user",
+type auditEntry struct {
+	ID        uint      `gorm:"primaryKey"`
+	Timestamp time.Time `gorm:"index"`
+	ActorID   string    `gorm:"index"`
+	Actor     string
+	Action    string `gorm:"index"`
+	Resource  string `gorm:"index"`
+	Details   string `gorm:"type:text"`
+	Status    string `gorm:"index"`
+	IP        string
+	UserAgent string
+}
+
+func (auditEntry) TableName() string {
+	return "audit_logs"
+}
+
+// --- Request Helpers ---
+
+// JSONRequest makes an HTTP request with JSON body and returns the response
+func JSONRequest(t *testing.T, client *http.Client, method, url string, body interface{}) *http.Response {
+	t.Helper()
+
+	var buf io.Reader
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			t.Fatalf("failed to marshal request body: %v", err)
+		}
+		buf = bytes.NewBuffer(b)
 	}
 
-	if err := db.Create(user).Error; err != nil {
-		t.Fatalf("failed to create test user: %v", err)
+	req, err := http.NewRequest(method, url, buf)
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
 	}
 
-	return user
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("failed to perform request: %v", err)
+	}
+
+	return resp
+}
+
+// ParseJSON parses a JSON response body into a struct
+func ParseJSON(t *testing.T, resp *http.Response, dest interface{}) {
+	t.Helper()
+	defer resp.Body.Close()
+
+	if err := json.NewDecoder(resp.Body).Decode(dest); err != nil {
+		t.Fatalf("failed to decode JSON response: %v", err)
+	}
 }
 
 // SkipIfShort skips test if running with -short flag
