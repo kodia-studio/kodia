@@ -1,9 +1,13 @@
 <script lang="ts">
-	import { Button, Input, Badge, Card } from '$lib/components/ui';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Input from '$lib/components/ui/Input.svelte';
+	import Badge from '$lib/components/ui/Badge.svelte';
+	import Card from '$lib/components/ui/Card.svelte';
 	import InfiniteList from '$lib/components/data/InfiniteList.svelte';
 	import VirtualList from '$lib/components/data/VirtualList.svelte';
 	import { createOptimistic } from '$lib/api/optimistic.svelte';
 	import { Loader2, RefreshCcw, Wifi, WifiOff, Zap } from 'lucide-svelte';
+	import { fade } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
 
 	// 1. Optimistic Update Demo

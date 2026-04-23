@@ -2,6 +2,7 @@ import { PUBLIC_API_URL } from '$env/static/public';
 import type { paths } from '../types/generated/api';
 import type { ApiError } from '../types/api.types';
 import { authStore } from '../stores/auth.store';
+import { devStore } from '../stores/dev.svelte';
 import { get } from 'svelte/store';
 
 type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -12,28 +13,26 @@ class ApiClient {
 	error = $state<ApiError | null>(null);
 
 	constructor() {
-		this.baseUrl = PUBLIC_API_URL || 'http://localhost:8080/api';
+		// Institutional standard: Strip /api if present as generated paths include it
+		this.baseUrl = (PUBLIC_API_URL || 'http://localhost:8080/api').replace(/\/api$/, '');
 	}
 
 	/**
-	 * Institutional-grade request handler with full type safety
+	 * Institutional-grade request handler with flexible typing
 	 */
-	async request<
-		P extends keyof paths,
-		M extends HttpMethod & keyof paths[P]
-	>(
-		path: P,
-		method: M,
+	async request<T = any>(
+		path: string,
+		method: HttpMethod,
 		options: {
-			params?: paths[P][M] extends { parameters: { query?: infer Q, path?: infer PH } } ? { query?: Q, path?: PH } : never;
-			body?: paths[P][M] extends { requestBody: { content: { "application/json": infer B } } } ? B : never;
+			params?: any;
+			body?: any;
 			headers?: Record<string, string>;
-		} = {} as any
-	): Promise<any> {
+		} = {}
+	): Promise<T> {
 		this.isLoading = true;
 		this.error = null;
 
-		let url = `${this.baseUrl}${path as string}`;
+		let url = `${this.baseUrl}${path}`;
 		
 		// Handle path parameters
 		if (options.params?.path) {
@@ -43,15 +42,21 @@ class ApiClient {
 		}
 
 		// Handle query parameters
-		if (options.params?.query) {
+		if (options.params?.query || (method === 'get' && options.params)) {
 			const searchParams = new URLSearchParams();
-			Object.entries(options.params.query).forEach(([key, value]) => {
-				if (value !== undefined && value !== null) {
-					searchParams.append(key, String(value));
+			const queryParams = options.params?.query || options.params;
+			
+			if (typeof queryParams === 'object') {
+				Object.entries(queryParams).forEach(([key, value]) => {
+					if (value !== undefined && value !== null) {
+						searchParams.append(key, String(value));
+					}
+				});
+				const queryString = searchParams.toString();
+				if (queryString) {
+					url += (url.includes('?') ? '&' : '?') + queryString;
 				}
-			});
-			const queryString = searchParams.toString();
-			if (queryString) url += `?${queryString}`;
+			}
 		}
 
 		const headers = new Headers(options.headers);
@@ -64,6 +69,16 @@ class ApiClient {
 			headers.set('Authorization', `Bearer ${token}`);
 		}
 
+		const logId = Math.random().toString(36).substring(7);
+		const startTime = performance.now();
+
+		devStore.logRequest({
+			id: logId,
+			method: method.toUpperCase(),
+			path: url.replace(this.baseUrl, ''),
+			requestBody: options.body
+		});
+
 		try {
 			const response = await fetch(url, {
 				method: method.toUpperCase(),
@@ -72,6 +87,13 @@ class ApiClient {
 			});
 
 			const result = await response.json();
+			const duration = performance.now() - startTime;
+
+			devStore.updateLog(logId, {
+				status: response.status,
+				duration,
+				responseBody: result
+			});
 
 			if (!response.ok) {
 				const apiError = result as ApiError;
@@ -79,7 +101,6 @@ class ApiClient {
 				throw apiError;
 			}
 
-			// Kodia Framework standard: always return the 'data' field if it exists
 			return result.data !== undefined ? result.data : result;
 		} catch (err) {
 			if (!this.error) {
@@ -95,25 +116,25 @@ class ApiClient {
 		}
 	}
 
-	// Helper methods for cleaner syntax
-	get<P extends keyof paths>(path: P, params?: any) {
-		return this.request(path, 'get', { params });
+	// Helper methods with path autocomplete support
+	get<T = any, P extends keyof paths | (string & {}) = string>(path: P, params?: any) {
+		return this.request<T>(path as string, 'get', { params });
 	}
 
-	post<P extends keyof paths>(path: P, body?: any, params?: any) {
-		return this.request(path, 'post', { body, params });
+	post<T = any, P extends keyof paths | (string & {}) = string>(path: P, body?: any, params?: any) {
+		return this.request<T>(path as string, 'post', { body, params });
 	}
 
-	put<P extends keyof paths>(path: P, body?: any, params?: any) {
-		return this.request(path, 'put', { body, params });
+	put<T = any, P extends keyof paths | (string & {}) = string>(path: P, body?: any, params?: any) {
+		return this.request<T>(path as string, 'put', { body, params });
 	}
 
-	patch<P extends keyof paths>(path: P, body?: any, params?: any) {
-		return this.request(path, 'patch', { body, params });
+	patch<T = any, P extends keyof paths | (string & {}) = string>(path: P, body?: any, params?: any) {
+		return this.request<T>(path as string, 'patch', { body, params });
 	}
 
-	delete<P extends keyof paths>(path: P, params?: any) {
-		return this.request(path, 'delete', { params });
+	delete<T = any, P extends keyof paths | (string & {}) = string>(path: P, params?: any) {
+		return this.request<T>(path as string, 'delete', { params });
 	}
 }
 

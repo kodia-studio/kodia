@@ -74,7 +74,7 @@ html {
     @apply w-full px-4 py-2.5 rounded-kodia border border-slate-200 dark:border-slate-800 
            bg-white dark:bg-slate-900/50 backdrop-blur-sm
            transition-all duration-200 
-           focus:outline-hidden focus:ring-2 focus:ring-primary/20 focus:border-primary
+           focus:outline-hidden focus:ring-4 focus:ring-primary/10 focus:border-primary
            placeholder:text-slate-400 dark:placeholder:text-slate-600;
   }
 

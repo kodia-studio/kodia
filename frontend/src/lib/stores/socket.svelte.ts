@@ -1,5 +1,6 @@
 import { PUBLIC_API_URL } from '$env/static/public';
 import { authStore } from './auth.store';
+import { devStore } from './dev.svelte';
 import { get } from 'svelte/store';
 
 /**
@@ -48,6 +49,7 @@ class SocketStore {
 
 		this.ws.onmessage = (event) => {
 			const data = JSON.parse(event.data);
+			devStore.logSocket('receive', data);
 			this.messages = [...this.messages, data].slice(-100); // Keep last 100
 		};
 
@@ -81,7 +83,9 @@ class SocketStore {
 
 	send(type: string, payload: any) {
 		if (this.status === 'open' && this.ws) {
-			this.ws.send(JSON.stringify({ type, payload }));
+			const data = { type, payload };
+			devStore.logSocket('send', data);
+			this.ws.send(JSON.stringify(data));
 		}
 	}
 

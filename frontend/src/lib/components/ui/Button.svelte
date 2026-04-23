@@ -37,7 +37,7 @@
 
 <button
 	class={cn(
-		"inline-flex items-center justify-center gap-2 rounded-kodia font-bold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary/40",
+		"inline-flex items-center justify-center gap-2 rounded-kodia font-bold transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/20",
 		variants[variant],
 		sizes[size],
 		className

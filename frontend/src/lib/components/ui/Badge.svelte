@@ -2,7 +2,7 @@
 	import { cn } from "$lib/utils";
 
 	interface Props {
-		variant?: "primary" | "secondary" | "success" | "warning" | "danger" | "ghost" | "premium";
+		variant?: "primary" | "secondary" | "success" | "warning" | "danger" | "ghost" | "premium" | "outline";
 		class?: string;
 		children?: import('svelte').Snippet;
 	}
@@ -16,7 +16,8 @@
 		warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
 		danger: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
 		ghost: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent",
-		premium: "bg-linear-to-r from-primary/10 to-secondary/10 text-primary border-primary/20 shadow-sm"
+		premium: "bg-linear-to-r from-primary/10 to-secondary/10 text-primary border-primary/20 shadow-sm",
+		outline: "bg-transparent text-slate-500 border-slate-200 dark:border-slate-800"
 	};
 </script>
 

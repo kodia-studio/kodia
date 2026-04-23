@@ -10,6 +10,8 @@
 - **Tailwind v4 Optimized**: Utilizes the latest Tailwind CSS features for styling.
 - **Data Intelligence**: Integrated API Codegen, Optimistic Updates, and Data Virtualization.
 - **Real-time Sync**: Reactive WebSocket stores for instant data synchronization.
+- **Elite DX**: Built-in DevTools (Ctrl+K), Error Boundaries, and Shimmer Skeletons.
+- **Global Ready**: Lightweight i18n engine with lazy loading support.
 - **Offline Ready**: Built-in PWA support with intelligent caching strategies.
 - **Smart Components**: Pre-wired for Kodia Framework's backend error structures and pagination.
 
@@ -36,7 +38,11 @@
 - **Editor**: Elite WYSIWYG editor powered by Tiptap.
 - **BarChart**: High-fidelity data visualization built on LayerChart (D3).
 
-### 📡 Data Layer
+### 🛠️ Developer Experience
+- **Kodia DevTools**: Floating panel for real-time API, state, and socket inspection.
+- **ErrorBoundary**: Safe isolation of component crashes with institutional recovery UI.
+- **KSkeleton**: Premium shimmer loaders for all content types.
+- **i18n**: Reactive translation engine built for performance.
 - **API Codegen**: Run `npm run codegen` to sync types instantly with the backend.
 - **Optimistic Helper**: Use `createOptimistic()` for instant UI feedback with auto-rollback.
 - **Socket Store**: Reactive `socketStore` for institutional-grade WebSocket communication.
