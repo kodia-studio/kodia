@@ -57,6 +57,8 @@ func (d DatabaseConfig) DSN() string {
 	case "mysql":
 		return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 			d.User, d.Password, d.Host, d.Port, d.Name)
+	case "sqlite", "sqlite3":
+		return d.Name
 	default: // postgres
 		return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s TimeZone=%s",
 			d.Host, d.Port, d.User, d.Password, d.Name, d.SSLMode, d.TimeZone)
@@ -157,12 +159,12 @@ func Load() (*Config, error) {
 	v.SetDefault("app.frontend_url", "http://localhost:3000")
 	v.SetDefault("app.locale", "en")
 
-	v.SetDefault("database.driver", "postgres")
+	v.SetDefault("database.driver", "sqlite")
 	v.SetDefault("database.host", "localhost")
 	v.SetDefault("database.port", 5432)
 	v.SetDefault("database.user", "postgres")
 	v.SetDefault("database.password", "password")
-	v.SetDefault("database.name", "kodia_db")
+	v.SetDefault("database.name", "kodia.sqlite")
 	v.SetDefault("database.ssl_mode", "disable")
 	v.SetDefault("database.timezone", "UTC")
 	v.SetDefault("database.max_open_conns", 50)

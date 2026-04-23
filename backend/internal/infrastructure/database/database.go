@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 )
@@ -25,8 +26,10 @@ func New(cfg *config.Config, log *zap.Logger) (*gorm.DB, error) {
 		dialector = mysql.Open(cfg.Database.DSN())
 	case "postgres", "postgresql":
 		dialector = postgres.Open(cfg.Database.DSN())
+	case "sqlite", "sqlite3":
+		dialector = sqlite.Open(cfg.Database.DSN())
 	default:
-		return nil, fmt.Errorf("unsupported database driver: %s (supported: postgres, mysql)", cfg.Database.Driver)
+		return nil, fmt.Errorf("unsupported database driver: %s (supported: sqlite, postgres, mysql)", cfg.Database.Driver)
 	}
 
 	logLevel := gormlogger.Silent
