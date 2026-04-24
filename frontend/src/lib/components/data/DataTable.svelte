@@ -1,22 +1,26 @@
 <script lang="ts" module>
 	import {
-		createSvelteTable,
-		flexRender,
 		getCoreRowModel,
 		getPaginationRowModel,
 		getSortedRowModel,
 		type ColumnDef,
-		type TableOptions,
 		type SortingState,
-		type OnChangeFn
-	} from "@tanstack/svelte-table";
+		type Updater,
+	} from "@tanstack/table-core";
+
+	export function flexRender(content: any, context: any) {
+		if (typeof content === "function") {
+			return content(context);
+		}
+		return content;
+	}
 </script>
 
 <script lang="ts">
+	import { createSvelteTable } from "$lib/components/ui/table/table.svelte";
 	import { cn } from "$lib/utils";
 	import Button from "../ui/Button.svelte";
 	import { ChevronLeft, ChevronRight, ChevronsUpDown, ChevronUp, ChevronDown } from "lucide-svelte";
-	import { writable } from "svelte/store";
 
 	interface Props<TData, TValue> {
 		columns: ColumnDef<TData, TValue>[];
@@ -28,7 +32,7 @@
 
 	let sorting = $state<SortingState>([]);
 
-	const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
+	const handleSortingChange = (updater: Updater<SortingState>) => {
 		if (typeof updater === "function") {
 			sorting = updater(sorting);
 		} else {
@@ -36,20 +40,8 @@
 		}
 	};
 
-	const options = writable<TableOptions<any>>({
-		data: [],
-		columns: [],
-		state: {
-			sorting: []
-		},
-		onSortingChange: handleSortingChange,
-		getCoreRowModel: getCoreRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-	});
-
-	$effect(() => {
-		options.set({
+	const table = $derived.by(() => {
+		return createSvelteTable({
 			data,
 			columns,
 			state: { sorting },
@@ -59,15 +51,13 @@
 			getSortedRowModel: getSortedRowModel(),
 		});
 	});
-
-	const table = createSvelteTable(options);
 </script>
 
 <div class={cn("flex flex-col gap-4", className)}>
 	<div class="rounded-kodia-lg border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-hidden shadow-kodia">
 		<table class="w-full text-left text-sm border-collapse">
 			<thead>
-				{#each $table.getHeaderGroups() as headerGroup}
+				{#each table.getHeaderGroups() as headerGroup}
 					<tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/80">
 						{#each headerGroup.headers as header}
 							<th class="px-4 py-4 font-black uppercase tracking-widest text-[10px] text-slate-500">
@@ -97,7 +87,7 @@
 				{/each}
 			</thead>
 			<tbody>
-				{#each $table.getRowModel().rows as row}
+				{#each table.getRowModel().rows as row}
 					<tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-primary/5 transition-colors">
 						{#each row.getVisibleCells() as cell}
 							<td class="px-4 py-4 text-slate-700 dark:text-slate-300 font-medium">
@@ -119,22 +109,22 @@
 	<!-- Pagination Controls -->
 	<div class="flex items-center justify-between px-2">
 		<div class="text-[10px] font-black uppercase tracking-widest text-slate-500">
-			Page {$table.getState().pagination.pageIndex + 1} of {$table.getPageCount()}
+			Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
 		</div>
 		<div class="flex items-center gap-2">
 			<Button
 				variant="outline"
 				size="icon"
-				onclick={() => $table.previousPage()}
-				disabled={!$table.getCanPreviousPage()}
+				onclick={() => table.previousPage()}
+				disabled={!table.getCanPreviousPage()}
 			>
 				<ChevronLeft class="w-4 h-4" />
 			</Button>
 			<Button
 				variant="outline"
 				size="icon"
-				onclick={() => $table.nextPage()}
-				disabled={!$table.getCanNextPage()}
+				onclick={() => table.nextPage()}
+				disabled={!table.getCanNextPage()}
 			>
 				<ChevronRight class="w-4 h-4" />
 			</Button>

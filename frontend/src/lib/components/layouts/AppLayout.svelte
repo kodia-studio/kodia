@@ -3,6 +3,7 @@
   import DevTools from "../dev/DevTools.svelte";
   import ErrorBoundary from "../ui/ErrorBoundary.svelte";
   import { i18n } from "$lib/stores/i18n.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import { Toaster } from "svelte-sonner";
   import { fade } from "svelte/transition";
   import { onMount } from "svelte";
@@ -12,6 +13,8 @@
   onMount(() => {
     i18n.setLocale('en');
   });
+
+  const theme = $derived(themeStore.dark ? 'dark' : 'light');
 </script>
 
 <div class="relative min-h-screen flex flex-col">
@@ -35,6 +38,6 @@
     </div>
   </footer>
 
-  <Toaster richColors position="top-right" />
+  <Toaster {theme} richColors position="top-right" />
   <DevTools />
 </div>

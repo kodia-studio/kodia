@@ -40,22 +40,9 @@ html {
   }
 }
 
-@layer components {
-  .glass {
-    background-color: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    @apply transition-all duration-500 ease-in-out;
-  }
-
-  .dark .glass {
-    background-color: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(51, 65, 85, 0.4);
-  }
-
+@layer utilities {
   .btn-premium {
-    @apply relative overflow-hidden px-8 py-3 rounded-kodia font-bold text-white 
+    @apply relative overflow-hidden px-8 py-3 rounded-kodia font-bold text-white
            bg-linear-to-r from-primary to-secondary
            transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/20
            active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
@@ -66,7 +53,16 @@ html {
   }
 
   .card-premium {
-    @apply glass p-6 rounded-kodia-lg transition-all duration-500 ease-in-out hover:-translate-y-2 hover:shadow-kodia-xl hover:shadow-primary/10;
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    @apply p-6 rounded-kodia-lg transition-all duration-500 ease-in-out hover:-translate-y-2 hover:shadow-kodia-xl hover:shadow-primary/10;
+  }
+
+  .dark .card-premium {
+    background-color: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(51, 65, 85, 0.4);
   }
 
   /* Form Controls */

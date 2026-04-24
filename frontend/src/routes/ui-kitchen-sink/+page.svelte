@@ -7,7 +7,6 @@
 	import Dropdown from "$lib/components/ui/Dropdown.svelte";
 	import Toast from "$lib/components/ui/Toast.svelte";
 	import Form from "$lib/components/forms/Form.svelte";
-	import SuperFormField from "$lib/components/forms/SuperFormField.svelte";
 	import DataTable from "$lib/components/data/DataTable.svelte";
 	import Uploader from "$lib/components/ui/Uploader.svelte";
 	import BarChart from "$lib/components/charts/BarChart.svelte";
@@ -141,8 +140,16 @@
 			<div class="max-w-xl">
 				<div class="card-premium">
 					<Form form={mockForm} submitLabel="Register Account">
-						<SuperFormField form={mockForm} name="username" label="Username" placeholder="Enter your username" />
-						<SuperFormField form={mockForm} name="email" label="Email Address" type="email" placeholder="you@kodia.id" />
+						<div class="space-y-4">
+							<div>
+								<label for="username" class="block text-sm font-semibold mb-2">Username</label>
+								<Input id="username" placeholder="Enter your username" />
+							</div>
+							<div>
+								<label for="email" class="block text-sm font-semibold mb-2">Email Address</label>
+								<Input id="email" type="email" placeholder="you@kodia.id" />
+							</div>
+						</div>
 					</Form>
 				</div>
 			</div>

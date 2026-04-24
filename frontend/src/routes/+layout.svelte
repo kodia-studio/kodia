@@ -1,15 +1,17 @@
 <script lang="ts">
   import "../app.css";
   import { onMount } from "svelte";
-  import { ModeWatcher } from "mode-watcher";
+  import { initTheme, themeStore } from "$lib/stores/theme.svelte";
   import { Toaster } from "svelte-sonner";
   import { authStore } from "$lib/stores/auth.store";
 
   let { children } = $props();
 
   onMount(() => {
-    // Auth store is now hydrated immediately upon module import
+    initTheme();
   });
+
+  const theme = $derived(themeStore.dark ? 'dark' : 'light');
 </script>
 
 <svelte:head>
@@ -21,8 +23,7 @@
   />
 </svelte:head>
 
-<ModeWatcher />
-<Toaster position="top-right" richColors closeButton />
+<Toaster {theme} position="top-right" richColors closeButton />
 
 <div class="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
   {@render children()}

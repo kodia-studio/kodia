@@ -1,21 +1,23 @@
 <script lang="ts">
 	import { Toaster as Sonner } from "svelte-sonner";
-	import { mode } from "mode-watcher";
+	import { themeStore } from "$lib/stores/theme.svelte";
 
 	interface Props {
 		position?: "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right";
 	}
 
 	let { position = "bottom-right" }: Props = $props();
+
+	const theme = $derived(themeStore.dark ? 'dark' : 'light');
 </script>
 
 <Sonner
-	theme={mode.current}
+	{theme}
 	class="toaster group"
 	{position}
 	toastOptions={{
 		classes: {
-			toast: "group toast group-[.toaster]:glass group-[.toaster]:rounded-kodia group-[.toaster]:border-slate-200 dark:group-[.toaster]:border-slate-800 group-[.toaster]:shadow-kodia-lg",
+			toast: "group toast group-[.toaster]:bg-white group-[.toaster]:dark:bg-slate-900 group-[.toaster]:rounded-kodia group-[.toaster]:border group-[.toaster]:border-slate-200 dark:group-[.toaster]:border-slate-800 group-[.toaster]:shadow-kodia-lg",
 			description: "group-[.toast]:text-slate-500",
 			actionButton: "group-[.toast]:bg-primary group-[.toast]:text-white",
 			cancelButton: "group-[.toast]:bg-slate-100 group-[.toast]:text-slate-500",
