@@ -25,7 +25,6 @@
 		"@types/d3-scale": "^4.0.9",
 		"@types/d3-shape": "^3.1.8",
 		"@types/node": "^24",
-		"@vite-pwa/sveltekit": "^0.4.0",
 		"eslint": "^10.2.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.17.0",
@@ -40,8 +39,7 @@
 		"tailwindcss": "^4.2.2",
 		"typescript": "^6.0.2",
 		"typescript-eslint": "^8.58.1",
-		"vite": "^8.0.7",
-		"vite-plugin-pwa": "^0.19.8"
+		"vite": "^8.0.7"
 	},
 	"dependencies": {
 		"@internationalized/date": "^3.12.1",

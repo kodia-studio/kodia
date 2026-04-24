@@ -98,8 +98,8 @@ func (r *Router) Setup() *gin.Engine {
 	}
 	engine.Use(cors.New(corsConfig))
 
-	// Profiling endpoints (pprof) - Development only or protected
-	if !r.cfg.IsProduction() || r.cfg.App.Debug {
+	// Profiling endpoints (pprof) - Development only
+	if !r.cfg.IsProduction() {
 		pprofGroup := engine.Group("/debug/pprof")
 		{
 			pprofGroup.GET("/", gin.WrapF(pprof.Index))

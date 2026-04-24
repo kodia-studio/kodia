@@ -163,7 +163,7 @@ func Load() (*Config, error) {
 	v.SetDefault("database.host", "localhost")
 	v.SetDefault("database.port", 5432)
 	v.SetDefault("database.user", "postgres")
-	v.SetDefault("database.password", "password")
+	// database.password: no default — must be set explicitly
 	v.SetDefault("database.name", "kodia.sqlite")
 	v.SetDefault("database.ssl_mode", "disable")
 	v.SetDefault("database.timezone", "UTC")
