@@ -45,6 +45,7 @@ Welcome to the Kodia Framework documentation. This guide helps you navigate all 
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Framework design & patterns | All developers |
+| [DATABASE_SETUP.md](DATABASE_SETUP.md) | Database configuration & setup | Backend developers |
 | [ORM_GUIDE.md](ORM_GUIDE.md) | Database operations with GORM | Backend developers |
 | [VALIDATION_LAYER.md](VALIDATION_LAYER.md) | Request validation system | Backend developers |
 | [VALIDATION_QUICK_REFERENCE.md](VALIDATION_QUICK_REFERENCE.md) | Validation cheat sheet | Backend developers |
@@ -83,10 +84,11 @@ Welcome to the Kodia Framework documentation. This guide helps you navigate all 
 ### 🚀 Getting Started
 
 1. [ARCHITECTURE.md](ARCHITECTURE.md) — Understand the big picture
-2. [VALIDATION_QUICK_REFERENCE.md](VALIDATION_QUICK_REFERENCE.md) — Learn validation basics
-3. [ORM_GUIDE.md](ORM_GUIDE.md) — Master database operations
+2. [DATABASE_SETUP.md](DATABASE_SETUP.md) — Configure your database (SQLite or PostgreSQL)
+3. [VALIDATION_QUICK_REFERENCE.md](VALIDATION_QUICK_REFERENCE.md) — Learn validation basics
+4. [ORM_GUIDE.md](ORM_GUIDE.md) — Master database operations
 
-**Time:** ~1 hour
+**Time:** ~1.5 hours
 
 ### 🔒 Security Hardening
 
@@ -172,6 +174,11 @@ Welcome to the Kodia Framework documentation. This guide helps you navigate all 
 ### "How do I protect my API from abuse?"
 
 → [RATE_LIMITING.md](RATE_LIMITING.md)
+
+### "How do I set up the database?"
+
+→ [DATABASE_SETUP.md](DATABASE_SETUP.md) — SQLite (instant) or PostgreSQL  
+→ [ORM_GUIDE.md](ORM_GUIDE.md) — Write queries
 
 ### "How do I work with databases?"
 
