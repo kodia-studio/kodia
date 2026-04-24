@@ -8,7 +8,6 @@ import (
 	"github.com/kodia-studio/kodia/internal/infrastructure/broadcasting"
 	notifinfra "github.com/kodia-studio/kodia/internal/infrastructure/notification"
 	"github.com/kodia-studio/kodia/internal/infrastructure/notification/channels"
-	"github.com/kodia-studio/kodia/pkg/config"
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	"github.com/kodia-studio/kodia/pkg/kodia"
 )
@@ -21,7 +20,7 @@ func NewRealtimeProvider() *RealtimeProvider { return &RealtimeProvider{} }
 func (p *RealtimeProvider) Name() string { return "kodia:realtime" }
 
 func (p *RealtimeProvider) Register(app *kodia.App) error {
-	cfg := app.MustGet("config").(*config.Config)
+	cfg := app.Config
 
 	// 1. SSE Manager
 	sseManager := sse.NewManager()
@@ -32,7 +31,7 @@ func (p *RealtimeProvider) Register(app *kodia.App) error {
 	app.Set("sse_handler", sseHandler)
 
 	// 3. Event Broadcaster (WS Hub + SSE)
-	hub := app.MustGet("ws_hub").(*ws.Hub)
+	hub := kodia.MustResolve[*ws.Hub](app, "ws_hub")
 	eventBroadcaster := broadcasting.NewEventBroadcaster(hub, sseManager, app.Log)
 	app.Set("event_broadcaster", eventBroadcaster)
 	app.Set("broadcaster_port", ports.Broadcaster(eventBroadcaster))
@@ -41,7 +40,7 @@ func (p *RealtimeProvider) Register(app *kodia.App) error {
 	notifManager := notifinfra.NewManager(app.Log)
 
 	// Email — always registered, wraps existing Mailer port
-	mailer := app.MustGet("mailer").(ports.Mailer)
+	mailer := kodia.MustResolve[ports.Mailer](app, "mailer")
 	notifManager.Register(channels.NewEmailChannel(mailer))
 
 	// WebSocket in-app channel — always registered
@@ -77,8 +76,8 @@ func (p *RealtimeProvider) Boot(app *kodia.App) error {
 		return nil
 	}
 
-	sseHandler := app.MustGet("sse_handler").(*sse.Handler)
-	jwtManager := app.MustGet("jwt_manager").(*jwt.Manager)
+	sseHandler := kodia.MustResolve[*sse.Handler](app, "sse_handler")
+	jwtManager := kodia.MustResolve[*jwt.Manager](app, "jwt_manager")
 
 	sseGroup := app.Router.Group("/api/v1/sse")
 	{

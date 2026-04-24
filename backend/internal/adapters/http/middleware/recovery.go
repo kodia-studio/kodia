@@ -1,10 +1,9 @@
 package middleware
 
 import (
-	"net/http"
-
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
+	"github.com/kodia-studio/kodia/pkg/response"
 	"go.uber.org/zap"
 )
 
@@ -27,10 +26,7 @@ func Recovery(log *zap.Logger) gin.HandlerFunc {
 					hub.RecoverWithContext(c.Request.Context(), err)
 				}
 
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"success": false,
-					"message": "An unexpected error occurred",
-				})
+				response.InternalServerError(c, "An unexpected error occurred")
 				c.Abort()
 			}
 		}()

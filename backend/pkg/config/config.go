@@ -26,13 +26,14 @@ type Config struct {
 
 // AppConfig holds general application settings.
 type AppConfig struct {
-	Name        string `mapstructure:"name"`
-	Env         string `mapstructure:"env"`
-	Port        int    `mapstructure:"port"`
-	Debug       bool   `mapstructure:"debug"`
-	BaseURL     string `mapstructure:"base_url"`
-	FrontendURL string `mapstructure:"frontend_url"`
-	Locale      string `mapstructure:"locale"`
+	Name                 string `mapstructure:"name"`
+	Env                  string `mapstructure:"env"`
+	Port                 int    `mapstructure:"port"`
+	Debug                bool   `mapstructure:"debug"`
+	BaseURL              string `mapstructure:"base_url"`
+	FrontendURL          string `mapstructure:"frontend_url"`
+	Locale               string `mapstructure:"locale"`
+	ShutdownTimeoutSecs  int    `mapstructure:"shutdown_timeout_secs"`
 }
 
 // DatabaseConfig holds database connection settings.
@@ -158,6 +159,7 @@ func Load() (*Config, error) {
 	v.SetDefault("app.base_url", "http://localhost:8080")
 	v.SetDefault("app.frontend_url", "http://localhost:3000")
 	v.SetDefault("app.locale", "en")
+	v.SetDefault("app.shutdown_timeout_secs", 30)
 
 	v.SetDefault("database.driver", "sqlite")
 	v.SetDefault("database.host", "localhost")

@@ -72,6 +72,7 @@ func (r *Router) Setup() *gin.Engine {
 	engine := gin.New()
 
 	// Global middleware
+	engine.Use(middleware.RequestID())
 	engine.Use(middleware.Recovery(r.log))
 	engine.Use(middleware.Logger(r.log))
 
@@ -119,6 +120,12 @@ func (r *Router) Setup() *gin.Engine {
 	// API grouped routes
 	api := engine.Group("/api")
 	{
+		// Apply global rate limiting to all /api/* routes
+		if r.redisClient != nil {
+			globalLimiter := middleware.LooseRateLimiter(r.redisClient, r.log)
+			api.Use(globalLimiter.Middleware())
+		}
+
 		// API Documentation (Swagger) - Development only
 		if !r.cfg.IsProduction() {
 			api.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

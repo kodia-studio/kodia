@@ -51,8 +51,8 @@ func (p *UserProvider) Boot(app *kodia.App) error {
 }
 
 func (p *UserProvider) registerRoutes(app *kodia.App) {
-	userHandler := app.MustGet("user_handler").(*handlers.UserHandler)
-	jwtManager := app.MustGet("jwt_manager").(*jwt.Manager)
+	userHandler := kodia.MustResolve[*handlers.UserHandler](app, "user_handler")
+	jwtManager := kodia.MustResolve[*jwt.Manager](app, "jwt_manager")
 	
 	api := app.Router.Group("/api")
 	users := api.Group("/users")

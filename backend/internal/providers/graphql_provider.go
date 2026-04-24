@@ -18,8 +18,8 @@ func (p *GraphQLProvider) Name() string {
 }
 
 func (p *GraphQLProvider) Register(app *kodia.App) error {
-	authService := app.MustGet("auth_service").(ports.AuthService)
-	userService := app.MustGet("user_service").(ports.UserService)
+	authService := kodia.MustResolve[ports.AuthService](app, "auth_service")
+	userService := kodia.MustResolve[ports.UserService](app, "user_service")
 	
 	graphqlHandler := handlers.NewGraphQLHandler(authService, userService, app.Log)
 	app.Set("graphql_handler", graphqlHandler)
@@ -29,7 +29,7 @@ func (p *GraphQLProvider) Register(app *kodia.App) error {
 
 func (p *GraphQLProvider) Boot(app *kodia.App) error {
 	if app.Router != nil {
-		h := app.MustGet("graphql_handler").(*handlers.GraphQLHandler)
+		h := kodia.MustResolve[*handlers.GraphQLHandler](app, "graphql_handler")
 		api := app.Router.Group("/api")
 		api.POST("/query", middleware.GraphQLContextMiddleware(), h.QueryHandler())
 		

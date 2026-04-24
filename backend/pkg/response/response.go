@@ -10,11 +10,13 @@ import (
 
 // Response is the standard API response envelope.
 type Response struct {
-	Success bool        `json:"success"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-	Errors  interface{} `json:"errors,omitempty"`
-	Meta    *Meta       `json:"meta,omitempty"`
+	Success   bool        `json:"success"`
+	Message   string      `json:"message"`
+	ErrorCode string      `json:"error_code,omitempty"`
+	RequestID string      `json:"request_id,omitempty"`
+	Data      interface{} `json:"data,omitempty"`
+	Errors    interface{} `json:"errors,omitempty"`
+	Meta      *Meta       `json:"meta,omitempty"`
 }
 
 // Meta holds pagination and other metadata.
@@ -27,7 +29,7 @@ type Meta struct {
 
 // OK sends a 200 OK response with data.
 func OK(c *gin.Context, message string, data interface{}) {
-	c.JSON(http.StatusOK, Response{
+	send(c, http.StatusOK, Response{
 		Success: true,
 		Message: message,
 		Data:    data,
@@ -36,7 +38,7 @@ func OK(c *gin.Context, message string, data interface{}) {
 
 // OKWithMeta sends a 200 OK response with data and pagination metadata.
 func OKWithMeta(c *gin.Context, message string, data interface{}, meta *Meta) {
-	c.JSON(http.StatusOK, Response{
+	send(c, http.StatusOK, Response{
 		Success: true,
 		Message: message,
 		Data:    data,
@@ -46,7 +48,7 @@ func OKWithMeta(c *gin.Context, message string, data interface{}, meta *Meta) {
 
 // Created sends a 201 Created response.
 func Created(c *gin.Context, message string, data interface{}) {
-	c.JSON(http.StatusCreated, Response{
+	send(c, http.StatusCreated, Response{
 		Success: true,
 		Message: message,
 		Data:    data,
@@ -60,7 +62,7 @@ func NoContent(c *gin.Context) {
 
 // BadRequest sends a 400 Bad Request response with validation errors.
 func BadRequest(c *gin.Context, message string, errors interface{}) {
-	c.JSON(http.StatusBadRequest, Response{
+	send(c, http.StatusBadRequest, Response{
 		Success: false,
 		Message: message,
 		Errors:  errors,
@@ -72,7 +74,7 @@ func Unauthorized(c *gin.Context, message string) {
 	if message == "" {
 		message = "Unauthorized"
 	}
-	c.JSON(http.StatusUnauthorized, Response{
+	send(c, http.StatusUnauthorized, Response{
 		Success: false,
 		Message: message,
 	})
@@ -83,7 +85,7 @@ func Forbidden(c *gin.Context, message string) {
 	if message == "" {
 		message = "Forbidden"
 	}
-	c.JSON(http.StatusForbidden, Response{
+	send(c, http.StatusForbidden, Response{
 		Success: false,
 		Message: message,
 	})
@@ -94,7 +96,7 @@ func NotFound(c *gin.Context, message string) {
 	if message == "" {
 		message = "Resource not found"
 	}
-	c.JSON(http.StatusNotFound, Response{
+	send(c, http.StatusNotFound, Response{
 		Success: false,
 		Message: message,
 	})
@@ -102,7 +104,7 @@ func NotFound(c *gin.Context, message string) {
 
 // Conflict sends a 409 Conflict response.
 func Conflict(c *gin.Context, message string) {
-	c.JSON(http.StatusConflict, Response{
+	send(c, http.StatusConflict, Response{
 		Success: false,
 		Message: message,
 	})
@@ -110,7 +112,7 @@ func Conflict(c *gin.Context, message string) {
 
 // UnprocessableEntity sends a 422 response for business logic validation failures.
 func UnprocessableEntity(c *gin.Context, message string, errors interface{}) {
-	c.JSON(http.StatusUnprocessableEntity, Response{
+	send(c, http.StatusUnprocessableEntity, Response{
 		Success: false,
 		Message: message,
 		Errors:  errors,
@@ -119,9 +121,9 @@ func UnprocessableEntity(c *gin.Context, message string, errors interface{}) {
 
 // TooManyRequests sends a 429 Too Many Requests response.
 func TooManyRequests(c *gin.Context) {
-	c.JSON(http.StatusTooManyRequests, Response{
+	send(c, http.StatusTooManyRequests, Response{
 		Success: false,
-		Message: "Too many requests. Please slow down.",
+		Message: "Too many requests. Please slow down and try again.",
 	})
 }
 
@@ -130,10 +132,18 @@ func InternalServerError(c *gin.Context, message string) {
 	if message == "" {
 		message = "Internal server error"
 	}
-	c.JSON(http.StatusInternalServerError, Response{
+	send(c, http.StatusInternalServerError, Response{
 		Success: false,
 		Message: message,
 	})
+}
+
+// send is an internal helper that injects request_id from context and sends the response.
+func send(c *gin.Context, status int, r Response) {
+	if reqID := c.GetString("request_id"); reqID != "" {
+		r.RequestID = reqID
+	}
+	c.JSON(status, r)
 }
 
 // NewMeta constructs a Meta struct for paginated responses.

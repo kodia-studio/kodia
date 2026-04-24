@@ -114,27 +114,35 @@ func (a *App) Run() error {
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	sig := <-quit
 
-	a.Log.Info("Shutting down application...")
+	a.Log.Info("Signal received", zap.String("signal", sig.String()))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// Use configurable shutdown timeout
+	timeout := time.Duration(a.Config.App.ShutdownTimeoutSecs) * time.Second
+	if timeout == 0 {
+		timeout = 30 * time.Second
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	// 1. Shutdown HTTP Server first to stop receiving new requests
+	a.Log.Info("Draining connections...", zap.Duration("timeout", timeout))
 	if err := server.Shutdown(ctx); err != nil {
-		a.Log.Error("Server forced to shutdown", zap.Error(err))
+		a.Log.Error("HTTP server forced shutdown", zap.Error(err))
 	}
 
 	// 2. Execute all registered cleanup tasks (DB, Redis, Tracing, etc.)
+	a.Log.Info("Running cleanup tasks...", zap.Int("count", len(a.cleanupTasks)))
 	for i := len(a.cleanupTasks) - 1; i >= 0; i-- {
 		if err := a.cleanupTasks[i](ctx); err != nil {
 			a.Log.Error("Cleanup task failed", zap.Error(err))
 		}
 	}
 
-	a.Log.Info("Application stopped gracefully")
+	a.Log.Info("Shutdown complete")
 	return nil
 }
 

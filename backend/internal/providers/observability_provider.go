@@ -51,7 +51,7 @@ func (p *ObservabilityProvider) Register(app *kodia.App) error {
 
 func (p *ObservabilityProvider) Boot(app *kodia.App) error {
 	if app.Router != nil {
-		healthHandler := app.MustGet("health_handler").(*handlers.HealthHandler)
+		healthHandler := kodia.MustResolve[*handlers.HealthHandler](app, "health_handler")
 		
 		// Register Health Routes
 		api := app.Router.Group("/api/v1")

@@ -36,12 +36,45 @@ Kodia comes pre-packaged with several official providers to ensure you're ready 
 
 Kodia uses a simple, thread-safe internal container to share services between providers. You can store anything in the container during registration and retrieve it during booting.
 
+### Type-Safe Container Access
+
+**Modern Pattern (v1.6.0+):**
 ```go
 // Storing a service
-app.Set("my_service", services.NewMyService())
+app.Set("auth_service", services.NewAuthService(...))
 
-// Retrieving a service (with automatic panic if missing)
+// Type-safe retrieval with compile-time safety
+authService := kodia.MustResolve[ports.AuthService](app, "auth_service")
+// panics with descriptive message if key not found or wrong type
+```
+
+**Benefits:**
+- ✅ Compile-time type checking
+- ✅ No runtime type assertions needed
+- ✅ Panic message shows expected type
+- ✅ Full IDE autocomplete support
+- ✅ Backward compatible with `app.MustGet()`
+
+**Legacy Pattern (still supported):**
+```go
+// Manual type assertion — works but less safe
 service := app.MustGet("my_service").(ports.MyService)
+// panics with generic "not found" if missing
+```
+
+### Generic Helpers
+
+`kodia` package provides two generic helpers:
+
+```go
+// Resolve[T] returns (value, ok) — safe for optional dependencies
+authService, ok := kodia.Resolve[ports.AuthService](app, "auth_service")
+if !ok {
+    // Service not found or wrong type
+}
+
+// MustResolve[T] panics if not found — for required dependencies
+authService := kodia.MustResolve[ports.AuthService](app, "auth_service")
 ```
 
 ## Extending with Third-Party Plugins

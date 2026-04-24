@@ -44,7 +44,7 @@ func (p *PulseProvider) Boot(app *kodia.App) error {
 
 	// 2. Register real-time stream route if router is available
 	if app.Router != nil {
-		jwtManager := app.MustGet("jwt_manager").(*jwt.Manager)
+		jwtManager := kodia.MustResolve[*jwt.Manager](app, "jwt_manager")
 		handler := handlers.NewPulseHandler(p.manager, app.Log)
 
 		pulse := app.Router.Group("/api/pulse")

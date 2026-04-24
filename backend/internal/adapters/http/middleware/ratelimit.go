@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kodia-studio/kodia/pkg/response"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -60,11 +60,7 @@ func (rl *RateLimiter) Middleware() gin.HandlerFunc {
 				zap.Int64("window_secs", rl.windowSecs),
 				zap.Int64("retry_after", retryAfter),
 			)
-			c.JSON(http.StatusTooManyRequests, gin.H{
-				"error":   "Rate limit exceeded",
-				"message": fmt.Sprintf("Maximum %d requests per %d seconds", rl.maxRequests, rl.windowSecs),
-			})
-			c.Abort()
+			response.TooManyRequests(c)
 			return
 		}
 

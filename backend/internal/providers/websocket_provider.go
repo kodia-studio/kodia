@@ -21,7 +21,7 @@ func (p *WebSocketProvider) Register(app *kodia.App) error {
 	go hub.Run()
 	app.Set("ws_hub", hub)
 
-	jwtManager := app.MustGet("jwt_manager").(*jwt.Manager)
+	jwtManager := kodia.MustResolve[*jwt.Manager](app, "jwt_manager")
 	wsHandler := websocket.NewHandler(hub, jwtManager, app.Log)
 	app.Set("ws_handler", wsHandler)
 
@@ -30,7 +30,7 @@ func (p *WebSocketProvider) Register(app *kodia.App) error {
 
 func (p *WebSocketProvider) Boot(app *kodia.App) error {
 	if app.Router != nil {
-		wsHandler := app.MustGet("ws_handler").(*websocket.Handler)
+		wsHandler := kodia.MustResolve[*websocket.Handler](app, "ws_handler")
 		api := app.Router.Group("/api/ws")
 		{
 			api.GET("", wsHandler.ServeWS)

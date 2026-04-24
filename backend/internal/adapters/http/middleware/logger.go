@@ -20,6 +20,7 @@ func Logger(log *zap.Logger) gin.HandlerFunc {
 		clientIP := c.ClientIP()
 		method := c.Request.Method
 		userID := GetUserID(c)
+		requestID := c.GetString(RequestIDKey)
 
 		fields := []zap.Field{
 			zap.Int("status", statusCode),
@@ -27,6 +28,10 @@ func Logger(log *zap.Logger) gin.HandlerFunc {
 			zap.String("path", path),
 			zap.String("ip", clientIP),
 			zap.Duration("latency", latency),
+		}
+
+		if requestID != "" {
+			fields = append(fields, zap.String("request_id", requestID))
 		}
 
 		if userID != "" {

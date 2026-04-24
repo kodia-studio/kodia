@@ -34,10 +34,10 @@ func (p *AuthProvider) Register(app *kodia.App) error {
 	// 2. Repositories
 	userRepo := postgres.NewUserRepository(app.DB)
 	refreshRepo := postgres.NewRefreshTokenRepository(app.DB)
-	
+
 	// Retrieve infra from container
-	cacheProvider := app.MustGet("cache").(ports.CacheProvider)
-	mailProvider := app.MustGet("mailer").(ports.Mailer)
+	cacheProvider := kodia.MustResolve[ports.CacheProvider](app, "cache")
+	mailProvider := kodia.MustResolve[ports.Mailer](app, "mailer")
 
 	// 3. Services
 	authService := services.NewAuthService(
@@ -69,8 +69,8 @@ func (p *AuthProvider) Boot(app *kodia.App) error {
 }
 
 func (p *AuthProvider) registerRoutes(app *kodia.App) {
-	authHandler := app.MustGet("auth_handler").(*handlers.AuthHandler)
-	jwtManager := app.MustGet("jwt_manager").(*jwt.Manager)
+	authHandler := kodia.MustResolve[*handlers.AuthHandler](app, "auth_handler")
+	jwtManager := kodia.MustResolve[*jwt.Manager](app, "jwt_manager")
 	
 	api := app.Router.Group("/api")
 	auth := api.Group("/auth")

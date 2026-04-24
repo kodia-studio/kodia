@@ -49,15 +49,45 @@ Client Request → Middleware → Check Rate Limit in Redis
                         Exceeded Limit → Reject (429)
 ```
 
-### 2. Protected Authentication Endpoints
+### 2. Global Rate Limiting (v1.6.0+)
 
 **File: `internal/adapters/http/router.go`**
 
+All `/api/*` routes now have automatic rate limiting applied:
+
 ```go
-// Auth routes with rate limiting
-auth := api.Group("/auth")
+// API grouped routes
+api := engine.Group("/api")
 {
-    // 5 requests per 15 minutes per IP
+    // Global rate limiting: 100 requests per minute per IP
+    if r.redisClient != nil {
+        globalLimiter := middleware.LooseRateLimiter(r.redisClient, r.log)
+        api.Use(globalLimiter.Middleware())  // applies to ALL /api/* routes
+    }
+
+    // All routes under /api/* automatically rate limited
+    v1 := api.Group("/v1")
+    // ... routes here ...
+}
+```
+
+**Benefits:**
+- ✅ Protects all endpoints from abuse
+- ✅ Prevents DDoS attacks
+- ✅ Single configuration point
+- ✅ Can be layered with endpoint-specific limits
+
+### 3. Protected Authentication Endpoints
+
+**File: `internal/adapters/http/router.go`**
+
+Auth endpoints have stricter limits on top of global rate limiting:
+
+```go
+// Auth routes with stricter rate limiting (5 per 15 min)
+auth := v1.Group("/auth")
+{
+    // 5 requests per 15 minutes per IP (stricter than global 100/min)
     authLimiter := middleware.AuthEndpointRateLimiter(redisClient, logger)
     
     auth.POST("/register", authLimiter.Middleware(), r.authHandler.Register)
@@ -65,6 +95,11 @@ auth := api.Group("/auth")
     auth.POST("/refresh", authLimiter.Middleware(), r.authHandler.RefreshToken)
 }
 ```
+
+**Layered Rate Limiting:**
+- Global limit: 100 req/min (protects all endpoints)
+- Auth limit: 5 req/15min (stricter, protects auth specifically)
+- Client hits whichever limit is reached first
 
 ### 3. Rate Limiting Configuration
 

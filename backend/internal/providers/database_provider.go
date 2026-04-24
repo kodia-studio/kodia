@@ -2,8 +2,11 @@ package providers
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/kodia-studio/kodia/internal/infrastructure/database"
+	infradb "github.com/kodia-studio/kodia/internal/infrastructure/database"
+	migrations "github.com/kodia-studio/kodia/internal/infrastructure/database/migrations/go"
+	"github.com/kodia-studio/kodia/pkg/database"
 	"github.com/kodia-studio/kodia/pkg/kodia"
 )
 
@@ -18,7 +21,7 @@ func (p *DatabaseProvider) Name() string {
 }
 
 func (p *DatabaseProvider) Register(app *kodia.App) error {
-	db, err := database.New(app.Config, app.Log)
+	db, err := infradb.New(app.Config, app.Log)
 	if err != nil {
 		return err
 	}
@@ -33,10 +36,24 @@ func (p *DatabaseProvider) Register(app *kodia.App) error {
 		app.Log.Info("Closing database connection...")
 		return sqlDB.Close()
 	})
-	
+
 	return nil
 }
 
 func (p *DatabaseProvider) Boot(app *kodia.App) error {
+	migrator := database.NewMigrator(app.DB, app.Log)
+
+	// Ensure the migrations tracking table exists
+	if err := migrator.EnsureTable(); err != nil {
+		return fmt.Errorf("failed to ensure migrations table: %w", err)
+	}
+
+	// Run all registered migrations
+	for _, entry := range migrations.All() {
+		if err := migrator.Run(entry.Name, entry.Migration.(database.Migration)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
