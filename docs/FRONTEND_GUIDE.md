@@ -7,7 +7,38 @@ The Kodia Framework features a premium, enterprise-grade frontend system built o
 1.  **Svelte 5 Runes**: Leveraging `$state`, `$derived`, and `$effect` for highly performant and reactive state management.
 2.  **Tailwind 4 Design System**: A modernized design system focused on HSL variables for flexible theming and dark mode support.
 3.  **Bits UI Foundation**: All interactive components (Selects, Modals, DatePickers) are built on top of the accessible Bits UI primitives.
-4.  **TanStack Table**: Advanced data grids with sorting, filtering, and pagination out of the box.
+4.  **TanStack Table Core**: Advanced data grids with sorting, filtering, and pagination using a custom Svelte 5 adapter.
+5.  **Framework Independence**: All UI components and utilities are built internally with zero third-party component dependencies.
+
+---
+
+## Dark Mode & Theme System
+
+The Kodia Framework includes a native, built-in dark mode system powered by **Svelte 5 runes**:
+
+### `themeStore` (`$lib/stores/theme.svelte.ts`)
+
+A singleton reactive store that manages theme state:
+
+```typescript
+import { themeStore, initTheme } from '$lib/stores/theme.svelte';
+
+// Initialize on app startup (called in +layout.svelte)
+initTheme();
+
+// Reactive access to dark mode state
+const isDark = $derived(themeStore.dark);
+
+// Toggle theme
+themeStore.toggle();
+```
+
+**Features:**
+- Automatically detects system preference (`prefers-color-scheme`)
+- Persists user selection to `localStorage` as `theme: 'dark' | 'light'`
+- Applies `.dark` class to `<html>` element for Tailwind CSS dark mode
+- Fully reactive with Svelte 5 `$state` and `$derived`
+- No external dependencies (replaces deprecated `mode-watcher`)
 
 ---
 
@@ -25,9 +56,10 @@ Layouts are located in `$lib/components/layouts`. They provide the structural fr
 
 ### Form System (`$lib/components/forms`)
 
-Our form system is designed to work seamlessly with **SvelteKit Superforms** and **Zod** validation.
+Our form system is designed around **Bits UI** for accessibility primitives and seamlessly integrates with **SvelteKit Superforms** for server-side validation.
 
--   **FormField**: Wraps inputs with labels, error messages, and descriptions.
+-   **KForm**: A wrapper component around Superforms for simplified form handling with error display.
+-   **Form**: Base form component for building custom forms with validation integration.
 -   **Input**: A standardized text input with support for icons and error states.
 -   **Select**: An accessible, premium selection component built with Bits UI.
 -   **Checkbox**: A fully styled, accessible checkbox.
@@ -36,9 +68,23 @@ Our form system is designed to work seamlessly with **SvelteKit Superforms** and
 
 ### Data & Analytics (`$lib/components/data` & `charts`)
 
--   **DataTable**: A high-performance table component using TanStack Table.
+-   **DataTable**: A high-performance table component using TanStack Table Core with custom Svelte 5 adapter. Features sorting, pagination, and fully reactive state via `$state` runes.
+    
+-   **AreaChart** & **BarChart**: Built-in chart components using pure SVG and D3 scale/shape functions. Features include:
+    - Interactive tooltips on hover
+    - Responsive scaling
+    - Dark mode support via Tailwind CSS
+    - No external charting dependencies
+    
+    ```typescript
+    <AreaChart
+      data={[{ date: new Date(), value: 100 }, ...]}
+      height={300}
+      color="hsl(var(--primary))"
+    />
+    ```
+    
 -   **ChartCard**: A container for analytics featuring titles, subtitles, and action areas.
--   **AreaChart**: A responsive area chart visualization built on **LayerChart** and **D3**.
 
 ---
 
