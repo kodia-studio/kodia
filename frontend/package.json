@@ -43,7 +43,7 @@
 	},
 	"dependencies": {
 		"@internationalized/date": "^3.12.1",
-		"@tanstack/svelte-table": "^8.21.3",
+		"@tanstack/svelte-table": "9.0.0-alpha.34",
 		"@tanstack/table-core": "^8.20.5",
 		"@tiptap/core": "^3.22.4",
 		"@tiptap/starter-kit": "^3.22.4",
