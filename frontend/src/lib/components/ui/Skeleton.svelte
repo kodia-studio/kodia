@@ -37,7 +37,7 @@
 	{style}
 >
 	<!-- Shimmer Effect -->
-	<div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 dark:via-white/5 to-transparent shimmer-animation"></div>
+	<div class="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/10 dark:via-white/5 to-transparent shimmer-animation"></div>
 </div>
 
 <style>
