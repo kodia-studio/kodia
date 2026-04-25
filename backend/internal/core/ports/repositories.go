@@ -100,3 +100,45 @@ type NotificationRepository interface {
 	CountUnread(ctx context.Context, userID string) (int64, error)
 }
 
+// RoleRepository defines all database operations for roles.
+type RoleRepository interface {
+	// Create persists a new role to the database.
+	Create(ctx context.Context, role *domain.RoleEntity) error
+
+	// FindByName retrieves a role by its name.
+	FindByName(ctx context.Context, name string) (*domain.RoleEntity, error)
+
+	// FindAll retrieves all roles.
+	FindAll(ctx context.Context) ([]*domain.RoleEntity, error)
+
+	// Update persists changes to an existing role.
+	Update(ctx context.Context, role *domain.RoleEntity) error
+
+	// Delete soft-deletes a role by its ID.
+	Delete(ctx context.Context, id string) error
+
+	// AssignToUser assigns a role to a user.
+	AssignToUser(ctx context.Context, userID, roleName string) error
+
+	// RevokeFromUser revokes a role from a user.
+	RevokeFromUser(ctx context.Context, userID, roleName string) error
+
+	// GetUserRoles retrieves all role names assigned to a user.
+	GetUserRoles(ctx context.Context, userID string) ([]string, error)
+}
+
+// PermissionRepository defines all database operations for permissions.
+type PermissionRepository interface {
+	// FindAll retrieves all permissions.
+	FindAll(ctx context.Context) ([]*domain.PermissionEntity, error)
+
+	// FindByName retrieves a permission by its name.
+	FindByName(ctx context.Context, name string) (*domain.PermissionEntity, error)
+
+	// Create persists a new permission to the database.
+	Create(ctx context.Context, perm *domain.PermissionEntity) error
+
+	// FindByGroup retrieves all permissions in a group.
+	FindByGroup(ctx context.Context, group string) ([]*domain.PermissionEntity, error)
+}
+

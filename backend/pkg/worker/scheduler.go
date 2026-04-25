@@ -28,6 +28,7 @@ func NewScheduler(redisAddr string, redisPassword string, redisDB int) *Schedule
 // JobBuilder helps build a scheduled job using a fluent API.
 type JobBuilder struct {
 	scheduler *Scheduler
+	interval  int
 	cron      string
 	task      *asynq.Task
 }
@@ -37,24 +38,25 @@ type JobBuilder struct {
 func (s *Scheduler) Every(interval int) *JobBuilder {
 	return &JobBuilder{
 		scheduler: s,
+		interval:  interval,
 	}
 }
 
 // Minute sets the interval to minutes.
 func (jb *JobBuilder) Minute() *JobBuilder {
-	jb.cron = "*/1 * * * *" // Simplified for MVP, real impl would use interval
+	jb.cron = fmt.Sprintf("*/%d * * * *", jb.interval)
 	return jb
 }
 
 // Hour sets the interval to hours.
 func (jb *JobBuilder) Hour() *JobBuilder {
-	jb.cron = "0 * * * *"
+	jb.cron = fmt.Sprintf("0 */%d * * *", jb.interval)
 	return jb
 }
 
 // Day sets the interval to days.
 func (jb *JobBuilder) Day() *JobBuilder {
-	jb.cron = "0 0 * * *"
+	jb.cron = fmt.Sprintf("0 0 */%d * *", jb.interval)
 	return jb
 }
 

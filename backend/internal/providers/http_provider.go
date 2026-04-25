@@ -30,6 +30,11 @@ func (p *HttpProvider) Register(app *kodia.App) error {
 	engine.Use(middleware.Recovery(app.Log))
 	engine.Use(middleware.Logger(app.Log))
 
+	// Sentry Performance Tracing (before OTEL tracing for proper span hierarchy)
+	if app.Config.Observability.SentryDSN != "" {
+		engine.Use(middleware.SentryTracing(app.Config.Observability.SentryDSN))
+	}
+
 	// Tracing & Metrics Middleware
 	if app.Config.Observability.TracingEnabled {
 		engine.Use(middleware.Tracing(app.Config.Observability.ServiceName))

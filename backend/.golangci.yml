@@ -1,0 +1,107 @@
+run:
+  deadline: 5m
+  build-tags:
+    - bench
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters:
+  enable:
+    - bodyclose
+    - cyclonumber: error checking for unclosed HTTP responses
+    - deadcode
+    - errcheck
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - gosimple
+    - govet
+    - ineffassign
+    - interfacer
+    - lll
+    - misspell
+    - nakedret
+    - nolintlint
+    - rowserrcheck
+    - scopelint
+    - sqlclosecheck
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  gocyclo:
+    min-complexity: 15
+
+  goimports:
+    local-prefixes: github.com/kodia-studio/kodia
+
+  golint:
+    min-confidence: 0.8
+
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+      - shadow
+
+  lll:
+    line-length: 120
+    tab-width: 1
+
+  misspell:
+    locale: US
+
+  nolintlint:
+    allow-leading-space: true
+    allow-unused: false
+    require-explanation: false
+    require-specific: false
+
+issues:
+  # Maximum issues count per one linter. Set to unlimited: 0
+  max-issues-per-linter: 0
+
+  # Maximum count of issues with the same text. Set to unlimited: 0
+  max-same-issues: 0
+
+  # Exclude some linters from running on tests files.
+  exclude-rules:
+    - path: _test\.go$
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - lll
+
+    - path: pkg/testing
+      linters:
+        - golint
+        - gocyclo
+
+    - linters:
+        - gocritic
+      text: "commentedOutCode|hugeParam"
+
+    - linters:
+        - govet
+      text: "shadow"
+
+    - linters:
+        - staticcheck
+      text: "SA9003"

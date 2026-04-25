@@ -41,11 +41,13 @@ func (m *Manager) Init(ctx context.Context) error {
 			Dsn:              m.cfg.Observability.SentryDSN,
 			Environment:      m.cfg.App.Env,
 			TracesSampleRate: m.cfg.Observability.SamplingRate,
+			EnableTracing:    m.cfg.Observability.SamplingRate > 0,
+			AttachStacktrace: true,
 		})
 		if err != nil {
 			m.log.Error("Sentry initialization failed", zap.Error(err))
 		} else {
-			m.log.Info("Sentry initialized successfully")
+			m.log.Info("Sentry initialized successfully", zap.Float64("trace_sample_rate", m.cfg.Observability.SamplingRate))
 		}
 	}
 

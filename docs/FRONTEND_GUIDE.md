@@ -9,6 +9,7 @@ The Kodia Framework features a premium, enterprise-grade frontend system built o
 3.  **Bits UI Foundation**: All interactive components (Selects, Modals, DatePickers) are built on top of the accessible Bits UI primitives.
 4.  **TanStack Table Core**: Advanced data grids with sorting, filtering, and pagination using a custom Svelte 5 adapter.
 5.  **Framework Independence**: All UI components and utilities are built internally with zero third-party component dependencies.
+6.  **Zero Third-Party Dependencies**: Custom implementations for forms, validation, notifications, and error handling — no svelte-sonner, no sveltekit-superforms.
 
 ---
 
@@ -54,13 +55,48 @@ Layouts are located in `$lib/components/layouts`. They provide the structural fr
 
 ## Component Library
 
-### Form System (`$lib/components/forms`)
+### Form System (`$lib/components/forms` & `$lib/forms`)
 
-Our form system is designed around **Bits UI** for accessibility primitives and seamlessly integrates with **SvelteKit Superforms** for server-side validation.
+A **custom, zero-dependency form validation system** that works seamlessly with SvelteKit's `use:enhance` actions.
 
--   **KForm**: A wrapper component around Superforms for simplified form handling with error display.
+#### Form Factory (`createForm`)
+
+The `createForm` function creates reactive forms with built-in validation, dirty tracking, and error handling:
+
+```typescript
+import { createForm } from '$lib/forms/createForm.svelte';
+
+const { values, errors, touched, isSubmitting, isDirty, setFieldValue, validate, handleSubmit } = 
+  createForm({
+    initialValues: { email: '', password: '' },
+    validators: {
+      email: (val) => !val ? 'Email required' : !val.includes('@') ? 'Invalid email' : undefined,
+      password: (val) => !val ? 'Password required' : val.length < 8 ? 'Min 8 chars' : undefined,
+    },
+  });
+
+const onSubmit = handleSubmit(async (values) => {
+  const response = await fetch('/api/login', {
+    method: 'POST',
+    body: JSON.stringify(values),
+  });
+  return response.json();
+});
+```
+
+**Features:**
+- Reactive state with Svelte 5 `$state` runes
+- Field-level validation with custom validators
+- Dirty tracking (detects if form has changed)
+- Form-level error handling via `setErrors()`
+- Compatible with SvelteKit's `use:enhance` for progressive enhancement
+- No external dependencies (replaces sveltekit-superforms)
+
+#### Form Components
+
 -   **Form**: Base form component for building custom forms with validation integration.
--   **Input**: A standardized text input with support for icons and error states.
+-   **Input**: A standardized text input with error display and validation state.
+-   **Button**: Reusable button component with variant/size control and disabled state.
 -   **Select**: An accessible, premium selection component built with Bits UI.
 -   **Checkbox**: A fully styled, accessible checkbox.
 -   **DatePicker**: An advanced date selection component using `@internationalized/date`.
@@ -90,12 +126,95 @@ Our form system is designed around **Bits UI** for accessibility primitives and 
 
 ## State Management
 
-### ApiClient (`$lib/api/client.ts`)
+### Toast Notification System (`$lib/stores/toast.svelte.ts`)
 
-The new `api` singleton provides a strictly typed interface for all backend communications:
+A custom, dependency-free notification system with FIFO eviction and auto-dismiss:
 
--   **Global Loading/Error**: Global `isLoading` and `error` states are handled via Svelte 5 runes.
--   **Automatic Headers**: Automatically handles `Content-Type` and `Authorization` headers.
+```typescript
+import { toast } from '$lib/stores/toast.svelte';
+
+// Show success notification
+toast.success('Profile updated!');
+
+// Show error notification
+toast.error('Failed to save changes');
+
+// Show info notification
+toast.info('Processing your request...');
+
+// Show warning notification
+toast.warning('This action cannot be undone');
+
+// Custom duration (default 4000ms)
+toast.success('Quick message', { duration: 2000 });
+```
+
+**Features:**
+- Max 3 toasts visible at once (older ones evicted)
+- Auto-dismiss after configurable duration
+- FIFO queue management
+- Colored borders by type (success=green, error=red, info=blue, warning=yellow)
+- Slide-in animation from bottom-right
+- Responsive layout
+
+### Error Boundary (`$lib/stores/error.store.svelte.ts`)
+
+Global error state management for API errors:
+
+```typescript
+import { errorStore } from '$lib/stores/error.store.svelte';
+
+// Errors automatically captured from:
+// - window.onerror (global JS errors)
+// - window.onunhandledrejection (unhandled promises)
+// - API responses with 500+ status codes
+
+// Display error in component:
+{#if $errorStore}
+  <ErrorBoundary error={$errorStore} />
+{/if}
+
+// Clear error
+errorStore.clear();
+```
+
+**Features:**
+- Captures global JavaScript errors
+- Captures unhandled promise rejections
+- Captures API server errors (500+)
+- Displays error card with request ID for debugging
+- Type-safe with ApiError interface
+
+### ApiClient (`$lib/api/client.svelte.ts`)
+
+The `api` singleton provides a strictly typed interface for all backend communications:
+
+```typescript
+import { api } from '$lib/api/client';
+
+// GET request
+const users = await api.get<User[]>('/users');
+
+// POST request
+const newUser = await api.post<User>('/users', { name: 'John' });
+
+// PUT request
+await api.put<User>(`/users/${id}`, { name: 'Jane' });
+
+// PATCH request
+await api.patch<User>(`/users/${id}`, { status: 'active' });
+
+// DELETE request
+await api.delete(`/users/${id}`);
+```
+
+**Features:**
+- Automatic `Content-Type` header management
+- Automatic `Authorization` header (Bearer token from auth store)
+- Automatic error handling (500+ → errorStore)
+- Form data support (multipart/form-data for file uploads)
+- Environment variable configuration via `PUBLIC_API_URL`
+- TypeScript generic response types
 
 ### Query Rune (`$lib/stores/query.svelte.ts`)
 
@@ -111,6 +230,72 @@ const users = createQuery(() => api.get<User[]>("/users"));
 // {#if users.isLoading}...{:else}{users.data}{/if}
 ```
 
+## Loading & Skeleton Components
+
+### Skeleton Loaders (`$lib/components/ui/Skeleton.svelte`)
+
+Flexible skeleton placeholder components for loading states:
+
+```svelte
+<!-- Simple text skeleton -->
+<Skeleton variant="text" count={3} />
+
+<!-- Avatar skeleton -->
+<Skeleton variant="avatar" />
+
+<!-- Card skeleton with multiple elements -->
+<SkeletonCard />
+
+<!-- List skeleton -->
+<SkeletonList rows={5} />
+
+<!-- Table skeleton -->
+<SkeletonTable rows={10} columns={5} />
+```
+
+### LoadingBoundary
+
+Conditional rendering of skeletons vs content:
+
+```svelte
+<LoadingBoundary isLoading={$query.isLoading}>
+  {#if $query.data}
+    <UserCard user={$query.data} />
+  {/if}
+</LoadingBoundary>
+```
+
+## Error Handling
+
+### API Error Display (`$lib/components/ui/ApiErrorDisplay.svelte`)
+
+Displays API error responses with field-level errors:
+
+```svelte
+<ApiErrorDisplay 
+  error={apiError}
+  onRetry={() => refetchData()}
+/>
+```
+
+Shows:
+- Main error message
+- Field-specific validation errors
+- Request ID for debugging
+- Optional retry button
+
+### EmptyState
+
+Empty state UI for no results:
+
+```svelte
+<EmptyState
+  title="No users found"
+  description="Try adjusting your filters"
+  icon="users"
+/>
+```
+
 ---
 
 ## Best Practices
@@ -118,3 +303,7 @@ const users = createQuery(() => api.get<User[]>("/users"));
 -   **Styling**: Use the HSL-based Tailwind variables (e.g., `text-primary`, `bg-muted`) instead of hardcoded colors.
 -   **Transitions**: Use Svelte's built-in `fade` and `slide` transitions for a premium, non-static user experience.
 -   **Accessibility**: Always provide descriptive labels and follow the patterns established in the Bits UI-based components.
+-   **Form Validation**: Use `createForm` for all forms instead of managing form state manually.
+-   **Error Handling**: Let `errorStore` handle global errors; display field errors via `ApiErrorDisplay`.
+-   **Loading States**: Always show skeleton loaders while data is fetching for better UX.
+-   **Notifications**: Use `toast` for user feedback (success, error, warning, info).

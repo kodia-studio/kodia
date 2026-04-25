@@ -144,3 +144,29 @@ type SendNotificationInput struct {
 	Data      map[string]interface{}
 	SendEmail bool
 }
+
+// RoleService defines role management business operations.
+// Implemented in internal/core/services/role_service.go.
+type RoleService interface {
+	// CreateRole creates a new role with permissions.
+	CreateRole(ctx context.Context, name, description string, permissions []string) (*domain.RoleEntity, error)
+
+	// AssignRole assigns a role to a user.
+	AssignRole(ctx context.Context, userID, roleName string) error
+
+	// RevokeRole revokes a role from a user.
+	RevokeRole(ctx context.Context, userID, roleName string) error
+
+	// GetUserRoles retrieves all role names assigned to a user.
+	GetUserRoles(ctx context.Context, userID string) ([]string, error)
+
+	// GetAllRoles retrieves all defined roles.
+	GetAllRoles(ctx context.Context) ([]*domain.RoleEntity, error)
+
+	// DeleteRole soft-deletes a role.
+	DeleteRole(ctx context.Context, id string) error
+
+	// SyncEngineFromDB loads all roles and permissions from database into the RBAC engine.
+	// Called at startup and after role/permission changes.
+	SyncEngineFromDB(ctx context.Context) error
+}

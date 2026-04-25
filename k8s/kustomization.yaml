@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: default
+
+resources:
+  - serviceaccount.yaml
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/name: kodia
+  app.kubernetes.io/component: api
+  app.kubernetes.io/version: v1
+
+commonAnnotations:
+  app.kubernetes.io/managed-by: kustomize
+
+# Image configuration
+images:
+- name: kodia/backend
+  newTag: latest
+
+# Replicas can be overridden per environment
+replicas:
+- name: kodia-api
+  count: 2

@@ -67,3 +67,29 @@ func (f *Factory) CreateRefreshToken(userID string, overrides ...func(*domain.Re
 
 	return token
 }
+
+// CreateMultipleUsers creates multiple users for testing
+func (f *Factory) CreateMultipleUsers(count int) []*domain.User {
+	users := make([]*domain.User, count)
+	for i := 0; i < count; i++ {
+		users[i] = f.CreateUser(func(u *domain.User) {
+			u.Email = fmt.Sprintf("user-%d@example.com", i+1)
+		})
+	}
+	return users
+}
+
+// CreateAdminUser creates an admin user with specific email
+func (f *Factory) CreateAdminUser(email string) *domain.User {
+	return f.CreateAdmin(func(u *domain.User) {
+		u.Email = email
+	})
+}
+
+// CreateInactiveUser creates an inactive user
+func (f *Factory) CreateInactiveUser(overrides ...func(*domain.User)) *domain.User {
+	overrides = append(overrides, func(u *domain.User) {
+		u.IsActive = false
+	})
+	return f.CreateUser(overrides...)
+}

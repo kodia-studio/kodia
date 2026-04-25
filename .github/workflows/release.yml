@@ -1,0 +1,267 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'cli/**'
+      - 'docs/**'
+      - '.github/workflows/release.yml'
+      - 'go.mod'
+      - 'CHANGELOG.md'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.7.0)'
+        required: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/backend
+  GO_VERSION: '1.22'
+
+jobs:
+  # Determine version using semantic-release or conventional commits
+  version:
+    runs-on: ubuntu-latest
+    name: Determine Version
+    outputs:
+      version: ${{ steps.semver.outputs.version }}
+      published: ${{ steps.semver.outputs.published }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install semantic-release
+        run: npm install --save-dev semantic-release @semantic-release/changelog @semantic-release/git
+
+      - name: Run semantic-release (dry-run)
+        id: semver
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx semantic-release --dry-run --no-ci 2>&1 | tee release.log || true
+
+          # Extract version from output
+          VERSION=$(grep -oP '(?<=The next release version is )\d+\.\d+\.\d+' release.log || echo "")
+
+          if [ -z "$VERSION" ]; then
+            # Default to patch version if no commits trigger release
+            VERSION="0.0.1"
+            PUBLISHED="false"
+          else
+            PUBLISHED="true"
+          fi
+
+          echo "version=v${VERSION}" >> $GITHUB_OUTPUT
+          echo "published=${PUBLISHED}" >> $GITHUB_OUTPUT
+
+          echo "Version: v${VERSION}"
+          echo "Published: ${PUBLISHED}"
+
+  # Build backend binary
+  build-backend:
+    runs-on: ubuntu-latest
+    name: Build Backend Binary
+    needs: version
+    outputs:
+      version: ${{ needs.version.outputs.version }}
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build Linux binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+            -ldflags="-s -w -X main.Version=${{ needs.version.outputs.version }}" \
+            -o kodia-server-linux-amd64 \
+            cmd/server/main.go
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: kodia-server-linux-amd64
+          path: backend/kodia-server-linux-amd64
+
+  # Build Docker image
+  build-docker:
+    runs-on: ubuntu-latest
+    name: Build Docker Image
+    needs: version
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.version.outputs.version }}
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Create GitHub Release
+  release:
+    runs-on: ubuntu-latest
+    name: Create Release
+    needs: [version, build-backend, build-docker]
+    if: needs.version.outputs.published == 'true'
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download backend artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: kodia-server-linux-amd64
+          path: release
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          CHANGELOG=$(git log $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD --oneline --pretty=format:"- %h %s (%an)" || echo "Initial release")
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.version.outputs.version }}
+          name: ${{ needs.version.outputs.version }}
+          body: |
+            ## 🚀 Release ${{ needs.version.outputs.version }}
+
+            ### 📝 Changes
+            ${{ steps.changelog.outputs.changelog }}
+
+            ### 📦 Artifacts
+            - **Server Binary** (Linux x64)
+            - **Docker Image** (`ghcr.io/${{ github.repository }}/backend:${{ needs.version.outputs.version }}`)
+            - **Frontend** (SvelteKit 5 optimized build included)
+
+            ### 📚 Documentation
+            - [Deployment Guide](https://github.com/${{ github.repository }}/blob/main/docs/DEPLOYMENT.md)
+            - [Testing Guide](https://github.com/${{ github.repository }}/blob/main/docs/TESTING.md)
+            - [Frontend Guide](https://github.com/${{ github.repository }}/blob/main/docs/FRONTEND_GUIDE.md)
+            - [Roadmap](https://github.com/${{ github.repository }}/blob/main/docs/ROADMAP.md)
+
+            ### 🔗 Quick Links
+            - [Docker Image](https://ghcr.io/${{ github.repository }}/backend:${{ needs.version.outputs.version }})
+            - [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+            - [GitHub Issues](https://github.com/${{ github.repository }}/issues)
+
+          files: release/kodia-server-linux-amd64
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Update CHANGELOG.md
+  update-changelog:
+    runs-on: ubuntu-latest
+    name: Update Changelog
+    needs: [version, release]
+    if: needs.version.outputs.published == 'true'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update CHANGELOG.md
+        run: |
+          VERSION=${{ needs.version.outputs.version }}
+          DATE=$(date -u +"%Y-%m-%d")
+
+          # Create header for new version
+          NEW_ENTRY="## [${VERSION}](https://github.com/${{ github.repository }}/releases/tag/${VERSION}) - ${DATE}"
+
+          # Get commits since last tag
+          COMMITS=$(git log $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD --oneline --pretty=format:"- %h %s (%an)")
+
+          # Prepend to CHANGELOG.md
+          (echo "$NEW_ENTRY"; echo ""; echo "$COMMITS"; echo ""; cat CHANGELOG.md) > CHANGELOG.md.tmp
+          mv CHANGELOG.md.tmp CHANGELOG.md
+
+      - name: Commit and push changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog for ${{ needs.version.outputs.version }}"
+          git push origin main
+
+  # Notify
+  notify:
+    runs-on: ubuntu-latest
+    name: Notify Release
+    needs: [version, release]
+    if: always() && needs.version.outputs.published == 'true'
+    steps:
+      - name: Release summary
+        run: |
+          echo "✅ Release ${{ needs.version.outputs.version }} published!"
+          echo ""
+          echo "📦 Artifacts:"
+          echo "- CLI binaries (multi-platform)"
+          echo "- Docker image (ghcr.io/${{ github.repository }}/backend:${{ needs.version.outputs.version }})"
+          echo ""
+          echo "🔗 GitHub Release: https://github.com/${{ github.repository }}/releases/tag/${{ needs.version.outputs.version }}"

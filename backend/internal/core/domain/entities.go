@@ -21,10 +21,11 @@ type User struct {
 	Email     string
 	Password  string // hashed
 	Role      UserRole
+	Roles     []string  // RBAC: role names assigned to user
 	Permissions []string
 	IsActive    bool
 	IsVerified  bool
-	
+
 	// 2FA Security
 	TwoFactorEnabled      bool
 	TwoFactorSecret       string

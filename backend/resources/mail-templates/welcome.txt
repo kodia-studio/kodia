@@ -1,0 +1,18 @@
+Welcome to {{ .app_name }}
+
+Hi {{ .name }},
+
+Welcome to {{ .app_name }}! We're excited to have you on board. Your account has been successfully created and is ready to use.
+
+You can now log in with your email address and start exploring all the features {{ .app_name }} has to offer.
+
+Get Started: https://kodia.id
+
+If you have any questions or need assistance, don't hesitate to reach out to our support team at support@kodia.id.
+
+Best regards,
+The {{ .app_name }} Team
+
+---
+This email was sent to {{ .email }}
+© 2026 {{ .app_name }}. All rights reserved.

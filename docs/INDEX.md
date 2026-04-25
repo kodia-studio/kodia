@@ -78,13 +78,15 @@ Work with the Kodia CLI tool:
 
 Write reliable, tested code:
 
-- **[Testing Guide](TESTING.md)** - Testing strategies
-  - Unit testing
-  - Integration testing
+- **[Testing Guide](TESTING.md)** - Comprehensive testing strategies
+  - Unit testing (120+ test cases covering 8 critical packages)
+  - Integration testing with testcontainers
   - End-to-end testing
-  - Test structure
+  - Test structure and organization
   - Mocking & fixtures
-  - Coverage reporting
+  - Coverage reporting (78% average on implemented packages)
+  - Benchmarking for performance tracking
+  - Running tests with CI/CD
   - Testing best practices
 
 ---
@@ -121,6 +123,24 @@ Scale your application with world-class background processing:
   - **Job Batching**
   - **Queue Monitoring Dashboard**
   - Audit Logging
+
+---
+
+## 📋 Strategic Roadmap
+
+Understand Kodia's vision and timeline:
+
+- **[Roadmap](ROADMAP.md)** - Development phases and commercialization
+  - Phase 1: Testing Infrastructure ✅ (Complete)
+  - Phase 2: Production Deployment (In Progress)
+  - Phase 3: CI/CD Pipeline (Planned)
+  - Phase 4: Observability & Monitoring (Planned)
+  - Phase 5: Mailer Provider (Planned)
+  - Phase 6: Storage Provider (Planned)
+  - Phase 7: Advanced Features (Planned)
+  - Phase 8: Commercialization (Planned)
+  - Revenue streams & business model
+  - Timeline and success metrics
 
 ---
 
@@ -222,20 +242,22 @@ Help improve Kodia:
 1. [Getting Started](GETTING_STARTED.md) - Installation & setup
 2. [Architecture Guide](ARCHITECTURE.md) - Understand the design
 3. [Backend Guide](BACKEND_GUIDE.md) - Create API endpoints
-4. [Frontend Guide](FRONTEND_GUIDE.md) - Build UI
+4. [Frontend Guide](FRONTEND_GUIDE.md) - Build UI with Svelte 5
 5. [CLI Reference](CLI_GUIDE.md) - Use scaffolding
 
 ### Intermediate: Production Ready
-1. [Testing Guide](TESTING.md) - Write tests
+1. [Testing Guide](TESTING.md) - Write tests (120+ examples)
 2. [Security Guide](SECURITY.md) - Secure your app
 3. [Deployment Guide](DEPLOYMENT.md) - Go live
-4. [Performance Guide](DEPLOYMENT.md#performance) - Optimize
+4. [Observability Guide](OBSERVABILITY.md) - Monitor performance
+5. [Performance Guide](DEPLOYMENT.md#performance) - Optimize
 
 ### Advanced: Scale & Contribute
-1. [Advanced Architecture Patterns](ARCHITECTURE.md#design-patterns)
-2. [Contributing Guide](../CONTRIBUTING.md) - Contribute to Kodia
-3. [CLI Development](CLI_GUIDE.md#extending) - Extend the CLI
-4. [Performance Tuning](DEPLOYMENT.md#scaling)
+1. [Roadmap](ROADMAP.md) - Understand Kodia's vision
+2. [Advanced Architecture Patterns](ARCHITECTURE.md#design-patterns)
+3. [Contributing Guide](../CONTRIBUTING.md) - Contribute to Kodia
+4. [CLI Development](CLI_GUIDE.md#extending) - Extend the CLI
+5. [Performance Tuning](DEPLOYMENT.md#scaling)
 
 ---
 
@@ -266,13 +288,26 @@ For security issues, email: **security@kodia.dev**
 
 ## 📊 Documentation Statistics
 
-- **15+** comprehensive guides
-- **100+** code examples
+- **16+** comprehensive guides (including new Roadmap)
+- **120+** code examples and test cases
 - **50+** diagrams and illustrations
-- **1000+** lines of documentation
+- **2000+** lines of documentation
+
+---
+
+## 🎯 What's New (Phase 1 - April 2026)
+
+✅ **Testing Infrastructure Complete**
+- 120+ comprehensive unit tests
+- 78% average code coverage
+- Testing documentation updated
+- Frontend system documentation updated
+- Strategic roadmap published
+
+See [ROADMAP.md](ROADMAP.md) for the full development plan.
 
 ---
 
 **Happy coding! 🚀**
 
-Last updated: 2024-04-19
+Last updated: April 25, 2026
