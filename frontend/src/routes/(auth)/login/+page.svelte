@@ -19,7 +19,7 @@
     isLoading = true;
 
     try {
-      const response = await api.post<any>("/auth/login", { email, password });
+      const response = await api.post<any>("/api/auth/login", { email, password });
       
       if (response.mfa_required) {
         sessionStorage.setItem("mfa_token", response.mfa_token);

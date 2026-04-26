@@ -29,7 +29,7 @@
 
     isLoading = true;
     try {
-      const response = await api.post<any>("/auth/register", { name, email, password });
+      const response = await api.post<any>("/api/auth/register", { name, email, password });
       
       // Auto-login with the returned token and user data
       const { user, access_token } = response;
