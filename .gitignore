@@ -63,3 +63,12 @@ coverage
 
 # Docker
 .docker_data/
+
+# Local database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Storage directories (uploads, cache, etc)
+storage/app.db
+backend/storage/
