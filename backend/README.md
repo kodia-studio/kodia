@@ -14,6 +14,8 @@ The backend is a high-performance REST API built with **Go** and **Gin** framewo
 
 ## Quick Start
 
+### Option A: Using Docker (Recommended)
+
 ```bash
 # 1. Install dependencies
 go mod download
@@ -22,15 +24,47 @@ go mod download
 cp .env.example .env
 
 # 3. Start PostgreSQL & Redis with Docker
-docker-compose up -d
+docker compose up -d
 
-# 4. Run migrations
-go run cmd/server/main.go migrate
+# 4. Wait for database to be ready
+sleep 3
 
 # 5. Start development server
 go run cmd/server/main.go
 
-# Should see: Server is running on http://localhost:8080
+# Server will run on http://localhost:8080
+```
+
+### Option B: Manual PostgreSQL Setup (macOS)
+
+```bash
+# 1. Install PostgreSQL (if not already installed)
+brew install postgresql
+
+# 2. Start PostgreSQL service
+brew services start postgresql
+
+# 3. Create database and user
+createuser andiaryatno
+createdb -O andiaryatno framework_db
+psql -U andiaryatno -d framework_db -c "ALTER USER andiaryatno WITH PASSWORD 'andiaryatno';"
+
+# 4. Install Redis (if not already installed)
+brew install redis
+
+# 5. Start Redis
+brew services start redis
+
+# 6. Setup environment
+cp .env.example .env
+
+# 7. Install dependencies
+go mod download
+
+# 8. Start development server
+go run cmd/server/main.go
+
+# Server will run on http://localhost:8080
 ```
 
 > **Note:** The backend can run in development mode without the frontend build. The `dist/` folder exists with a placeholder file (`.gitkeep`), allowing `go run` and `go build` to work immediately. If you want to serve the frontend in production mode, run `npm run build` in the `../frontend/` directory.
