@@ -4,7 +4,6 @@ import (
 	"github.com/kodia-studio/kodia/internal/adapters/http/handlers"
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/adapters/repository/postgres"
-	wsocket "github.com/kodia-studio/kodia/internal/adapters/websocket"
 	"github.com/kodia-studio/kodia/internal/core/events/listeners"
 	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/internal/core/services"
@@ -28,7 +27,7 @@ func (p *NotificationProvider) Register(app *kodia.App) error {
 	notifRepo := postgres.NewNotificationRepository(app.DB)
 
 	// 2. Get dependencies from container
-	broadcaster := kodia.MustResolve[*wsocket.Broadcaster](app, "event_broadcaster")
+	broadcaster := kodia.MustResolve[ports.Broadcaster](app, "broadcaster_port")
 	dispatcher := kodia.MustResolve[ports.EventDispatcher](app, "event_dispatcher")
 	mailer := kodia.MustResolve[ports.Mailer](app, "mailer")
 	userRepo := postgres.NewUserRepository(app.DB)

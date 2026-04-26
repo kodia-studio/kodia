@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	wsocket "github.com/kodia-studio/kodia/internal/adapters/websocket"
 	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/pkg/pagination"
@@ -31,14 +30,14 @@ func (e *NotificationCreatedEvent) Payload() interface{} {
 
 type notificationService struct {
 	repo        ports.NotificationRepository
-	broadcaster *wsocket.Broadcaster
+	broadcaster ports.Broadcaster
 	dispatcher  ports.EventDispatcher
 	log         *zap.Logger
 }
 
 func NewNotificationService(
 	repo ports.NotificationRepository,
-	broadcaster *wsocket.Broadcaster,
+	broadcaster ports.Broadcaster,
 	dispatcher ports.EventDispatcher,
 	log *zap.Logger,
 ) ports.NotificationService {
@@ -70,10 +69,10 @@ func (s *notificationService) Send(ctx context.Context, input ports.SendNotifica
 	}
 
 	// 2. Real-time push via WebSocket
-	s.broadcaster.NotifyUser(input.UserID, "notification", wsocket.NotificationPayload{
-		Title:   n.Title,
-		Message: n.Message,
-		Data:    n.Data,
+	s.broadcaster.BroadcastToUser(ctx, input.UserID, "notification", map[string]interface{}{
+		"title":   n.Title,
+		"message": n.Message,
+		"data":    n.Data,
 	})
 
 	// 3. Async email (optional, via event dispatch)
