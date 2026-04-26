@@ -28,6 +28,10 @@ build/
 !.env.example
 dist/
 
+# Exception: Track the empty backend static dist folder (placeholder for embed)
+!backend/internal/infrastructure/static/dist/
+!backend/internal/infrastructure/static/dist/.gitkeep
+
 # Logs
 logs
 *.log
