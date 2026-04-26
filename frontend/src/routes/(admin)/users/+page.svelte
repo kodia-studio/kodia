@@ -15,7 +15,7 @@
   async function fetchUsers() {
     isLoading = true;
     try {
-      const res = await api.get<any[]>("/users");
+      const res = await api.get<any[]>("/api/users");
       // API client returns data directly, no .data wrapper
       users = res.map((u: any) => ({
         ...u,
@@ -32,7 +32,7 @@
   async function deleteUser(id: string) {
     if (!confirm("Are you sure you want to delete this user? This action is permanent.")) return;
     try {
-      await api.delete(`/users/${id}`);
+      await api.delete(`/api/users/${id}`);
       users = users.filter(u => u.id !== id);
       toast.success("User deleted");
     } catch (err: any) {
