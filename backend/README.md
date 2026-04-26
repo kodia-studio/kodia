@@ -33,6 +33,30 @@ go run cmd/server/main.go
 # Should see: Server is running on http://localhost:8080
 ```
 
+> **Note:** The backend can run in development mode without the frontend build. The `dist/` folder exists with a placeholder file (`.gitkeep`), allowing `go run` and `go build` to work immediately. If you want to serve the frontend in production mode, run `npm run build` in the `../frontend/` directory.
+
+---
+
+## Frontend Build (Optional for Production)
+
+If you want to serve the built frontend from the backend in **production mode**:
+
+```bash
+# 1. Build the frontend
+cd ../frontend
+npm install
+npm run build
+
+# 2. The built files are now embedded in the backend
+# Start the backend in production mode
+cd ../backend
+APP_ENV=production go run cmd/server/main.go
+```
+
+**Development Mode:** In development (`APP_ENV=development`), the backend serves API only. The frontend should run separately with `npm run dev`.
+
+**Production Mode:** In production, if frontend is built, the backend automatically serves the SvelteKit frontend from the embedded `dist/` folder.
+
 ---
 
 ## Project Structure

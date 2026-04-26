@@ -21,29 +21,33 @@ func (p *StaticProvider) Name() string {
 }
 
 func (p *StaticProvider) Register(app *kodia.App) error {
-	// Only serve static files if we are in production or if configured
+	// Only serve static files if we are in production or if frontend exists
 	if app.Config.IsProduction() {
-		app.Log.Info("Frontend embedding enabled (Production Mode)")
-		
-		// Create subfilesystem for the dist folder
-		sub, err := fs.Sub(static.DistFS, "dist")
-		if err != nil {
-			return err
-		}
+		if static.HasFrontend() {
+			app.Log.Info("Frontend embedding enabled (Production Mode)")
 
-		staticServer := http.FS(sub)
-
-		// Serve all static assets
-		app.Router.NoRoute(func(c *gin.Context) {
-			// If request is for API, don't serve static file (handles 404 naturally)
-			if c.Request.URL.Path[:4] == "/api" {
-				c.JSON(404, gin.H{"error": "route not found"})
-				return
+			// Create subfilesystem for the dist folder
+			sub, err := fs.Sub(static.DistFS, "dist")
+			if err != nil {
+				return err
 			}
-			
-			// Serve static file
-			http.FileServer(staticServer).ServeHTTP(c.Writer, c.Request)
-		})
+
+			staticServer := http.FS(sub)
+
+			// Serve all static assets
+			app.Router.NoRoute(func(c *gin.Context) {
+				// If request is for API, don't serve static file (handles 404 naturally)
+				if c.Request.URL.Path[:4] == "/api" {
+					c.JSON(404, gin.H{"error": "route not found"})
+					return
+				}
+
+				// Serve static file
+				http.FileServer(staticServer).ServeHTTP(c.Writer, c.Request)
+			})
+		} else {
+			app.Log.Warn("Frontend build not found (dist/ is empty). Build frontend with 'npm run build' in frontend/ directory")
+		}
 	}
 	return nil
 }
