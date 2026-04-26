@@ -36,16 +36,17 @@ func main() {
 	app := kodia.NewApp(cfg, log)
 
 	// 4. Register Official Providers (Batteries Included)
+	// ORDER MATTERS: Dependencies must be registered before providers that use them
 	err = app.RegisterProviders(
 		providers.NewDatabaseProvider(),
 		providers.NewInfraProvider(),
-		providers.NewObservabilityProvider(), // New provider
+		providers.NewObservabilityProvider(),
 		providers.NewHttpProvider(),
 		providers.NewStaticProvider(), // Handles frontend embedding
 		providers.NewAuthProvider(),
 		providers.NewUserProvider(),
-		providers.NewNotificationProvider(),
-		providers.NewWebSocketProvider(),
+		providers.NewWebSocketProvider(), // Must be before NotificationProvider (provides broadcaster)
+		providers.NewNotificationProvider(), // Requires broadcaster from WebSocketProvider
 		providers.NewGraphQLProvider(),
 		providers.NewPulseProvider(), // Broadcaster for real-time monitoring
 		// Third-party plugins would be added here
