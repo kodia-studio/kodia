@@ -4,22 +4,22 @@ import type { ApiResponse } from '../types/api.types';
 
 export const userApi = {
 	getAll: async (page = 1, perPage = 15) => {
-		return await api.get<UserResponse[]>(`/users?page=${page}&per_page=${perPage}`);
+		return await api.get<UserResponse[]>(`/api/users?page=${page}&per_page=${perPage}`);
 	},
 
 	getById: async (id: string) => {
-		return await api.get<UserResponse>(`/users/${id}`);
+		return await api.get<UserResponse>(`/api/users/${id}`);
 	},
 
 	update: async (id: string, data: UpdateUserRequest) => {
-		return await api.patch<UserResponse>(`/users/${id}`, data);
+		return await api.patch<UserResponse>(`/api/users/${id}`, data);
 	},
 
 	delete: async (id: string) => {
-		return await api.delete(`/users/${id}`);
+		return await api.delete(`/api/users/${id}`);
 	},
 
 	changePassword: async (data: ChangePasswordRequest) => {
-		return await api.post('/users/me/change-password', data);
+		return await api.post('/api/users/me/change-password', data);
 	}
 };
