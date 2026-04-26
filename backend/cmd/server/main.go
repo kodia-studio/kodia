@@ -45,10 +45,11 @@ func main() {
 		providers.NewStaticProvider(), // Handles frontend embedding
 		providers.NewAuthProvider(),
 		providers.NewUserProvider(),
-		providers.NewWebSocketProvider(), // Must be before NotificationProvider (provides broadcaster)
-		providers.NewNotificationProvider(), // Requires broadcaster from WebSocketProvider
+		providers.NewWebSocketProvider(), // Provides ws_hub (required by RealtimeProvider)
+		providers.NewRealtimeProvider(), // Provides event_broadcaster (required by NotificationProvider)
+		providers.NewNotificationProvider(), // Requires event_broadcaster from RealtimeProvider
 		providers.NewGraphQLProvider(),
-		providers.NewPulseProvider(), // Broadcaster for real-time monitoring
+		providers.NewPulseProvider(), // Real-time observability telemetry
 		// Third-party plugins would be added here
 	)
 	if err != nil {

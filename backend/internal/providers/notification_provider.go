@@ -28,7 +28,7 @@ func (p *NotificationProvider) Register(app *kodia.App) error {
 	notifRepo := postgres.NewNotificationRepository(app.DB)
 
 	// 2. Get dependencies from container
-	broadcaster := kodia.MustResolve[*wsocket.Broadcaster](app, "broadcaster")
+	broadcaster := kodia.MustResolve[*wsocket.Broadcaster](app, "event_broadcaster")
 	dispatcher := kodia.MustResolve[ports.EventDispatcher](app, "event_dispatcher")
 	mailer := kodia.MustResolve[ports.Mailer](app, "mailer")
 	userRepo := postgres.NewUserRepository(app.DB)
