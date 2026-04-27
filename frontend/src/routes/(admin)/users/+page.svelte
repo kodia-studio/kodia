@@ -11,6 +11,7 @@
   let users = $state<User[]>([]);
   let isLoading = $state(true);
   let searchQuery = $state("");
+  let initialized = $state(false);
 
   async function fetchUsers() {
     isLoading = true;
@@ -101,7 +102,10 @@
   ];
 
   $effect(() => {
-    fetchUsers();
+    if (!initialized) {
+      fetchUsers();
+      initialized = true;
+    }
     // Handler for the custom event from the table
     const handleEvent = (e: any) => deleteUser(e.detail);
     window.addEventListener('delete-user', handleEvent);
@@ -165,9 +169,9 @@
 
     <!-- Data Table Showcase -->
     <div class="relative group">
-      <div class="absolute -inset-1 bg-linear-to-r from-primary/20 to-secondary/20 rounded-[32px] blur opacity-50 transition duration-500"></div>
+      <div class="absolute -inset-1 bg-linear-to-r from-primary/20 to-secondary/20 rounded-4xl blur opacity-50 transition duration-500"></div>
       
-      <div class="relative glass rounded-[32px] border border-slate-200/50 dark:border-white/5 overflow-hidden bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl shadow-2xl">
+      <div class="relative glass rounded-4xl border border-slate-200/50 dark:border-white/5 overflow-hidden bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl shadow-2xl">
         {#if isLoading}
           <div class="h-96 flex flex-col items-center justify-center gap-6 text-slate-400">
             <div class="relative">
