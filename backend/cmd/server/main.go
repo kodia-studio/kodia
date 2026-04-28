@@ -45,6 +45,7 @@ func main() {
 		providers.NewStaticProvider(), // Handles frontend embedding
 		providers.NewAuthProvider(),
 		providers.NewUserProvider(),
+		providers.NewRoleProvider(), // Role and permission management
 		providers.NewWebSocketProvider(), // Provides ws_hub (required by RealtimeProvider)
 		providers.NewRealtimeProvider(), // Provides event_broadcaster (required by NotificationProvider)
 		providers.NewNotificationProvider(), // Requires event_broadcaster from RealtimeProvider

@@ -37,8 +37,8 @@ func NewNotificationHandler(service ports.NotificationService, validate *validat
 // @Param        per_page query int false "Items per page (default: 10)"
 // @Success      200 {object} response.Response{data=[]dto.NotificationResponse}
 // @Failure      401 {object} response.Response
-// @Security     Bearer
-// @Router       /api/notifications [get]
+// @Security     BearerAuth
+// @Router       /notifications [get]
 func (h *NotificationHandler) List(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -70,8 +70,8 @@ func (h *NotificationHandler) List(c *gin.Context) {
 // @Produce      json
 // @Success      200 {object} response.Response{data=dto.UnreadCountResponse}
 // @Failure      401 {object} response.Response
-// @Security     Bearer
-// @Router       /api/notifications/unread-count [get]
+// @Security     BearerAuth
+// @Router       /notifications/unread-count [get]
 func (h *NotificationHandler) UnreadCount(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -98,8 +98,8 @@ func (h *NotificationHandler) UnreadCount(c *gin.Context) {
 // @Success      200 {object} response.Response
 // @Failure      401 {object} response.Response
 // @Failure      404 {object} response.Response
-// @Security     Bearer
-// @Router       /api/notifications/{id}/read [put]
+// @Security     BearerAuth
+// @Router       /notifications/{id}/read [put]
 func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -134,8 +134,8 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 // @Produce      json
 // @Success      200 {object} response.Response
 // @Failure      401 {object} response.Response
-// @Security     Bearer
-// @Router       /api/notifications/read-all [put]
+// @Security     BearerAuth
+// @Router       /notifications/read-all [put]
 func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -162,8 +162,8 @@ func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
 // @Success      204 {object} response.Response
 // @Failure      401 {object} response.Response
 // @Failure      404 {object} response.Response
-// @Security     Bearer
-// @Router       /api/notifications/{id} [delete]
+// @Security     BearerAuth
+// @Router       /notifications/{id} [delete]
 func (h *NotificationHandler) Delete(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {

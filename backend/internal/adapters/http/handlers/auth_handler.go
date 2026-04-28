@@ -42,7 +42,7 @@ func NewAuthHandler(authService ports.AuthService, validate *validation.Validato
 // @Success      201 {object} response.Response{data=dto.AuthResponse}
 // @Failure      400 {object} response.Response
 // @Failure      409 {object} response.Response
-// @Router       /api/v1/auth/register [post]
+// @Router       /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := binder.Bind(c, &req); err != nil {
@@ -72,7 +72,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Success      200 {object} response.Response{data=dto.AuthResponse}
 // @Failure      400 {object} response.Response
 // @Failure      401 {object} response.Response
-// @Router       /api/v1/auth/login [post]
+// @Router       /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := binder.Bind(c, &req); err != nil {
@@ -100,7 +100,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 // @Param        body body dto.RefreshTokenRequest true "Refresh token"
 // @Success      200 {object} response.Response{data=dto.AuthResponse}
 // @Failure      401 {object} response.Response
-// @Router       /api/auth/refresh [post]
+// @Router       /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -117,16 +117,89 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	response.OK(c, "Token refreshed", dto.MapAuthToResponse(result))
 }
 
+// ForgotPassword godoc
+// @Summary      Request password reset
+// @Description  Send a password reset link to the user's email
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body body dto.ForgotPasswordRequest true "Email address"
+// @Success      200 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Router       /auth/forgot-password [post]
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	var req dto.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request body", nil)
+		return
+	}
+
+	if err := h.authService.ForgotPassword(c.Request.Context(), req.Email); err != nil {
+		h.log.Error("Forgot password error", zap.Error(err))
+	}
+
+	response.OK(c, "If your email is registered, you will receive a reset link.", nil)
+}
+
+// ResetPassword godoc
+// @Summary      Reset password
+// @Description  Reset password using a valid reset token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body body dto.ResetPasswordRequest true "Reset token and new password"
+// @Success      200 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Router       /auth/reset-password [post]
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	var req dto.ResetPasswordRequest
+	if !validation.BindAndValidate(c, h.validate, &req) {
+		return
+	}
+
+	if err := h.authService.ResetPassword(c.Request.Context(), req.Token, req.NewPassword); err != nil {
+		response.BadRequest(c, err.Error(), nil)
+		return
+	}
+
+	response.OK(c, "Password reset successfully", nil)
+}
+
+// VerifyEmail godoc
+// @Summary      Verify email address
+// @Description  Verify email using a verification token from email
+// @Tags         auth
+// @Produce      json
+// @Param        token query string true "Verification token"
+// @Success      200 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Router       /auth/verify-email [get]
+func (h *AuthHandler) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		response.BadRequest(c, "Token is required", nil)
+		return
+	}
+
+	if err := h.authService.VerifyEmail(c.Request.Context(), token); err != nil {
+		response.BadRequest(c, err.Error(), nil)
+		return
+	}
+
+	response.OK(c, "Email verified successfully", nil)
+}
+
 // Logout godoc
 // @Summary      Logout
 // @Description  Revoke a refresh token
 // @Tags         auth
+// @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Security     BearerAuth
 // @Param        body body dto.LogoutRequest true "Refresh token to revoke"
 // @Success      200 {object} response.Response
-// @Router       /api/auth/logout [post]
+// @Failure      401 {object} response.Response
+// @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	var req dto.LogoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -146,8 +219,10 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Description  Revoke all refresh tokens for the authenticated user
 // @Tags         auth
 // @Security     BearerAuth
+// @Produce      json
 // @Success      200 {object} response.Response
-// @Router       /api/auth/logout-all [post]
+// @Failure      401 {object} response.Response
+// @Router       /auth/logout-all [post]
 func (h *AuthHandler) LogoutAll(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	if err := h.authService.LogoutAll(c.Request.Context(), userID); err != nil {
@@ -158,12 +233,14 @@ func (h *AuthHandler) LogoutAll(c *gin.Context) {
 }
 
 // Me godoc
-// @Summary      Get current user
+// @Summary      Get current user profile
 // @Description  Returns the profile of the authenticated user
 // @Tags         auth
 // @Security     BearerAuth
-// @Success      200 {object} response.Response{data=dto.UserResponse}
-// @Router       /api/auth/me [get]
+// @Produce      json
+// @Success      200 {object} response.Response
+// @Failure      401 {object} response.Response
+// @Router       /auth/me [get]
 func (h *AuthHandler) Me(c *gin.Context) {
 	// The user info is already in the context from the Auth middleware
 	userID := middleware.GetUserID(c)
@@ -180,53 +257,15 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	})
 }
 
-// ForgotPassword handles requesting a password reset link.
-func (h *AuthHandler) ForgotPassword(c *gin.Context) {
-	var req dto.ForgotPasswordRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request body", nil)
-		return
-	}
-
-	if err := h.authService.ForgotPassword(c.Request.Context(), req.Email); err != nil {
-		h.log.Error("Forgot password error", zap.Error(err))
-	}
-
-	response.OK(c, "If your email is registered, you will receive a reset link.", nil)
-}
-
-// ResetPassword handles resetting a password using a token.
-func (h *AuthHandler) ResetPassword(c *gin.Context) {
-	var req dto.ResetPasswordRequest
-	if !validation.BindAndValidate(c, h.validate, &req) {
-		return
-	}
-
-	if err := h.authService.ResetPassword(c.Request.Context(), req.Token, req.NewPassword); err != nil {
-		response.BadRequest(c, err.Error(), nil)
-		return
-	}
-
-	response.OK(c, "Password reset successfully", nil)
-}
-
-// VerifyEmail handles email verification using a token.
-func (h *AuthHandler) VerifyEmail(c *gin.Context) {
-	token := c.Query("token")
-	if token == "" {
-		response.BadRequest(c, "Token is required", nil)
-		return
-	}
-
-	if err := h.authService.VerifyEmail(c.Request.Context(), token); err != nil {
-		response.BadRequest(c, err.Error(), nil)
-		return
-	}
-
-	response.OK(c, "Email verified successfully", nil)
-}
-
-// Enable2FA generates TOTP secret and QR code.
+// Enable2FA godoc
+// @Summary      Enable two-factor authentication
+// @Description  Generate TOTP secret and QR code for setting up 2FA
+// @Tags         auth
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200 {object} response.Response{data=dto.TwoFactorSetupResponse}
+// @Failure      401 {object} response.Response
+// @Router       /auth/2fa/enable [post]
 func (h *AuthHandler) Enable2FA(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	setup, err := h.authService.Enable2FA(c.Request.Context(), userID)
@@ -241,7 +280,18 @@ func (h *AuthHandler) Enable2FA(c *gin.Context) {
 	})
 }
 
-// Verify2FA verifies the initial TOTP setup and returns recovery codes.
+// Verify2FA godoc
+// @Summary      Verify two-factor authentication setup
+// @Description  Verify TOTP code during 2FA setup and return recovery codes
+// @Tags         auth
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        body body dto.Verify2FARequest true "TOTP verification code"
+// @Success      200 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Failure      401 {object} response.Response
+// @Router       /auth/2fa/verify [post]
 func (h *AuthHandler) Verify2FA(c *gin.Context) {
 	var req dto.Verify2FARequest
 	if !validation.BindAndValidate(c, h.validate, &req) {
@@ -258,7 +308,15 @@ func (h *AuthHandler) Verify2FA(c *gin.Context) {
 	response.OK(c, "2FA enabled successfully. Save your recovery codes.", gin.H{"recovery_codes": recovery})
 }
 
-// Disable2FA disables TOTP for the user.
+// Disable2FA godoc
+// @Summary      Disable two-factor authentication
+// @Description  Disable TOTP for the authenticated user
+// @Tags         auth
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200 {object} response.Response
+// @Failure      401 {object} response.Response
+// @Router       /auth/2fa/disable [delete]
 func (h *AuthHandler) Disable2FA(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	if err := h.authService.Disable2FA(c.Request.Context(), userID); err != nil {
@@ -269,7 +327,17 @@ func (h *AuthHandler) Disable2FA(c *gin.Context) {
 	response.OK(c, "2FA disabled successfully", nil)
 }
 
-// LoginVerify2FA handles TOTP verification during login using a temporary token.
+// LoginVerify2FA godoc
+// @Summary      Verify 2FA during login
+// @Description  Complete login by verifying a TOTP code using temporary MFA token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body body dto.LoginVerify2FARequest true "MFA token and verification code"
+// @Success      200 {object} response.Response{data=dto.AuthResponse}
+// @Failure      400 {object} response.Response
+// @Failure      401 {object} response.Response
+// @Router       /auth/2fa/login-verify [post]
 func (h *AuthHandler) LoginVerify2FA(c *gin.Context) {
 	var req dto.LoginVerify2FARequest
 	if !validation.BindAndValidate(c, h.validate, &req) {
@@ -303,4 +371,3 @@ func (h *AuthHandler) handleAuthError(c *gin.Context, err error) {
 		response.InternalServerError(c, "")
 	}
 }
-

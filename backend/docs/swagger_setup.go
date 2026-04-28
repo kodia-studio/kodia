@@ -19,7 +19,7 @@ package docs
 // @basePath /api
 // @schemes http https
 
-// @securityDefinitions.apiKey Bearer
+// @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
 // @description Type "Bearer" followed by a space and JWT token.

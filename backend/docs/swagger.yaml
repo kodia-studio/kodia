@@ -31,6 +31,17 @@ definitions:
     - current_password
     - new_password
     type: object
+  dto.ForgotPasswordRequest:
+    properties:
+      email:
+        description: |-
+          User email address
+          @required
+        example: user@example.com
+        type: string
+    required:
+    - email
+    type: object
   dto.LoginRequest:
     properties:
       email:
@@ -49,6 +60,24 @@ definitions:
     required:
     - email
     - password
+    type: object
+  dto.LoginVerify2FARequest:
+    properties:
+      code:
+        description: |-
+          6-digit TOTP code
+          @required
+        example: "123456"
+        type: string
+      mfa_token:
+        description: |-
+          Temporary MFA token from login response
+          @required
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - code
+    - mfa_token
     type: object
   dto.LogoutRequest:
     properties:
@@ -129,6 +158,35 @@ definitions:
     - name
     - password
     type: object
+  dto.ResetPasswordRequest:
+    properties:
+      new_password:
+        description: |-
+          New password
+          @required
+        example: NewSecurePassword456!
+        maxLength: 72
+        minLength: 8
+        type: string
+      token:
+        description: |-
+          Reset token from email
+          @required
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - new_password
+    - token
+    type: object
+  dto.TwoFactorSetupResponse:
+    properties:
+      qr_code:
+        example: otpauth://totp/Kodia%20Framework:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Kodia%20Framework
+        type: string
+      secret:
+        example: JBSWY3DPEHPK3PXP
+        type: string
+    type: object
   dto.UnreadCountResponse:
     properties:
       count:
@@ -189,6 +247,92 @@ definitions:
         example: "2024-04-19T10:00:00Z"
         type: string
     type: object
+  dto.Verify2FARequest:
+    properties:
+      code:
+        description: |-
+          6-digit TOTP code
+          @required
+        example: "123456"
+        type: string
+    required:
+    - code
+    type: object
+  handlers.AssignRoleRequest:
+    properties:
+      role_name:
+        minLength: 1
+        type: string
+    required:
+    - role_name
+    type: object
+  handlers.CreateRoleRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      permissions:
+        items:
+          type: string
+        type: array
+    required:
+    - name
+    type: object
+  handlers.RoleResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      permissions:
+        items:
+          type: string
+        type: array
+      updated_at:
+        type: string
+    type: object
+  health.CheckResult:
+    properties:
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+  health.Stats:
+    properties:
+      checks:
+        additionalProperties:
+          $ref: '#/definitions/health.CheckResult'
+        type: object
+      cpu_usage_percent:
+        type: number
+      disk_total_bytes:
+        type: integer
+      disk_usage_percent:
+        type: number
+      disk_used_bytes:
+        type: integer
+      goroutines:
+        type: integer
+      memory_total_bytes:
+        type: integer
+      memory_usage_percent:
+        type: number
+      memory_used_bytes:
+        type: integer
+      status:
+        description: '"up", "degraded", "down"'
+        type: string
+      timestamp:
+        type: string
+    type: object
   response.Meta:
     properties:
       page:
@@ -203,18 +347,336 @@ definitions:
   response.Response:
     properties:
       data: {}
+      error_code:
+        type: string
       errors: {}
       message:
         type: string
       meta:
         $ref: '#/definitions/response.Meta'
+      request_id:
+        type: string
       success:
         type: boolean
     type: object
 info:
   contact: {}
 paths:
-  /api/auth/logout:
+  /admin/roles:
+    get:
+      description: Get all defined roles (admin only)
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handlers.RoleResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all roles
+      tags:
+      - roles
+    post:
+      consumes:
+      - application/json
+      description: Create a new role with permissions (admin only)
+      parameters:
+      - description: Create role request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.RoleResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new role
+      tags:
+      - roles
+  /admin/roles/{id}:
+    delete:
+      description: Soft-delete a role by ID (admin only)
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a role
+      tags:
+      - roles
+  /admin/users/{user_id}/roles:
+    get:
+      description: Get all roles assigned to a user (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    type: string
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get user roles
+      tags:
+      - roles
+    post:
+      consumes:
+      - application/json
+      description: Assign a role to a user (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Assign role request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AssignRoleRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Assign a role to a user
+      tags:
+      - roles
+  /admin/users/{user_id}/roles/{role}:
+    delete:
+      description: Revoke a role from a user (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Role name
+        in: path
+        name: role
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Revoke a role from a user
+      tags:
+      - roles
+  /auth/2fa/disable:
+    delete:
+      description: Disable TOTP for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Disable two-factor authentication
+      tags:
+      - auth
+  /auth/2fa/enable:
+    post:
+      description: Generate TOTP secret and QR code for setting up 2FA
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.TwoFactorSetupResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Enable two-factor authentication
+      tags:
+      - auth
+  /auth/2fa/login-verify:
+    post:
+      consumes:
+      - application/json
+      description: Complete login by verifying a TOTP code using temporary MFA token
+      parameters:
+      - description: MFA token and verification code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginVerify2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Verify 2FA during login
+      tags:
+      - auth
+  /auth/2fa/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verify TOTP code during 2FA setup and return recovery codes
+      parameters:
+      - description: TOTP verification code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.Verify2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Verify two-factor authentication setup
+      tags:
+      - auth
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Send a password reset link to the user's email
+      parameters:
+      - description: Email address
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Request password reset
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate with email and password, returns JWT tokens
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Login
+      tags:
+      - auth
+  /auth/logout:
     post:
       consumes:
       - application/json
@@ -233,17 +695,27 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
       summary: Logout
       tags:
       - auth
-  /api/auth/logout-all:
+  /auth/logout-all:
     post:
       description: Revoke all refresh tokens for the authenticated user
+      produces:
+      - application/json
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/response.Response'
       security:
@@ -251,25 +723,26 @@ paths:
       summary: Logout from all devices
       tags:
       - auth
-  /api/auth/me:
+  /auth/me:
     get:
       description: Returns the profile of the authenticated user
+      produces:
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.UserResponse'
-              type: object
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: Get current user
+      summary: Get current user profile
       tags:
       - auth
-  /api/auth/refresh:
+  /auth/refresh:
     post:
       consumes:
       - application/json
@@ -300,7 +773,123 @@ paths:
       summary: Refresh access token
       tags:
       - auth
-  /api/notifications:
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account and return JWT tokens
+      parameters:
+      - description: Registration data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Register a new user
+      tags:
+      - auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password using a valid reset token
+      parameters:
+      - description: Reset token and new password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Reset password
+      tags:
+      - auth
+  /auth/verify-email:
+    get:
+      description: Verify email using a verification token from email
+      parameters:
+      - description: Verification token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Verify email address
+      tags:
+      - auth
+  /health/live:
+    get:
+      description: Returns 200 if service is alive (simple ping)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Liveness probe
+      tags:
+      - health
+  /health/ready:
+    get:
+      description: Checks service readiness including database and Redis connectivity
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is ready
+          schema:
+            $ref: '#/definitions/health.Stats'
+        "503":
+          description: Service is degraded or down
+          schema:
+            $ref: '#/definitions/health.Stats'
+      summary: Readiness probe
+      tags:
+      - health
+  /notifications:
     get:
       description: Get paginated notifications for the authenticated user
       parameters:
@@ -331,11 +920,11 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - Bearer: []
+      - BearerAuth: []
       summary: List notifications
       tags:
       - notifications
-  /api/notifications/{id}:
+  /notifications/{id}:
     delete:
       description: Delete a specific notification
       parameters:
@@ -360,11 +949,11 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - Bearer: []
+      - BearerAuth: []
       summary: Delete notification
       tags:
       - notifications
-  /api/notifications/{id}/read:
+  /notifications/{id}/read:
     put:
       description: Mark a specific notification as read
       parameters:
@@ -389,11 +978,11 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - Bearer: []
+      - BearerAuth: []
       summary: Mark notification as read
       tags:
       - notifications
-  /api/notifications/read-all:
+  /notifications/read-all:
     put:
       description: Mark all notifications for the user as read
       produces:
@@ -408,11 +997,11 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - Bearer: []
+      - BearerAuth: []
       summary: Mark all notifications as read
       tags:
       - notifications
-  /api/notifications/unread-count:
+  /notifications/unread-count:
     get:
       description: Get the number of unread notifications for the authenticated user
       produces:
@@ -432,95 +1021,11 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       security:
-      - Bearer: []
+      - BearerAuth: []
       summary: Get unread notification count
       tags:
       - notifications
-  /api/products:
-    get:
-      parameters:
-      - default: 1
-        description: Page number
-        in: query
-        name: page
-        type: integer
-      - default: 15
-        description: Items per page
-        in: query
-        name: per_page
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: List all products
-      tags:
-      - products
-    post:
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Create product
-      tags:
-      - products
-  /api/products/{id}:
-    delete:
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: No Content
-      security:
-      - BearerAuth: []
-      summary: Delete product
-      tags:
-      - products
-    get:
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Get product by ID
-      tags:
-      - products
-    patch:
-      parameters:
-      - description: ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Update product
-      tags:
-      - products
-  /api/users:
+  /users:
     get:
       description: Returns a paginated list of all users (admin only)
       parameters:
@@ -551,7 +1056,7 @@ paths:
       summary: List all users
       tags:
       - users
-  /api/users/{id}:
+  /users/{id}:
     delete:
       parameters:
       - description: User ID
@@ -621,7 +1126,7 @@ paths:
       summary: Update user profile
       tags:
       - users
-  /api/users/me:
+  /users/me:
     get:
       responses:
         "200":
@@ -638,7 +1143,7 @@ paths:
       summary: Get authenticated user profile
       tags:
       - users
-  /api/users/me/change-password:
+  /users/me/change-password:
     post:
       parameters:
       - description: Password change data
@@ -657,74 +1162,4 @@ paths:
       summary: Change password
       tags:
       - users
-  /api/v1/auth/login:
-    post:
-      consumes:
-      - application/json
-      description: Authenticate with email and password, returns JWT tokens
-      parameters:
-      - description: Login credentials
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.AuthResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Login
-      tags:
-      - auth
-  /api/v1/auth/register:
-    post:
-      consumes:
-      - application/json
-      description: Create a new user account and return JWT tokens
-      parameters:
-      - description: Registration data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.RegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.AuthResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Register a new user
-      tags:
-      - auth
 swagger: "2.0"

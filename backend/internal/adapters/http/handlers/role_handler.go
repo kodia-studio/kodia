@@ -51,7 +51,7 @@ type RoleResponse struct {
 // @Produce      json
 // @Param        request body CreateRoleRequest true "Create role request"
 // @Success      201 {object} response.Response{data=RoleResponse}
-// @Router       /api/admin/roles [post]
+// @Router       /admin/roles [post]
 func (h *RoleHandler) CreateRole(c *gin.Context) {
 	// Verify admin
 	middleware.RequireRole("admin")(c)
@@ -78,7 +78,7 @@ func (h *RoleHandler) CreateRole(c *gin.Context) {
 // @Tags         roles
 // @Security     BearerAuth
 // @Success      200 {object} response.Response{data=[]RoleResponse}
-// @Router       /api/admin/roles [get]
+// @Router       /admin/roles [get]
 func (h *RoleHandler) GetRoles(c *gin.Context) {
 	// Verify admin
 	middleware.RequireRole("admin")(c)
@@ -105,7 +105,7 @@ func (h *RoleHandler) GetRoles(c *gin.Context) {
 // @Security     BearerAuth
 // @Param        id path string true "Role ID"
 // @Success      200 {object} response.Response
-// @Router       /api/admin/roles/{id} [delete]
+// @Router       /admin/roles/{id} [delete]
 func (h *RoleHandler) DeleteRole(c *gin.Context) {
 	// Verify admin
 	middleware.RequireRole("admin")(c)
@@ -134,7 +134,7 @@ type AssignRoleRequest struct {
 // @Param        user_id path string true "User ID"
 // @Param        request body AssignRoleRequest true "Assign role request"
 // @Success      200 {object} response.Response
-// @Router       /api/admin/users/{user_id}/roles [post]
+// @Router       /admin/users/{user_id}/roles [post]
 func (h *RoleHandler) AssignRole(c *gin.Context) {
 	// Verify admin
 	middleware.RequireRole("admin")(c)
@@ -163,7 +163,7 @@ func (h *RoleHandler) AssignRole(c *gin.Context) {
 // @Param        user_id path string true "User ID"
 // @Param        role    path string true "Role name"
 // @Success      200 {object} response.Response
-// @Router       /api/admin/users/{user_id}/roles/{role} [delete]
+// @Router       /admin/users/{user_id}/roles/{role} [delete]
 func (h *RoleHandler) RevokeRole(c *gin.Context) {
 	// Verify admin
 	middleware.RequireRole("admin")(c)
@@ -187,7 +187,7 @@ func (h *RoleHandler) RevokeRole(c *gin.Context) {
 // @Security     BearerAuth
 // @Param        user_id path string true "User ID"
 // @Success      200 {object} response.Response{data=[]string}
-// @Router       /api/admin/users/{user_id}/roles [get]
+// @Router       /admin/users/{user_id}/roles [get]
 func (h *RoleHandler) GetUserRoles(c *gin.Context) {
 	// Verify admin
 	middleware.RequireRole("admin")(c)

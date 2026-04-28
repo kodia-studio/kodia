@@ -187,3 +187,49 @@ type NotificationResponse struct {
 type UnreadCountResponse struct {
 	Count int64 `json:"count" example:"5"`
 }
+
+// --- Role DTOs ---
+
+// CreateRoleRequest is the request body for POST /api/admin/roles.
+// @swagger:model
+type CreateRoleRequest struct {
+	// Role name
+	// @required
+	Name string `json:"name" validate:"required,min=1,max=255" example:"editor"`
+
+	// Role description
+	Description string `json:"description" example:"Can edit content"`
+
+	// List of permission names
+	Permissions []string `json:"permissions" example:"content:read,content:write"`
+}
+
+// RoleResponse is the response for a role.
+// @swagger:model
+type RoleResponse struct {
+	// Role unique identifier
+	ID string `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+
+	// Role name
+	Name string `json:"name" example:"editor"`
+
+	// Role description
+	Description string `json:"description" example:"Can edit content"`
+
+	// List of permission names
+	Permissions []string `json:"permissions" example:"content:read,content:write"`
+
+	// ISO 8601 creation timestamp
+	CreatedAt string `json:"created_at" example:"2024-04-19T10:00:00Z"`
+
+	// ISO 8601 update timestamp
+	UpdatedAt string `json:"updated_at" example:"2024-04-19T10:00:00Z"`
+}
+
+// AssignRoleRequest is the request body for POST /api/admin/users/:user_id/roles.
+// @swagger:model
+type AssignRoleRequest struct {
+	// Role name to assign
+	// @required
+	RoleName string `json:"role_name" validate:"required,min=1" example:"editor"`
+}

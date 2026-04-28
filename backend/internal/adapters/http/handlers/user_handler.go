@@ -37,7 +37,7 @@ func NewUserHandler(userService ports.UserService, validate *validation.Validato
 // @Param        page     query int false "Page number" default(1)
 // @Param        per_page query int false "Items per page" default(15)
 // @Success      200 {object} response.Response{data=[]dto.UserResponse}
-// @Router       /api/users [get]
+// @Router       /users [get]
 func (h *UserHandler) GetAll(c *gin.Context) {
 	params := pagination.FromContext(c)
 	users, total, err := h.userService.GetAll(c.Request.Context(), params)
@@ -58,7 +58,7 @@ func (h *UserHandler) GetAll(c *gin.Context) {
 // @Param        id path string true "User ID"
 // @Success      200 {object} response.Response{data=dto.UserResponse}
 // @Failure      404 {object} response.Response
-// @Router       /api/users/{id} [get]
+// @Router       /users/{id} [get]
 func (h *UserHandler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 	user, err := h.userService.GetByID(c.Request.Context(), id)
@@ -78,7 +78,7 @@ func (h *UserHandler) GetByID(c *gin.Context) {
 // @Tags         users
 // @Security     BearerAuth
 // @Success      200 {object} response.Response{data=dto.UserResponse}
-// @Router       /api/users/me [get]
+// @Router       /users/me [get]
 func (h *UserHandler) GetMe(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	user, err := h.userService.GetByID(c.Request.Context(), userID)
@@ -96,7 +96,7 @@ func (h *UserHandler) GetMe(c *gin.Context) {
 // @Param        id   path string              true "User ID"
 // @Param        body body dto.UpdateUserRequest true "Profile update data"
 // @Success      200 {object} response.Response{data=dto.UserResponse}
-// @Router       /api/users/{id} [patch]
+// @Router       /users/{id} [patch]
 func (h *UserHandler) Update(c *gin.Context) {
 	id := c.Param("id")
 
@@ -135,7 +135,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 // @Security     BearerAuth
 // @Param        id path string true "User ID"
 // @Success      204
-// @Router       /api/users/{id} [delete]
+// @Router       /users/{id} [delete]
 func (h *UserHandler) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.userService.Delete(c.Request.Context(), id); err != nil {
@@ -155,7 +155,7 @@ func (h *UserHandler) Delete(c *gin.Context) {
 // @Security     BearerAuth
 // @Param        body body dto.ChangePasswordRequest true "Password change data"
 // @Success      200 {object} response.Response
-// @Router       /api/users/me/change-password [post]
+// @Router       /users/me/change-password [post]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
 	var req dto.ChangePasswordRequest
 	if !validation.BindAndValidate(c, h.validate, &req) {

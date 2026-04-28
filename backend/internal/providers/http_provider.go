@@ -1,11 +1,14 @@
 package providers
 
 import (
+	_ "github.com/kodia-studio/kodia/docs"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	kodia_http "github.com/kodia-studio/kodia/internal/adapters/http"
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/pkg/kodia"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 )
 
@@ -63,5 +66,9 @@ func (p *HttpProvider) Register(app *kodia.App) error {
 }
 
 func (p *HttpProvider) Boot(app *kodia.App) error {
+	// Register Swagger UI in development mode
+	if !app.Config.IsProduction() {
+		app.Router.GET("/api/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 	return nil
 }
