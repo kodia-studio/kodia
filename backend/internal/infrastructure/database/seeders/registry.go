@@ -10,7 +10,6 @@ import (
 var Registry = []Seeder{
 	// --- Seeder Registration Start ---
 	&UserSeeder{},
-	&ProductSeeder{},
 	// --- Seeder Registration End ---
 }
 

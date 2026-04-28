@@ -58,24 +58,6 @@ type RefreshTokenRepository interface {
 	DeleteExpired(ctx context.Context) error
 }
 
-// ProductRepository defines all database operations for the Product entity.
-type ProductRepository interface {
-	// Create persists a new product to the database.
-	Create(ctx context.Context, product *domain.Product) error
-
-	// FindByID retrieves a product by its unique ID.
-	FindByID(ctx context.Context, id string) (*domain.Product, error)
-
-	// FindAll retrieves a paginated list of products.
-	FindAll(ctx context.Context, params *pagination.Params) ([]domain.Product, int64, error)
-
-	// Update persists changes to an existing product.
-	Update(ctx context.Context, product *domain.Product) error
-
-	// Delete soft-deletes a product by its ID.
-	Delete(ctx context.Context, id string) error
-}
-
 // NotificationRepository defines all database operations for the Notification entity.
 type NotificationRepository interface {
 	// Create persists a new notification to the database.
