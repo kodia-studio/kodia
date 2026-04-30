@@ -110,9 +110,10 @@ func WithTrashed() func(db *gorm.DB) *gorm.DB {
 }
 
 // OnlyTrashed is a GORM scope that returns only soft-deleted records.
+// Must call Unscoped() first to bypass GORM's built-in soft delete filter.
 // Usage: db.Scopes(OnlyTrashed()).Find(&items)
 func OnlyTrashed() func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Where("deleted_at IS NOT NULL")
+		return db.Unscoped().Where("deleted_at IS NOT NULL")
 	}
 }

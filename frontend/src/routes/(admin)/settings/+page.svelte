@@ -1,23 +1,19 @@
 <script lang="ts">
-  import AdminLayout from "$lib/components/layouts/AdminLayout.svelte";
-  import { Shield, Smartphone, QrCode, ClipboardCheck, Loader2, AlertTriangle, CheckCircle2, User, Key, Save } from "lucide-svelte";
+  import { Shield, Smartphone, User, Save, Key, Check, Loader, ClipboardCheck } from "lucide-svelte";
   import { api } from "$lib/api/client.svelte";
   import { authStore } from "$lib/stores/auth.store";
   import { toast } from "svelte-sonner";
   import { cn } from "$lib/utils/styles";
 
-  let activeTab = $state("general");
+  let activeTab = $state("profile");
   let isLoading = $state(false);
-  
-  // Profile State
+  let copiedCode = $state(false);
+
   let profileName = $state($authStore.user?.name || "");
-  
-  // Password State
   let currentPassword = $state("");
   let newPassword = $state("");
   let confirmPassword = $state("");
 
-  // 2FA State
   let setupData = $state<any>(null);
   let verificationCode = $state("");
   let recoveryCodes = $state<string[]>([]);
@@ -59,7 +55,6 @@
     }
   }
 
-  /* 2FA Logic */
   async function startSetup() {
     isLoading = true;
     try {
@@ -81,9 +76,9 @@
       recoveryCodes = response.data.recovery_codes || [];
       toast.success("2FA Enabled Successfully!");
       if ($authStore.user) {
-        authStore.update(s => ({ 
-          ...s, 
-          user: s.user ? { ...s.user, two_factor_enabled: true } : null 
+        authStore.update(s => ({
+          ...s,
+          user: s.user ? { ...s.user, two_factor_enabled: true } : null
         }));
       }
     } catch (err: any) {
@@ -100,9 +95,9 @@
       await api.delete("/auth/2fa/disable");
       toast.success("2FA Disabled");
       if ($authStore.user) {
-        authStore.update(s => ({ 
-          ...s, 
-          user: s.user ? { ...s.user, two_factor_enabled: false } : null 
+        authStore.update(s => ({
+          ...s,
+          user: s.user ? { ...s.user, two_factor_enabled: false } : null
         }));
       }
     } catch (err: any) {
@@ -113,8 +108,7 @@
   }
 </script>
 
-<AdminLayout>
-  <div class="max-w-5xl space-y-12 pb-10">
+<div class="max-w-5xl space-y-12 pb-10">
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200/50 dark:border-white/5">
       <div>
         <h1 class="text-4xl font-black font-heading tracking-tight text-slate-900 dark:text-white leading-none">Console Config.</h1>
@@ -152,7 +146,7 @@
     <div class="grid grid-cols-1 gap-12">
       {#if activeTab === "general"}
         <div class="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <section class="glass p-10 rounded-[32px] border border-slate-200/50 dark:border-white/5 relative overflow-hidden">
+          <section class="glass p-10 rounded-4xl border border-slate-200/50 dark:border-white/5 relative overflow-hidden">
             <div class="absolute top-0 right-0 p-10 opacity-5">
                <User size={120} class="text-primary" />
             </div>
@@ -189,7 +183,7 @@
 
                 <div class="pt-4">
                   <button type="submit" class="btn-premium px-10 py-4 text-xs uppercase tracking-widest flex items-center gap-3" disabled={isLoading}>
-                    {#if isLoading}<Loader2 class="w-4 h-4 animate-spin" />{:else}<Save class="w-4 h-4" />{/if}
+                    {#if isLoading}<Loader class="w-4 h-4 animate-spin" />{:else}<Save class="w-4 h-4" />{/if}
                     Save Matrix.
                   </button>
                 </div>
@@ -216,7 +210,7 @@
                     </p>
                     {#if $authStore.user?.two_factor_enabled}
                       <div class="mt-6 flex items-center gap-2 text-emerald-500 bg-emerald-500/10 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] w-fit">
-                        <CheckCircle2 class="w-4 h-4 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                        <Check class="w-4 h-4 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                         Protocol Active.
                       </div>
                     {/if}
@@ -237,7 +231,7 @@
               </div>
 
               {#if showSetup && !recoveryCodes.length}
-                <div class="mt-12 p-10 bg-slate-100/50 dark:bg-black/40 rounded-[32px] border border-slate-200 dark:border-white/5 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center animate-in zoom-in-95 duration-500">
+                <div class="mt-12 p-10 bg-slate-100/50 dark:bg-black/40 rounded-4xl border border-slate-200 dark:border-white/5 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center animate-in zoom-in-95 duration-500">
                   <div class="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6">
                     <p class="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Protocol: Scan Identity</p>
                     <div class="relative group/qr p-6 bg-white rounded-3xl shadow-2xl transition-transform hover:scale-105 duration-500">
@@ -268,7 +262,7 @@
               {/if}
 
               {#if recoveryCodes.length}
-                <div class="mt-12 p-8 bg-emerald-500/5 border border-emerald-500/20 rounded-[32px] space-y-6 animate-in slide-in-from-top-4">
+                <div class="mt-12 p-8 bg-emerald-500/5 border border-emerald-500/20 rounded-4xl space-y-6 animate-in slide-in-from-top-4">
                   <div class="flex items-center gap-4 text-emerald-500">
                     <ClipboardCheck class="w-8 h-8" />
                     <h4 class="text-xl font-black">Emergency Access Protocols.</h4>
@@ -288,7 +282,7 @@
           </section>
 
           <!-- Password Redesign -->
-          <section class="glass p-10 rounded-[32px] border border-slate-200/50 dark:border-white/5 relative overflow-hidden">
+          <section class="glass p-10 rounded-4xl border border-slate-200/50 dark:border-white/5 relative overflow-hidden">
             <div class="absolute top-0 right-0 p-10 opacity-5">
                <Key size={100} class="text-orange-500" />
             </div>
@@ -328,4 +322,3 @@
       {/if}
     </div>
   </div>
-</AdminLayout>

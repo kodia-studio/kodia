@@ -3,6 +3,7 @@ package validation
 import (
 	"regexp"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/go-playground/validator/v10"
@@ -13,6 +14,9 @@ func registerCustomRules(v *validator.Validate) {
 	v.RegisterValidation("phone", validatePhone)
 	v.RegisterValidation("alpha_space", validateAlphaSpace)
 	v.RegisterValidation("no_html", validateNoHTML)
+	v.RegisterValidation("alphanumeric", validateAlphanumeric)
+	v.RegisterValidation("slug", validateSlug)
+	v.RegisterValidation("date_format", validateDateFormat)
 }
 
 // validateStrongPassword checks for uppercase, lowercase, digit, and symbol.
@@ -55,4 +59,29 @@ func validateAlphaSpace(fl validator.FieldLevel) bool {
 func validateNoHTML(fl validator.FieldLevel) bool {
 	s := fl.Field().String()
 	return !strings.Contains(s, "<") && !strings.Contains(s, ">")
+}
+
+// validateAlphanumeric allows only letters and digits.
+func validateAlphanumeric(fl validator.FieldLevel) bool {
+	for _, c := range fl.Field().String() {
+		if !unicode.IsLetter(c) && !unicode.IsDigit(c) {
+			return false
+		}
+	}
+	return true
+}
+
+// validateSlug checks for valid URL slug format: lowercase letters, digits, hyphens.
+var slugRe = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+
+func validateSlug(fl validator.FieldLevel) bool {
+	return slugRe.MatchString(fl.Field().String())
+}
+
+// validateDateFormat checks if the value matches the given date format.
+// Usage: validate:"date_format:2006-01-02"
+func validateDateFormat(fl validator.FieldLevel) bool {
+	layout := fl.Param()
+	_, err := time.Parse(layout, fl.Field().String())
+	return err == nil
 }

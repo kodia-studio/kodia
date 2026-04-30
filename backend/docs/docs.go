@@ -830,55 +830,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/health/live": {
-            "get": {
-                "description": "Returns 200 if service is alive (simple ping)",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "health"
-                ],
-                "summary": "Liveness probe",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/health/ready": {
-            "get": {
-                "description": "Checks service readiness including database and Redis connectivity",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "health"
-                ],
-                "summary": "Readiness probe",
-                "responses": {
-                    "200": {
-                        "description": "Service is ready",
-                        "schema": {
-                            "$ref": "#/definitions/health.Stats"
-                        }
-                    },
-                    "503": {
-                        "description": "Service is degraded or down",
-                        "schema": {
-                            "$ref": "#/definitions/health.Stats"
-                        }
-                    }
-                }
-            }
-        },
         "/notifications": {
             "get": {
                 "security": [
@@ -1340,6 +1291,55 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/health/live": {
+            "get": {
+                "description": "Returns 200 if service is alive (simple ping)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Liveness probe",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/health/ready": {
+            "get": {
+                "description": "Checks service readiness including database and Redis connectivity",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Readiness probe",
+                "responses": {
+                    "200": {
+                        "description": "Service is ready",
+                        "schema": {
+                            "$ref": "#/definitions/health.Stats"
+                        }
+                    },
+                    "503": {
+                        "description": "Service is degraded or down",
+                        "schema": {
+                            "$ref": "#/definitions/health.Stats"
                         }
                     }
                 }

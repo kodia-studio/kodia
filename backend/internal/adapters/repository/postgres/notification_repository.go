@@ -8,6 +8,7 @@ import (
 
 	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/internal/core/ports"
+	"github.com/kodia-studio/kodia/pkg/database"
 	"github.com/kodia-studio/kodia/pkg/pagination"
 	"gorm.io/gorm"
 )
@@ -64,21 +65,21 @@ func fromDomainNotification(n *domain.Notification) *gormNotification {
 }
 
 type notificationRepository struct {
-	db *gorm.DB
+	database.BaseRepository[gormNotification]
 }
 
 func NewNotificationRepository(db *gorm.DB) ports.NotificationRepository {
-	return &notificationRepository{db: db}
+	return &notificationRepository{BaseRepository: database.NewBaseRepository[gormNotification](db)}
 }
 
 func (r *notificationRepository) Create(ctx context.Context, n *domain.Notification) error {
 	m := fromDomainNotification(n)
-	return r.db.WithContext(ctx).Create(m).Error
+	return r.DB().WithContext(ctx).Create(m).Error
 }
 
 func (r *notificationRepository) FindByID(ctx context.Context, id string) (*domain.Notification, error) {
 	var item gormNotification
-	err := r.db.WithContext(ctx).Where("id = ?", id).First(&item).Error
+	err := r.DB().WithContext(ctx).Where("id = ?", id).First(&item).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
@@ -90,15 +91,11 @@ func (r *notificationRepository) FindByID(ctx context.Context, id string) (*doma
 
 func (r *notificationRepository) FindByUserID(ctx context.Context, userID string, params *pagination.Params) ([]*domain.Notification, int64, error) {
 	var items []gormNotification
-	var total int64
-
-	query := r.db.WithContext(ctx).Model(&gormNotification{}).Where("user_id = ?", userID)
-
-	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	if err := query.Order("created_at DESC").Offset(params.Offset()).Limit(params.Limit()).Find(&items).Error; err != nil {
+	total, err := r.Query().
+		Where("user_id = ?", userID).
+		OrderDesc("created_at").
+		FindPaginated(ctx, &items, params)
+	if err != nil {
 		return nil, 0, err
 	}
 
@@ -111,25 +108,23 @@ func (r *notificationRepository) FindByUserID(ctx context.Context, userID string
 }
 
 func (r *notificationRepository) MarkAsRead(ctx context.Context, id string, userID string) error {
-	return r.db.WithContext(ctx).Model(&gormNotification{}).
+	return r.DB().WithContext(ctx).Model(&gormNotification{}).
 		Where("id = ? AND user_id = ?", id, userID).
 		Update("is_read", true).Error
 }
 
 func (r *notificationRepository) MarkAllAsRead(ctx context.Context, userID string) error {
-	return r.db.WithContext(ctx).Model(&gormNotification{}).
+	return r.DB().WithContext(ctx).Model(&gormNotification{}).
 		Where("user_id = ?", userID).
 		Update("is_read", true).Error
 }
 
 func (r *notificationRepository) Delete(ctx context.Context, id string, userID string) error {
-	return r.db.WithContext(ctx).Where("id = ? AND user_id = ?", id, userID).Delete(&gormNotification{}).Error
+	return r.DB().WithContext(ctx).Where("id = ? AND user_id = ?", id, userID).Delete(&gormNotification{}).Error
 }
 
 func (r *notificationRepository) CountUnread(ctx context.Context, userID string) (int64, error) {
-	var count int64
-	err := r.db.WithContext(ctx).Model(&gormNotification{}).
+	return r.Query().
 		Where("user_id = ? AND is_read = false", userID).
-		Count(&count).Error
-	return count, err
+		Count(ctx)
 }

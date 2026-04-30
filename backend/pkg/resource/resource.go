@@ -1,34 +1,47 @@
+// Package resource provides generic, version-aware resource transformers for HTTP responses.
+// Transformers convert domain models to JSON-serializable maps, with support for
+// API versioning, field filtering, and conditional field inclusion.
 package resource
 
-import "reflect"
+import "github.com/gin-gonic/gin"
 
-// Transformer defines the interface for resource transformation.
-type Transformer interface {
-	Transform(model interface{}) interface{}
+// Transformer converts a model of type T to a JSON-serializable map.
+// The TransformContext carries the API version and requested fields.
+type Transformer[T any] interface {
+	Transform(model T, ctx TransformContext) map[string]any
 }
 
-// MapFunc is a helper for functional transformations.
-type MapFunc func(model interface{}) interface{}
+// TransformFunc is a function satisfying Transformer[T].
+type TransformFunc[T any] func(model T, ctx TransformContext) map[string]any
 
-func (f MapFunc) Transform(model interface{}) interface{} {
-	return f(model)
+func (f TransformFunc[T]) Transform(model T, ctx TransformContext) map[string]any {
+	return f(model, ctx)
 }
 
-// NewItem transforms a single model.
-func NewItem(model interface{}, transformer Transformer) interface{} {
-	return transformer.Transform(model)
+// Item transforms a single model using the given transformer.
+func Item[T any](model T, t Transformer[T], ctx TransformContext) map[string]any {
+	return t.Transform(model, ctx)
 }
 
-// NewCollection transforms a slice of models.
-func NewCollection(models interface{}, transformer Transformer) []interface{} {
-	v := reflect.ValueOf(models)
-	if v.Kind() != reflect.Slice {
-		return nil
-	}
-
-	result := make([]interface{}, v.Len())
-	for i := 0; i < v.Len(); i++ {
-		result[i] = transformer.Transform(v.Index(i).Interface())
+// Collection transforms a slice of models.
+func Collection[T any](models []T, t Transformer[T], ctx TransformContext) []map[string]any {
+	result := make([]map[string]any, len(models))
+	for i, m := range models {
+		result[i] = t.Transform(m, ctx)
 	}
 	return result
+}
+
+// FromContext extracts a TransformContext from a gin.Context.
+// Reads the API version injected by version.Middleware and optional ?fields= query param.
+func FromContext(c *gin.Context) TransformContext {
+	v, _ := c.Get("api_version")
+	ver, _ := v.(string)
+	if ver == "" {
+		ver = "v1"
+	}
+	return TransformContext{
+		Version: ver,
+		Fields:  c.QueryArray("fields"),
+	}
 }

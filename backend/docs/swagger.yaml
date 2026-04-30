@@ -857,38 +857,6 @@ paths:
       summary: Verify email address
       tags:
       - auth
-  /health/live:
-    get:
-      description: Returns 200 if service is alive (simple ping)
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Liveness probe
-      tags:
-      - health
-  /health/ready:
-    get:
-      description: Checks service readiness including database and Redis connectivity
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Service is ready
-          schema:
-            $ref: '#/definitions/health.Stats'
-        "503":
-          description: Service is degraded or down
-          schema:
-            $ref: '#/definitions/health.Stats'
-      summary: Readiness probe
-      tags:
-      - health
   /notifications:
     get:
       description: Get paginated notifications for the authenticated user
@@ -1162,4 +1130,36 @@ paths:
       summary: Change password
       tags:
       - users
+  /v1/health/live:
+    get:
+      description: Returns 200 if service is alive (simple ping)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Liveness probe
+      tags:
+      - health
+  /v1/health/ready:
+    get:
+      description: Checks service readiness including database and Redis connectivity
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is ready
+          schema:
+            $ref: '#/definitions/health.Stats'
+        "503":
+          description: Service is degraded or down
+          schema:
+            $ref: '#/definitions/health.Stats'
+      summary: Readiness probe
+      tags:
+      - health
 swagger: "2.0"

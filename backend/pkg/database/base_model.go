@@ -48,3 +48,21 @@ type Timestamps struct {
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
+
+// ToDeletedAt converts *time.Time (domain layer) to gorm.DeletedAt (GORM model).
+// Used in repository converters to transform domain entities to GORM models.
+func ToDeletedAt(t *time.Time) gorm.DeletedAt {
+	if t == nil {
+		return gorm.DeletedAt{}
+	}
+	return gorm.DeletedAt{Time: *t, Valid: true}
+}
+
+// FromDeletedAt converts gorm.DeletedAt (GORM model) to *time.Time (domain layer).
+// Used in repository converters to transform GORM models to domain entities.
+func FromDeletedAt(d gorm.DeletedAt) *time.Time {
+	if !d.Valid {
+		return nil
+	}
+	return &d.Time
+}

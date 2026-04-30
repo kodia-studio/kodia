@@ -122,6 +122,9 @@ func TestAppConfigDefaults(t *testing.T) {
 	assert.Equal(t, "test", cfg.Env)
 	assert.Equal(t, 8080, cfg.Port)
 	assert.True(t, cfg.Debug)
+	assert.Equal(t, "http://localhost:8080", cfg.BaseURL)
+	assert.Equal(t, "http://localhost:3000", cfg.FrontendURL)
+	assert.Equal(t, "en", cfg.Locale)
 }
 
 // TestJWTConfigValues tests JWT config
@@ -182,6 +185,9 @@ func TestStorageConfigS3(t *testing.T) {
 	assert.Equal(t, "s3", cfg.Provider)
 	assert.Equal(t, "my-bucket", cfg.Bucket)
 	assert.Equal(t, "us-east-1", cfg.Region)
+	assert.Equal(t, "AKIAIOSFODNN7EXAMPLE", cfg.AccessID)
+	assert.Equal(t, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", cfg.SecretKey)
+	assert.Equal(t, "https://s3.amazonaws.com/my-bucket", cfg.PublicURL)
 }
 
 // TestMailConfigSMTP tests mail config
@@ -197,6 +203,8 @@ func TestMailConfigSMTP(t *testing.T) {
 
 	assert.Equal(t, "smtp.gmail.com", cfg.Host)
 	assert.Equal(t, 587, cfg.Port)
+	assert.Equal(t, "user@example.com", cfg.User)
+	assert.Equal(t, "password", cfg.Password)
 	assert.Equal(t, "noreply@example.com", cfg.FromAddr)
 	assert.Equal(t, "My App", cfg.FromName)
 }
@@ -229,6 +237,8 @@ func TestNotificationConfigChannels(t *testing.T) {
 	}
 
 	assert.NotEmpty(t, cfg.TwilioAccountSID)
+	assert.Equal(t, "token123", cfg.TwilioAuthToken)
+	assert.Equal(t, "+1234567890", cfg.TwilioFromNumber)
 	assert.NotEmpty(t, cfg.SlackWebhookURL)
 	assert.NotEmpty(t, cfg.FCMServerKey)
 }

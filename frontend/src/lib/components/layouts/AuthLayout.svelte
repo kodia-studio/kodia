@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Zap } from "lucide-svelte";
   import { fade, fly } from "svelte/transition";
 
   let { children } = $props();
@@ -14,14 +13,12 @@
   <div class="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-[120px] animate-pulse"></div>
   <div class="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-amber-500/5 blur-[120px] animate-pulse" style="animation-duration: 4s"></div>
 
-  <div class="w-full max-w-[440px] px-6 relative z-10 py-12">
+  <div class="w-full max-w-110 px-6 relative z-10 py-12">
     <!-- Brand Identity -->
     <div class="flex flex-col items-center mb-10" in:fly={{ y: -20, duration: 800 }}>
-      <a href="/" class="flex items-center gap-3 group">
-        <div class="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-primary/30 group-hover:rotate-12 transition-transform duration-500">
-          <Zap size={32} fill="currentColor" />
-        </div>
-        <span class="text-4xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">Kodia</span>
+      <a href="/" class="flex items-center gap-2 group">
+        <img src="/logo.png" alt="Kodia Logo" class="h-10 w-auto group-hover:scale-105 transition-transform" />
+        <span class="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">Kodia</span>
       </a>
     </div>
 

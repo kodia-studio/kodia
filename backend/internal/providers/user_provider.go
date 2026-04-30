@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/kodia-studio/kodia/internal/adapters/http/handlers"
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/adapters/repository/postgres"
@@ -8,6 +9,7 @@ import (
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	"github.com/kodia-studio/kodia/pkg/kodia"
 	"github.com/kodia-studio/kodia/pkg/validation"
+	"github.com/kodia-studio/kodia/pkg/version"
 	"go.uber.org/zap"
 )
 
@@ -53,21 +55,31 @@ func (p *UserProvider) Boot(app *kodia.App) error {
 func (p *UserProvider) registerRoutes(app *kodia.App) {
 	userHandler := kodia.MustResolve[*handlers.UserHandler](app, "user_handler")
 	jwtManager := kodia.MustResolve[*jwt.Manager](app, "jwt_manager")
-	
-	api := app.Router.Group("/api")
-	users := api.Group("/users")
-	users.Use(middleware.Auth(jwtManager))
-	{
-		users.GET("/me", userHandler.GetMe)
-		users.POST("/me/change-password", userHandler.ChangePassword)
 
-		admin := users.Group("")
+	api := app.Router.Group("/api")
+
+	// /api/v1/users/... — versioned routes (canonical)
+	v1 := api.Group("/v1")
+	v1.Use(version.Middleware())
+	registerUserRoutes(v1.Group("/users"), userHandler, jwtManager)
+
+	// /api/users/... — unversioned legacy routes (backward compatibility)
+	registerUserRoutes(api.Group("/users"), userHandler, jwtManager)
+}
+
+func registerUserRoutes(g *gin.RouterGroup, h *handlers.UserHandler, jwtManager *jwt.Manager) {
+	g.Use(middleware.Auth(jwtManager))
+	{
+		g.GET("/me", h.GetMe)
+		g.POST("/me/change-password", h.ChangePassword)
+
+		admin := g.Group("")
 		admin.Use(middleware.RequireRole("admin"))
 		{
-			admin.GET("", userHandler.GetAll)
-			admin.GET("/:id", userHandler.GetByID)
-			admin.PATCH("/:id", userHandler.Update)
-			admin.DELETE("/:id", userHandler.Delete)
+			admin.GET("", h.GetAll)
+			admin.GET("/:id", h.GetByID)
+			admin.PATCH("/:id", h.Update)
+			admin.DELETE("/:id", h.Delete)
 		}
 	}
 }

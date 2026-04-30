@@ -30,8 +30,17 @@ type UserRepository interface {
 	// Update persists changes to an existing user.
 	Update(ctx context.Context, user *domain.User) error
 
-	// Delete soft-deletes a user by their ID.
+	// Delete soft-deletes a user by their ID (sets deleted_at timestamp).
 	Delete(ctx context.Context, id string) error
+
+	// Restore recovers a soft-deleted user by ID (sets deleted_at to NULL).
+	Restore(ctx context.Context, id string) error
+
+	// ForceDelete permanently removes a user from the database (cannot be undone).
+	ForceDelete(ctx context.Context, id string) error
+
+	// FindTrashed retrieves paginated soft-deleted users.
+	FindTrashed(ctx context.Context, params *pagination.Params) ([]*domain.User, int64, error)
 
 	// ExistsByEmail returns true if a user with the given email exists.
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
@@ -96,8 +105,14 @@ type RoleRepository interface {
 	// Update persists changes to an existing role.
 	Update(ctx context.Context, role *domain.RoleEntity) error
 
-	// Delete soft-deletes a role by its ID.
+	// Delete soft-deletes a role by its ID (sets deleted_at timestamp).
 	Delete(ctx context.Context, id string) error
+
+	// Restore recovers a soft-deleted role by ID (sets deleted_at to NULL).
+	Restore(ctx context.Context, id string) error
+
+	// ForceDelete permanently removes a role from the database (cannot be undone).
+	ForceDelete(ctx context.Context, id string) error
 
 	// AssignToUser assigns a role to a user.
 	AssignToUser(ctx context.Context, userID, roleName string) error

@@ -37,10 +37,10 @@
                     <div class="relative w-72 h-72 md:w-96 md:h-96 group">
                         <!-- Holographic Orb -->
                         <div class="absolute inset-0 bg-linear-to-tr from-primary to-amber-500 rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-1000 animate-pulse"></div>
-                        <div class="absolute inset-4 glass rounded-full border border-white/20 shadow-2xl flex items-center justify-center p-8 backdrop-blur-3xl overflow-hidden group-hover:scale-105 transition-transform duration-700">
+                        <div class="absolute inset-4 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-2xl flex items-center justify-center p-8 overflow-hidden group-hover:scale-105 transition-transform duration-700">
                             <!-- Inner Hive Pattern -->
-                            <div class="absolute inset-0 bg-hive opacity-20"></div>
-                            <div class="relative z-10 w-24 h-24 md:w-32 md:h-32 bg-primary rounded-full flex items-center justify-center text-white font-black shadow-[0_0_50px_rgba(59,130,246,0.5)]">
+                            <div class="absolute inset-0 bg-hive opacity-10 dark:opacity-5"></div>
+                            <div class="relative z-10 w-24 h-24 md:w-32 md:h-32 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center text-slate-900 dark:text-white font-black shadow-lg">
                                 <img src="/logo.png" alt="Kodia Hive" class="w-16 h-auto animate-pulse" />
                             </div>
                         </div>

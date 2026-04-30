@@ -15,7 +15,9 @@ Welcome to the Kodia Framework documentation. This guide helps you navigate all 
 
 **Building Features:**
 - [Routing & Controllers](ARCHITECTURE.md#http-layer)
-- [Validation Layer](VALIDATION_LAYER.md) — Comprehensive validation guide
+- [Data Validation & Sanitization Framework](DATA_VALIDATION_FRAMEWORK.md) — Complete validation, sanitization & localization
+- [Validation Layer](VALIDATION_LAYER.md) — Quick reference
+- [Response Transformers & API Versioning](RESPONSE_TRANSFORMERS_AND_API_VERSIONING.md) — Version-aware JSON responses
 - [ORM Features](ORM_GUIDE.md)
 - [JWT Security](JWT_SECURITY.md)
 - [WebSocket Implementation](WEBSOCKET_GUIDE.md)
@@ -48,6 +50,7 @@ Welcome to the Kodia Framework documentation. This guide helps you navigate all 
 | [DATABASE_SETUP.md](DATABASE_SETUP.md) | Database configuration & setup | Backend developers |
 | [ORM_GUIDE.md](ORM_GUIDE.md) | Database operations with GORM | Backend developers |
 | [VALIDATION_LAYER.md](VALIDATION_LAYER.md) | Request validation system | Backend developers |
+| [DATA_VALIDATION_FRAMEWORK.md](DATA_VALIDATION_FRAMEWORK.md) | Comprehensive validation & sanitization guide | Backend developers |
 | [VALIDATION_QUICK_REFERENCE.md](VALIDATION_QUICK_REFERENCE.md) | Validation cheat sheet | Backend developers |
 | [VALIDATION_IMPLEMENTATION_SUMMARY.md](VALIDATION_IMPLEMENTATION_SUMMARY.md) | Implementation details | Framework maintainers |
 | [NOTIFICATION_SYSTEM.md](NOTIFICATION_SYSTEM.md) | Notification storage & delivery | Backend developers |
@@ -56,6 +59,7 @@ Welcome to the Kodia Framework documentation. This guide helps you navigate all 
 
 | Document | Purpose | Audience |
 |----------|---------|----------|
+| [RESPONSE_TRANSFORMERS_AND_API_VERSIONING.md](RESPONSE_TRANSFORMERS_AND_API_VERSIONING.md) | Version-aware JSON responses & API evolution | Backend developers |
 | [NOTIFICATION_SYSTEM.md](NOTIFICATION_SYSTEM.md) | Notifications & real-time delivery | Backend developers |
 | [SOCIAL_LOGIN.md](SOCIAL_LOGIN.md) | OAuth2 social authentication | Backend developers |
 | [WEBSOCKET_GUIDE.md](WEBSOCKET_GUIDE.md) | Real-time communication | Backend developers |
@@ -102,12 +106,13 @@ Welcome to the Kodia Framework documentation. This guide helps you navigate all 
 
 ### 🛠️ Advanced Features
 
-1. [VALIDATION_LAYER.md](VALIDATION_LAYER.md) — Advanced validation
-2. [NOTIFICATION_SYSTEM.md](NOTIFICATION_SYSTEM.md) — Notifications & real-time delivery
-3. [WEBSOCKET_GUIDE.md](WEBSOCKET_GUIDE.md) — Real-time features
-4. [SOCIAL_LOGIN.md](SOCIAL_LOGIN.md) — OAuth2 integration
+1. [DATA_VALIDATION_FRAMEWORK.md](DATA_VALIDATION_FRAMEWORK.md) — Validation, sanitization & localization
+2. [RESPONSE_TRANSFORMERS_AND_API_VERSIONING.md](RESPONSE_TRANSFORMERS_AND_API_VERSIONING.md) — Version-aware responses & API evolution
+3. [NOTIFICATION_SYSTEM.md](NOTIFICATION_SYSTEM.md) — Notifications & real-time delivery
+4. [WEBSOCKET_GUIDE.md](WEBSOCKET_GUIDE.md) — Real-time features
+5. [SOCIAL_LOGIN.md](SOCIAL_LOGIN.md) — OAuth2 integration
 
-**Time:** ~2.5 hours
+**Time:** ~3 hours
 
 ### 🚢 Production Deployment
 
@@ -123,6 +128,23 @@ Welcome to the Kodia Framework documentation. This guide helps you navigate all 
 
 ### Newly Added (Latest)
 
+🆕 **[RESPONSE_TRANSFORMERS_AND_API_VERSIONING.md](RESPONSE_TRANSFORMERS_AND_API_VERSIONING.md)**
+- Type-safe resource transformers using Go 1.25 generics
+- API versioning via URL path, headers, or Accept content-type
+- Version-aware conditional field inclusion
+- Field filtering via query parameters (?fields=id,name)
+- Deprecation warnings with RFC 8594 headers
+- Backward compatibility with existing unversioned routes
+- Zero new dependencies
+
+🆕 **[DATA_VALIDATION_FRAMEWORK.md](DATA_VALIDATION_FRAMEWORK.md)**
+- Input sanitization with 10+ filters (trim, lowercase, slug, no_html, etc.)
+- Validation rules via struct tags (custom rules: strong_password, phone, alpha_space, etc.)
+- Context-aware async validation (database uniqueness checks)
+- Localized error messages (English, Indonesian, extensible)
+- Zero new dependencies
+- Detailed API reference and real-world examples
+
 🆕 **[NOTIFICATION_SYSTEM.md](NOTIFICATION_SYSTEM.md)**
 - Real-time notification delivery
 - Persistent notification storage
@@ -135,11 +157,6 @@ Welcome to the Kodia Framework documentation. This guide helps you navigate all 
 - Eliminates boilerplate code
 - Security-focused design
 
-🆕 **[VALIDATION_QUICK_REFERENCE.md](VALIDATION_QUICK_REFERENCE.md)**
-- Quick lookup guide
-- Common patterns
-- Troubleshooting tips
-
 ---
 
 ## Common Tasks
@@ -149,10 +166,15 @@ Welcome to the Kodia Framework documentation. This guide helps you navigate all 
 → [NOTIFICATION_SYSTEM.md](NOTIFICATION_SYSTEM.md) — Full guide  
 → [WEBSOCKET_GUIDE.md](WEBSOCKET_GUIDE.md) — Real-time delivery
 
-### "How do I validate a request?"
+### "How do I validate and sanitize a request?"
 
-→ [VALIDATION_LAYER.md](VALIDATION_LAYER.md) — Full guide  
-→ [VALIDATION_QUICK_REFERENCE.md](VALIDATION_QUICK_REFERENCE.md) — Quick lookup
+→ [DATA_VALIDATION_FRAMEWORK.md](DATA_VALIDATION_FRAMEWORK.md) — Complete guide (sanitization, validation, localization)  
+→ [VALIDATION_LAYER.md](VALIDATION_LAYER.md) — Quick reference  
+→ [VALIDATION_QUICK_REFERENCE.md](VALIDATION_QUICK_REFERENCE.md) — Cheat sheet
+
+### "How do I version my API?"
+
+→ [RESPONSE_TRANSFORMERS_AND_API_VERSIONING.md](RESPONSE_TRANSFORMERS_AND_API_VERSIONING.md) — Complete guide (versioning, transformers, field filtering, deprecation)
 
 ### "How do I secure API endpoints?"
 
@@ -239,8 +261,9 @@ To add or update documentation:
 ## Quick Reference Links
 
 ### Popular Features
+- [API Versioning & Transformers](RESPONSE_TRANSFORMERS_AND_API_VERSIONING.md)
 - [Notifications](NOTIFICATION_SYSTEM.md)
-- [Validation](VALIDATION_LAYER.md)
+- [Validation & Sanitization](DATA_VALIDATION_FRAMEWORK.md)
 - [Authentication](JWT_SECURITY.md)
 - [Database](ORM_GUIDE.md)
 - [WebSockets](WEBSOCKET_GUIDE.md)

@@ -77,13 +77,13 @@
                     </div>
 
                     <!-- Floating Badge -->
-                    <div class="absolute -bottom-12 -right-6 glass p-4 rounded-2xl shadow-xl border border-white/10 animate-bounce-slow hidden sm:block">
+                    <div class="absolute -bottom-12 -right-6 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 animate-bounce-slow hidden sm:block">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500">
                                 <Zap size={20} fill="currentColor" />
                             </div>
                             <div>
-                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Performance</p>
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Performance</p>
                                 <p class="text-sm font-black text-slate-900 dark:text-white">0.4ms Response</p>
                             </div>
                         </div>

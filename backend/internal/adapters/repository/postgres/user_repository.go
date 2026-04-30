@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/pkg/database"
 	"github.com/kodia-studio/kodia/pkg/pagination"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -24,16 +25,16 @@ type gormUser struct {
 	Role      string     `gorm:"column:role;not null;default:'user'"`
 	IsActive  bool       `gorm:"column:is_active;not null;default:true"`
 	IsVerified bool       `gorm:"column:is_verified;not null;default:false"`
-	
+
 	// 2FA Security
 	TwoFactorEnabled      bool           `gorm:"column:two_factor_enabled;not null;default:false"`
 	TwoFactorSecret       string         `gorm:"column:two_factor_secret"`
 	TwoFactorRecoveryCodes pq.StringArray `gorm:"column:two_factor_recovery_codes;type:text[]"`
 
-	AvatarURL *string    `gorm:"column:avatar_url"`
-	CreatedAt time.Time  `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt time.Time  `gorm:"column:updated_at;autoUpdateTime"`
-	DeletedAt *time.Time `gorm:"column:deleted_at;index"`
+	AvatarURL *string        `gorm:"column:avatar_url"`
+	CreatedAt time.Time      `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"column:updated_at;autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;index"`
 }
 
 func (gormUser) TableName() string { return "users" }
@@ -54,7 +55,7 @@ func (g *gormUser) toDomain() *domain.User {
 		AvatarURL: g.AvatarURL,
 		CreatedAt: g.CreatedAt,
 		UpdatedAt: g.UpdatedAt,
-		DeletedAt: g.DeletedAt,
+		DeletedAt: database.FromDeletedAt(g.DeletedAt),
 	}
 }
 
@@ -74,18 +75,18 @@ func fromDomainUser(u *domain.User) *gormUser {
 		AvatarURL: u.AvatarURL,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
-		DeletedAt: u.DeletedAt,
+		DeletedAt: database.ToDeletedAt(u.DeletedAt),
 	}
 }
 
 // UserRepository is the GORM implementation of ports.UserRepository.
 type UserRepository struct {
-	db *gorm.DB
+	database.BaseRepository[gormUser]
 }
 
 // NewUserRepository creates a new GORM-backed UserRepository.
 func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{db: db}
+	return &UserRepository{BaseRepository: database.NewBaseRepository[gormUser](db)}
 }
 
 // AutoMigrate runs the GORM auto-migration for the user and auth models.
@@ -95,13 +96,13 @@ func AutoMigrate(db *gorm.DB) error {
 
 func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
 	m := fromDomainUser(user)
-	result := r.db.WithContext(ctx).Create(m)
+	result := r.DB().WithContext(ctx).Create(m)
 	return result.Error
 }
 
 func (r *UserRepository) FindByID(ctx context.Context, id string) (*domain.User, error) {
 	var m gormUser
-	result := r.db.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", id).First(&m)
+	result := r.DB().WithContext(ctx).Where("id = ?", id).First(&m)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
@@ -113,7 +114,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id string) (*domain.User,
 
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var m gormUser
-	result := r.db.WithContext(ctx).Where("email = ? AND deleted_at IS NULL", email).First(&m)
+	result := r.DB().WithContext(ctx).Where("email = ?", email).First(&m)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
@@ -125,20 +126,8 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain
 
 func (r *UserRepository) FindAll(ctx context.Context, params *pagination.Params) ([]*domain.User, int64, error) {
 	var models []gormUser
-	var total int64
-
-	baseQuery := r.db.WithContext(ctx).Model(&gormUser{}).Where("deleted_at IS NULL")
-
-	if err := baseQuery.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// Guard: use safe defaults when params is nil (e.g. called for count-only checks)
-	if params == nil {
-		params = &pagination.Params{Page: 1, PerPage: pagination.MaxPerPage}
-	}
-
-	if err := baseQuery.Offset(params.Offset()).Limit(params.Limit()).Find(&models).Error; err != nil {
+	total, err := r.Query().FindPaginated(ctx, &models, params)
+	if err != nil {
 		return nil, 0, err
 	}
 
@@ -152,31 +141,40 @@ func (r *UserRepository) FindAll(ctx context.Context, params *pagination.Params)
 
 func (r *UserRepository) Update(ctx context.Context, user *domain.User) error {
 	m := fromDomainUser(user)
-	return r.db.WithContext(ctx).Save(m).Error
+	return r.DB().WithContext(ctx).Save(m).Error
 }
 
 func (r *UserRepository) Delete(ctx context.Context, id string) error {
-	now := time.Now()
-	return r.db.WithContext(ctx).
-		Model(&gormUser{}).
-		Where("id = ?", id).
-		Update("deleted_at", now).Error
+	return r.RawDelete(ctx, id)
 }
 
 func (r *UserRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
-	var count int64
-	err := r.db.WithContext(ctx).
-		Model(&gormUser{}).
-		Where("email = ? AND deleted_at IS NULL", email).
-		Count(&count).Error
-	return count > 0, err
+	return r.Query().Where("email = ?", email).Exists(ctx)
 }
 
 func (r *UserRepository) CountByRole(ctx context.Context, role string) (int64, error) {
-	var count int64
-	err := r.db.WithContext(ctx).
-		Model(&gormUser{}).
-		Where("role = ? AND deleted_at IS NULL", role).
-		Count(&count).Error
-	return count, err
+	return r.Query().Where("role = ?", role).Count(ctx)
+}
+
+func (r *UserRepository) Restore(ctx context.Context, id string) error {
+	return r.RawRestore(ctx, id)
+}
+
+func (r *UserRepository) ForceDelete(ctx context.Context, id string) error {
+	return r.RawForceDelete(ctx, id)
+}
+
+func (r *UserRepository) FindTrashed(ctx context.Context, params *pagination.Params) ([]*domain.User, int64, error) {
+	var models []gormUser
+	total, err := r.Query().OnlyTrashed().FindPaginated(ctx, &models, params)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	users := make([]*domain.User, len(models))
+	for i, m := range models {
+		mc := m
+		users[i] = mc.toDomain()
+	}
+	return users, total, nil
 }

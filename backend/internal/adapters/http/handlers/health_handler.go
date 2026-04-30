@@ -32,7 +32,7 @@ func NewHealthHandler(db *gorm.DB, redis *redis.Client, log *zap.Logger) *Health
 // @Tags         health
 // @Produce      json
 // @Success      200 {object} map[string]string
-// @Router       /health/live [get]
+// @Router       /v1/health/live [get]
 func (h *HealthHandler) Live(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": "up",
@@ -46,7 +46,7 @@ func (h *HealthHandler) Live(c *gin.Context) {
 // @Produce      json
 // @Success      200 {object} health.Stats "Service is ready"
 // @Failure      503 {object} health.Stats "Service is degraded or down"
-// @Router       /health/ready [get]
+// @Router       /v1/health/ready [get]
 func (h *HealthHandler) Ready(c *gin.Context) {
 	checkers := []health.Checker{
 		&health.DBChecker{DB: h.db},

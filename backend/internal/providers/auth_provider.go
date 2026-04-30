@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/kodia-studio/kodia/internal/adapters/http/handlers"
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/adapters/repository/postgres"
@@ -9,6 +10,7 @@ import (
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	"github.com/kodia-studio/kodia/pkg/kodia"
 	"github.com/kodia-studio/kodia/pkg/validation"
+	"github.com/kodia-studio/kodia/pkg/version"
 )
 
 type AuthProvider struct{}
@@ -71,34 +73,40 @@ func (p *AuthProvider) Boot(app *kodia.App) error {
 func (p *AuthProvider) registerRoutes(app *kodia.App) {
 	authHandler := kodia.MustResolve[*handlers.AuthHandler](app, "auth_handler")
 	jwtManager := kodia.MustResolve[*jwt.Manager](app, "jwt_manager")
-	
+
 	api := app.Router.Group("/api")
-	auth := api.Group("/auth")
+
+	// /api/v1/auth/... — versioned routes (canonical)
+	v1 := api.Group("/v1")
+	v1.Use(version.Middleware())
+	registerAuthRoutes(v1.Group("/auth"), authHandler, jwtManager)
+
+	// /api/auth/... — unversioned legacy routes (backward compatibility)
+	registerAuthRoutes(api.Group("/auth"), authHandler, jwtManager)
+}
+
+func registerAuthRoutes(g *gin.RouterGroup, h *handlers.AuthHandler, jwtManager *jwt.Manager) {
+	g.POST("/register", h.Register)
+	g.POST("/login", h.Login)
+	g.POST("/refresh", h.RefreshToken)
+	g.POST("/forgot-password", h.ForgotPassword)
+	g.POST("/reset-password", h.ResetPassword)
+	g.GET("/verify-email", h.VerifyEmail)
+	g.POST("/2fa/login-verify", h.LoginVerify2FA)
+	g.POST("/logout", middleware.Auth(jwtManager), h.Logout)
+
+	protected := g.Group("")
+	protected.Use(middleware.Auth(jwtManager))
 	{
-		auth.POST("/register", authHandler.Register)
-		auth.POST("/login", authHandler.Login)
-		auth.POST("/refresh", authHandler.RefreshToken)
-		auth.POST("/logout", middleware.Auth(jwtManager), authHandler.Logout)
+		protected.POST("/logout-all", h.LogoutAll)
+		protected.GET("/me", h.Me)
 
-		// Password Recovery & Email Verification
-		auth.POST("/forgot-password", authHandler.ForgotPassword)
-		auth.POST("/reset-password", authHandler.ResetPassword)
-		auth.GET("/verify-email", authHandler.VerifyEmail)
-		auth.POST("/2fa/login-verify", authHandler.LoginVerify2FA)
-
-		protected := auth.Group("")
-		protected.Use(middleware.Auth(jwtManager))
+		// 2FA Management
+		mfa := protected.Group("/2fa")
 		{
-			protected.POST("/logout-all", authHandler.LogoutAll)
-			protected.GET("/me", authHandler.Me)
-
-			// 2FA Management
-			mfa := protected.Group("/2fa")
-			{
-				mfa.POST("/enable", authHandler.Enable2FA)
-				mfa.POST("/verify", authHandler.Verify2FA)
-				mfa.DELETE("/disable", authHandler.Disable2FA)
-			}
+			mfa.POST("/enable", h.Enable2FA)
+			mfa.POST("/verify", h.Verify2FA)
+			mfa.DELETE("/disable", h.Disable2FA)
 		}
 	}
 }

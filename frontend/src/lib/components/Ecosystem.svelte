@@ -32,7 +32,7 @@
             </p>
         </div>
 
-        <div class="relative h-[600px] flex items-center justify-center">
+        <div class="relative h-150 flex items-center justify-center">
             <!-- Connection Lines (SVG) -->
             <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-20">
                 <defs>
@@ -56,7 +56,7 @@
             <!-- Center Hub -->
             <div class="relative group">
                 <div class="absolute inset-0 bg-primary/40 blur-[80px] rounded-full group-hover:bg-primary/60 transition-all duration-1000"></div>
-                <div class="relative w-32 h-32 md:w-40 md:h-40 {nodes[0].class} rounded-full flex flex-col items-center justify-center text-center p-4 border border-white/20 shadow-2xl z-20 transition-transform duration-500 scale-100 group-hover:scale-105">
+                <div class="relative w-32 h-32 md:w-40 md:h-40 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-full flex flex-col items-center justify-center text-center p-4 border border-slate-200 dark:border-slate-700 shadow-2xl z-20 transition-transform duration-500 scale-100 group-hover:scale-105">
                     <img src="/logo.png" alt="Kodia Core" class="h-12 w-auto mb-2" />
                     <span class="text-xs font-black uppercase tracking-tighter">Kodia Core</span>
                 </div>

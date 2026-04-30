@@ -44,6 +44,20 @@ Learn how to build features:
   - Error handling
   - Best practices
 
+- **[Query Builder & Advanced ORM](QUERY_BUILDER_ORM.md)** - Type-safe fluent queries
+  - Fluent QueryBuilder API
+  - Generic BaseRepository[T]
+  - Filtering, ordering, pagination
+  - Eager loading (Preload, Joins)
+  - Soft delete queries
+  - Best practices & patterns
+
+- **[Soft Deletes Guide](DATABASE_SOFT_DELETES.md)** - Data safety & recovery
+  - Soft delete patterns
+  - Restore & force delete operations
+  - Querying deleted records
+  - Best practices & examples
+
 - **[Rate Limiting Guide](../backend/docs/RATE_LIMITING.md)** - Prevent abuse
   - Rate limiting implementation
   - Attack prevention

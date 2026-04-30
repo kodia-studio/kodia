@@ -28,10 +28,10 @@
 {#if $authStore.isAuthenticated}
 	<div class="flex h-screen overflow-hidden">
 		<!-- Sidebar -->
-		<aside class="w-64 glass border-r h-full hidden md:flex flex-col">
+		<aside class="w-64 glass border-r h-full hidden md:flex flex-col fixed left-0 top-0 bottom-0">
 			<div class="p-6">
-				<div class="flex items-center gap-2">
-					<div class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold">K</div>
+				<div class="flex items-center gap-2 group">
+					<img src="/logo.png" alt="Kodia Logo" class="h-8 w-auto group-hover:scale-105 transition-transform" />
 					<span class="text-xl font-bold tracking-tight">Kodia</span>
 				</div>
 			</div>
@@ -77,9 +77,9 @@
 		</aside>
 
 		<!-- Main Content -->
-		<main class="flex-1 overflow-y-auto relative bg-slate-50/50 dark:bg-slate-950/50">
+		<main class="flex-1 overflow-y-auto relative bg-slate-50/50 dark:bg-slate-950/50 md:ml-64">
 			<!-- Header -->
-			<header class="sticky top-0 z-30 h-16 glass border-b px-8 flex items-center justify-between">
+			<header class="fixed top-0 right-0 left-0 md:left-64 z-30 h-16 glass border-b px-8 flex items-center justify-between">
 				<button class="md:hidden text-slate-500" aria-label="Toggle menu">
 					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
@@ -106,7 +106,7 @@
 				</div>
 			</header>
 
-			<div class="p-8">
+			<div class="p-8 pt-24">
 				{@render children()}
 			</div>
 		</main>

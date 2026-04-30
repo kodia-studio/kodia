@@ -5,11 +5,11 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --color-primary: #8b5cf6; /* Violet */
-    --color-primary-dark: #6d28d9;
-    --color-secondary: #06b6d4; /* Cyan */
-    --color-accent: #f43f5e; /* Rose */
-    
+    --color-primary: #3b82f6; /* Blue */
+    --color-primary-dark: #1d4ed8;
+    --color-secondary: #0ea5e9; /* Sky Blue */
+    --color-accent: #f59e0b; /* Amber */
+
     --color-slate-950: #020617;
     --color-slate-900: #0f172a;
     --color-slate-800: #1e293b;

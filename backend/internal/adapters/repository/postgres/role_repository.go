@@ -6,30 +6,31 @@ import (
 	"time"
 
 	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/pkg/database"
 	"gorm.io/gorm"
 )
 
 // gormRole is the GORM model for the roles table.
 type gormRole struct {
-	ID          string         `gorm:"column:id;primaryKey"`
-	Name        string         `gorm:"column:name;uniqueIndex;not null"`
-	Description string         `gorm:"column:description"`
+	ID          string           `gorm:"column:id;primaryKey"`
+	Name        string           `gorm:"column:name;uniqueIndex;not null"`
+	Description string           `gorm:"column:description"`
 	Permissions []gormPermission `gorm:"many2many:role_permissions;"`
-	CreatedAt   time.Time      `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt   time.Time      `gorm:"column:updated_at;autoUpdateTime"`
-	DeletedAt   *time.Time     `gorm:"column:deleted_at;index"`
+	CreatedAt   time.Time        `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt   time.Time        `gorm:"column:updated_at;autoUpdateTime"`
+	DeletedAt   gorm.DeletedAt   `gorm:"column:deleted_at;index"`
 }
 
 func (gormRole) TableName() string { return "roles" }
 
 // gormPermission is the GORM model for the permissions table.
 type gormPermission struct {
-	ID        string    `gorm:"column:id;primaryKey"`
-	Name      string    `gorm:"column:name;uniqueIndex;not null"`
-	Description string    `gorm:"column:description"`
-	Group     string    `gorm:"column:group;not null"`
-	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
-	DeletedAt *time.Time `gorm:"column:deleted_at;index"`
+	ID          string         `gorm:"column:id;primaryKey"`
+	Name        string         `gorm:"column:name;uniqueIndex;not null"`
+	Description string         `gorm:"column:description"`
+	Group       string         `gorm:"column:group;not null"`
+	CreatedAt   time.Time      `gorm:"column:created_at;autoCreateTime"`
+	DeletedAt   gorm.DeletedAt `gorm:"column:deleted_at;index"`
 }
 
 func (gormPermission) TableName() string { return "permissions" }
@@ -56,7 +57,7 @@ func (g *gormRole) toDomain() *domain.RoleEntity {
 		Permissions: permissions,
 		CreatedAt:   g.CreatedAt,
 		UpdatedAt:   g.UpdatedAt,
-		DeletedAt:   g.DeletedAt,
+		DeletedAt:   database.FromDeletedAt(g.DeletedAt),
 	}
 }
 
@@ -68,7 +69,7 @@ func fromDomainRole(r *domain.RoleEntity) *gormRole {
 		Description: r.Description,
 		CreatedAt:   r.CreatedAt,
 		UpdatedAt:   r.UpdatedAt,
-		DeletedAt:   r.DeletedAt,
+		DeletedAt:   database.ToDeletedAt(r.DeletedAt),
 	}
 }
 
@@ -80,7 +81,7 @@ func (g *gormPermission) toDomain() *domain.PermissionEntity {
 		Description: g.Description,
 		Group:       g.Group,
 		CreatedAt:   g.CreatedAt,
-		DeletedAt:   g.DeletedAt,
+		DeletedAt:   database.FromDeletedAt(g.DeletedAt),
 	}
 }
 
@@ -92,28 +93,28 @@ func fromDomainPermission(p *domain.PermissionEntity) *gormPermission {
 		Description: p.Description,
 		Group:       p.Group,
 		CreatedAt:   p.CreatedAt,
-		DeletedAt:   p.DeletedAt,
+		DeletedAt:   database.ToDeletedAt(p.DeletedAt),
 	}
 }
 
 // RoleRepository is the GORM implementation of ports.RoleRepository.
 type RoleRepository struct {
-	db *gorm.DB
+	database.BaseRepository[gormRole]
 }
 
 // NewRoleRepository creates a new GORM-backed RoleRepository.
 func NewRoleRepository(db *gorm.DB) *RoleRepository {
-	return &RoleRepository{db: db}
+	return &RoleRepository{BaseRepository: database.NewBaseRepository[gormRole](db)}
 }
 
 // PermissionRepository is the GORM implementation of ports.PermissionRepository.
 type PermissionRepository struct {
-	db *gorm.DB
+	database.BaseRepository[gormPermission]
 }
 
 // NewPermissionRepository creates a new GORM-backed PermissionRepository.
 func NewPermissionRepository(db *gorm.DB) *PermissionRepository {
-	return &PermissionRepository{db: db}
+	return &PermissionRepository{BaseRepository: database.NewBaseRepository[gormPermission](db)}
 }
 
 // AutoMigrateRoles runs GORM auto-migration for roles and permissions tables.
@@ -133,33 +134,32 @@ func (r *RoleRepository) Create(ctx context.Context, role *domain.RoleEntity) er
 	// Load permissions if provided
 	if len(role.Permissions) > 0 {
 		var perms []gormPermission
-		if err := r.db.WithContext(ctx).Where("name IN ?", role.Permissions).Find(&perms).Error; err != nil {
+		if err := r.DB().WithContext(ctx).Where("name IN ?", role.Permissions).Find(&perms).Error; err != nil {
 			return err
 		}
 		m.Permissions = perms
 	}
 
-	result := r.db.WithContext(ctx).Create(m)
+	result := r.DB().WithContext(ctx).Create(m)
 	return result.Error
 }
 
 func (r *RoleRepository) FindByName(ctx context.Context, name string) (*domain.RoleEntity, error) {
 	var m gormRole
-	result := r.db.WithContext(ctx).Preload("Permissions").Where("name = ?", name).First(&m)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	err := r.Query().Preload("Permissions").Where("name = ?", name).First(ctx, &m)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
-	if result.Error != nil {
-		return nil, result.Error
+	if err != nil {
+		return nil, err
 	}
 	return m.toDomain(), nil
 }
 
 func (r *RoleRepository) FindAll(ctx context.Context) ([]*domain.RoleEntity, error) {
 	var roles []gormRole
-	result := r.db.WithContext(ctx).Preload("Permissions").Find(&roles)
-	if result.Error != nil {
-		return nil, result.Error
+	if err := r.Query().Preload("Permissions").Find(ctx, &roles); err != nil {
+		return nil, err
 	}
 
 	entities := make([]*domain.RoleEntity, len(roles))
@@ -173,17 +173,17 @@ func (r *RoleRepository) Update(ctx context.Context, role *domain.RoleEntity) er
 	m := fromDomainRole(role)
 
 	// Update basic fields
-	if err := r.db.WithContext(ctx).Model(m).Updates(m).Error; err != nil {
+	if err := r.DB().WithContext(ctx).Model(m).Updates(m).Error; err != nil {
 		return err
 	}
 
 	// Update permissions association if provided
 	if len(role.Permissions) > 0 {
 		var perms []gormPermission
-		if err := r.db.WithContext(ctx).Where("name IN ?", role.Permissions).Find(&perms).Error; err != nil {
+		if err := r.DB().WithContext(ctx).Where("name IN ?", role.Permissions).Find(&perms).Error; err != nil {
 			return err
 		}
-		if err := r.db.WithContext(ctx).Model(m).Association("Permissions").Replace(perms); err != nil {
+		if err := r.DB().WithContext(ctx).Model(m).Association("Permissions").Replace(perms); err != nil {
 			return err
 		}
 	}
@@ -192,18 +192,26 @@ func (r *RoleRepository) Update(ctx context.Context, role *domain.RoleEntity) er
 }
 
 func (r *RoleRepository) Delete(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Model(&gormRole{}).Where("id = ?", id).Update("deleted_at", time.Now()).Error
+	return r.RawDelete(ctx, id)
+}
+
+func (r *RoleRepository) Restore(ctx context.Context, id string) error {
+	return r.RawRestore(ctx, id)
+}
+
+func (r *RoleRepository) ForceDelete(ctx context.Context, id string) error {
+	return r.RawForceDelete(ctx, id)
 }
 
 func (r *RoleRepository) AssignToUser(ctx context.Context, userID, roleName string) error {
 	// Find the role ID
 	var role gormRole
-	if err := r.db.WithContext(ctx).Select("id").Where("name = ?", roleName).First(&role).Error; err != nil {
+	if err := r.DB().WithContext(ctx).Select("id").Where("name = ?", roleName).First(&role).Error; err != nil {
 		return err
 	}
 
 	// Create association in user_roles
-	return r.db.WithContext(ctx).Create(&gormUserRole{
+	return r.DB().WithContext(ctx).Create(&gormUserRole{
 		UserID: userID,
 		RoleID: role.ID,
 	}).Error
@@ -212,23 +220,23 @@ func (r *RoleRepository) AssignToUser(ctx context.Context, userID, roleName stri
 func (r *RoleRepository) RevokeFromUser(ctx context.Context, userID, roleName string) error {
 	// Find the role ID
 	var role gormRole
-	if err := r.db.WithContext(ctx).Select("id").Where("name = ?", roleName).First(&role).Error; err != nil {
+	if err := r.DB().WithContext(ctx).Select("id").Where("name = ?", roleName).First(&role).Error; err != nil {
 		return err
 	}
 
 	// Delete the association
-	return r.db.WithContext(ctx).Where("user_id = ? AND role_id = ?", userID, role.ID).Delete(&gormUserRole{}).Error
+	return r.DB().WithContext(ctx).Where("user_id = ? AND role_id = ?", userID, role.ID).Delete(&gormUserRole{}).Error
 }
 
 func (r *RoleRepository) GetUserRoles(ctx context.Context, userID string) ([]string, error) {
 	var roles []gormRole
-	result := r.db.WithContext(ctx).
+	err := r.Query().
 		Joins("INNER JOIN user_roles ON user_roles.role_id = roles.id").
 		Where("user_roles.user_id = ?", userID).
-		Find(&roles)
+		Find(ctx, &roles)
 
-	if result.Error != nil {
-		return nil, result.Error
+	if err != nil {
+		return nil, err
 	}
 
 	roleNames := make([]string, len(roles))
@@ -243,9 +251,8 @@ func (r *RoleRepository) GetUserRoles(ctx context.Context, userID string) ([]str
 
 func (p *PermissionRepository) FindAll(ctx context.Context) ([]*domain.PermissionEntity, error) {
 	var perms []gormPermission
-	result := p.db.WithContext(ctx).Find(&perms)
-	if result.Error != nil {
-		return nil, result.Error
+	if err := p.Query().Find(ctx, &perms); err != nil {
+		return nil, err
 	}
 
 	entities := make([]*domain.PermissionEntity, len(perms))
@@ -257,26 +264,25 @@ func (p *PermissionRepository) FindAll(ctx context.Context) ([]*domain.Permissio
 
 func (p *PermissionRepository) FindByName(ctx context.Context, name string) (*domain.PermissionEntity, error) {
 	var m gormPermission
-	result := p.db.WithContext(ctx).Where("name = ?", name).First(&m)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	err := p.Query().Where("name = ?", name).First(ctx, &m)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
-	if result.Error != nil {
-		return nil, result.Error
+	if err != nil {
+		return nil, err
 	}
 	return m.toDomain(), nil
 }
 
 func (p *PermissionRepository) Create(ctx context.Context, perm *domain.PermissionEntity) error {
 	m := fromDomainPermission(perm)
-	return p.db.WithContext(ctx).Create(m).Error
+	return p.DB().WithContext(ctx).Create(m).Error
 }
 
 func (p *PermissionRepository) FindByGroup(ctx context.Context, group string) ([]*domain.PermissionEntity, error) {
 	var perms []gormPermission
-	result := p.db.WithContext(ctx).Where("group = ?", group).Find(&perms)
-	if result.Error != nil {
-		return nil, result.Error
+	if err := p.Query().Where("group = ?", group).Find(ctx, &perms); err != nil {
+		return nil, err
 	}
 
 	entities := make([]*domain.PermissionEntity, len(perms))

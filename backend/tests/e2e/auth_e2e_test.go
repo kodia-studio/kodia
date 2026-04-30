@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kodia-studio/kodia/internal/adapters/http/dto"
 	"github.com/kodia-studio/kodia/internal/adapters/http/handlers"
-	kodia_http "github.com/kodia-studio/kodia/internal/adapters/http"
+	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/adapters/repository/postgres"
 	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/internal/core/services"
@@ -379,14 +379,34 @@ func setupTestRouter(_ *testing.T, testDB *tests.TestDatabase) *gin.Engine {
 	// Create handlers
 	authHandler := handlers.NewAuthHandler(authService, nil, logger)
 	userHandler := handlers.NewUserHandler(userService, nil, logger)
-	graphqlHandler := handlers.NewGraphQLHandler(authService, userService, logger)
 	healthHandler := handlers.NewHealthHandler(testDB.DB, nil, logger)
-	pulseHandler := handlers.NewPulseHandler(nil, logger) // Mock or nil for E2E if not needed
 
-	// Create router
-	// want (*Config, *Logger, *jwt.Manager, *AuthHandler, *UserHandler, *redis.Client, *websocket.Handler, *GraphQLHandler, *observability.Manager, *PulseHandler, *HealthHandler)
-	router := kodia_http.NewRouter(config, logger, jwtManager, authHandler, userHandler, nil, nil, graphqlHandler, nil, pulseHandler, healthHandler)
-	return router.Setup()
+	// Create Gin router and register routes manually
+	router := gin.New()
+
+	// Auth routes
+	authGroup := router.Group("/api/auth")
+	{
+		authGroup.POST("/register", authHandler.Register)
+		authGroup.POST("/login", authHandler.Login)
+		authGroup.POST("/refresh", authHandler.RefreshToken)
+	}
+
+	// User routes (protected)
+	userGroup := router.Group("/api/users")
+	userGroup.Use(middleware.Auth(jwtManager))
+	{
+		userGroup.GET("/me", userHandler.GetMe)
+	}
+
+	// Health routes
+	healthGroup := router.Group("/api/v1/health")
+	{
+		healthGroup.GET("/live", healthHandler.Live)
+		healthGroup.GET("/ready", healthHandler.Ready)
+	}
+
+	return router
 }
 
 // MockCacheProvider is a simple mock for E2E tests

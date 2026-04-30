@@ -56,6 +56,11 @@ func (u *User) Can(permission string) bool {
 	return false
 }
 
+// IsDeleted returns true if the user has been soft-deleted.
+func (u *User) IsDeleted() bool {
+	return u.DeletedAt != nil
+}
+
 // ApiKey represents a programmatic access key.
 type ApiKey struct {
 	ID        string

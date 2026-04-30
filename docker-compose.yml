@@ -19,6 +19,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - kodia-network
 
   # MySQL Database (Disabled by default, uncomment if needed)
   # mysql:
@@ -47,33 +49,54 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - kodia-network
 
-  # Kodia Backend (Development mode with Hot Reload via Air)
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   container_name: kodia_backend
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   env_file: ./backend/.env
+  # Kodia Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kodia_backend
+    restart: on-failure
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: ./backend/.env
+    environment:
+      APP_DATABASE_DRIVER: postgres
+      APP_DATABASE_HOST: postgres
+      APP_REDIS_HOST: redis
+    volumes:
+      - ./backend/storage:/app/storage
+    networks:
+      - kodia-network
 
   # Kodia Frontend
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: kodia_frontend
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - backend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kodia_frontend
+    restart: on-failure
+    ports:
+      - "3000:3000"
+    environment:
+      PUBLIC_API_URL: http://localhost:8080/api
+    depends_on:
+      - backend
+    networks:
+      - kodia-network
 
 volumes:
   postgres_data:
   mysql_data:
+
+networks:
+  kodia-network:
+    driver: bridge

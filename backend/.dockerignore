@@ -1,0 +1,31 @@
+# Git
+.git/
+.gitignore
+
+# Development
+tmp/
+air.toml
+*.log
+
+# Test files
+*_test.go
+tests/
+
+# Build output
+server
+seeder
+
+# Local env files
+.env
+*.env
+!.env.example
+
+# Local database
+storage/
+*.db
+*.sqlite
+*.sqlite3
+
+# Docs
+docs/*.md
+README.md

@@ -1,15 +1,11 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import AdminLayout from "$lib/components/layouts/AdminLayout.svelte";
-  import Grid from "$lib/components/shared/Grid.svelte";
-  import ChartCard from "$lib/components/charts/ChartCard.svelte";
   import AreaChart from "$lib/components/charts/AreaChart.svelte";
   import { cn } from "$lib/utils/styles";
   import { authStore } from "$lib/stores/auth.store";
-  import { Activity, Server, Database, AlertCircle, Terminal, Cpu, HardDrive, Network } from "lucide-svelte";
-  import { fade, slide } from "svelte/transition";
+  import { Cpu, Server, HardDrive, Activity, Terminal, Zap } from "lucide-svelte";
+  import { slide } from "svelte/transition";
 
-  // State
   let stats = $state({
     cpu_usage_percent: 0,
     memory_usage_percent: 0,
@@ -23,15 +19,13 @@
   let logs = $state<any[]>([]);
   let ws: WebSocket;
 
-  // Max samples for charts
   const MAX_SAMPLES = 30;
 
   function connect() {
     const token = $authStore.accessToken;
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    // Adjust port/host as needed for your environment logic
     const host = window.location.hostname === "localhost" ? "localhost:8080" : window.location.host;
-    
+
     ws = new WebSocket(`${protocol}//${host}/api/pulse/stream?token=${token}`);
 
     ws.onopen = () => {
@@ -40,13 +34,10 @@
 
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-      
+
       if (msg.type === "stats") {
         stats = { ...msg.data, status: "up" };
-        
-        // Update History
         const now = new Date();
-        
         cpuHistory = [...cpuHistory, { date: now, value: stats.cpu_usage_percent }].slice(-MAX_SAMPLES);
         memHistory = [...memHistory, { date: now, value: stats.memory_usage_percent }].slice(-MAX_SAMPLES);
       } else if (msg.type === "log") {
@@ -56,7 +47,6 @@
 
     ws.onclose = () => {
       stats.status = "down";
-      // Auto reconnect after 3 seconds
       setTimeout(connect, 3000);
     };
   }
@@ -77,135 +67,93 @@
   ]);
 </script>
 
-<AdminLayout>
-  <div class="space-y-12 pb-10">
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200/50 dark:border-white/5">
-      <div class="flex flex-col">
-        <div class="flex items-center gap-4">
-          <h1 class="text-4xl font-black font-heading tracking-tight text-slate-900 dark:text-white leading-none">System Pulse.</h1>
-          <div class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 
-            {stats.status === 'up' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 
-             stats.status === 'connecting' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
-             'bg-rose-500/10 text-rose-500 border border-rose-500/20'}">
-            <span class="w-1.5 h-1.5 rounded-full {stats.status === 'up' ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]' : stats.status === 'connecting' ? 'bg-amber-500' : 'bg-rose-500'}"></span>
-            {stats.status}
+<div class="space-y-8">
+  <!-- Header -->
+  <div class="flex flex-col gap-2">
+    <div class="flex items-center gap-3">
+      <h1 class="text-3xl font-bold text-slate-900 dark:text-white">System Pulse</h1>
+      <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold {stats.status === 'up' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : stats.status === 'connecting' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}">
+        <span class="w-2 h-2 rounded-full {stats.status === 'up' ? 'bg-green-600 dark:bg-green-400 animate-pulse' : stats.status === 'connecting' ? 'bg-amber-600 dark:bg-amber-400' : 'bg-red-600 dark:bg-red-400'}"></span>
+        {stats.status}
+      </span>
+    </div>
+    <p class="text-sm text-slate-600 dark:text-slate-400">Real-time system monitoring and performance metrics</p>
+  </div>
+
+  <!-- Vitals Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    {#each vitals as vital}
+      <div class="bg-white dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 p-6 hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+        <div class="flex items-start justify-between mb-4">
+          <div class={cn("p-3 rounded-lg", vital.bg)}>
+            <vital.icon class={cn("w-5 h-5", vital.color)} />
           </div>
         </div>
-        <p class="text-xs font-black uppercase tracking-[0.3em] text-slate-400 mt-3 leading-none">High-Frequency Telemetry Stream</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">{vital.name}</p>
+        <p class="text-3xl font-bold text-slate-900 dark:text-white font-mono">{vital.value}</p>
       </div>
-      
-      <div class="flex items-center gap-3 px-4 py-2 bg-slate-100/50 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-        <Activity class="w-3.5 h-3.5" />
-        Endpoint: /pulse/stream
+    {/each}
+  </div>
+
+  <!-- Charts Row -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- CPU Chart -->
+    <div class="bg-white dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white">CPU Usage</h2>
+        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">Last 30 samples</p>
+      </div>
+      <div class="p-6">
+        <AreaChart data={cpuHistory} height={250} />
       </div>
     </div>
 
-    <!-- Elite Vitals Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-      {#each vitals as vital}
-        <div class="group relative">
-          <div class="absolute -inset-1 bg-linear-to-r from-primary to-secondary rounded-3xl blur opacity-0 group-hover:opacity-10 transition duration-500"></div>
-          <div class="glass relative p-7 rounded-3xl border border-slate-200/50 dark:border-white/5 flex items-start justify-between hover:scale-[1.02] transition-all duration-300">
-            <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 leading-none">{vital.name}</p>
-              <h2 class="text-3xl font-black text-slate-900 dark:text-white tracking-tighter tabular-nums">{vital.value}</h2>
-            </div>
-            <div class={cn("p-4 rounded-2xl ring-1 ring-white/20 shadow-inner group-hover:scale-110 transition-transform", vital.bg, vital.color)}>
-              <vital.icon class="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-      {/each}
-    </div>
-
-    <!-- Chart Analytics Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <!-- CPU Load Chart -->
-      <div class="glass rounded-3xl border border-slate-200/50 dark:border-white/5 overflow-hidden flex flex-col bg-white/30 dark:bg-slate-900/40">
-        <div class="px-8 py-7 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between">
-          <div>
-            <h3 class="text-lg font-black text-slate-900 dark:text-white leading-none uppercase tracking-tight">CPU Core Load.</h3>
-            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2">Active processing intensity</p>
-          </div>
-          <div class="w-2.5 h-2.5 rounded-full bg-primary/20 animate-pulse ring-4 ring-primary/5"></div>
-        </div>
-        <div class="p-8 pb-4">
-          <AreaChart data={cpuHistory} height={250} />
-        </div>
+    <!-- Memory Chart -->
+    <div class="bg-white dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Memory Usage</h2>
+        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">Last 30 samples</p>
       </div>
-
-      <!-- Memory Usage Chart -->
-      <div class="glass rounded-3xl border border-slate-200/50 dark:border-white/5 overflow-hidden flex flex-col bg-white/30 dark:bg-slate-900/40">
-        <div class="px-8 py-7 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between">
-          <div>
-            <h3 class="text-lg font-black text-slate-900 dark:text-white leading-none uppercase tracking-tight">Heap Statistics.</h3>
-            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2">Memory allocation & GC cycle</p>
-          </div>
-          <div class="w-2.5 h-2.5 rounded-full bg-secondary/20 animate-pulse ring-4 ring-secondary/5"></div>
-        </div>
-        <div class="p-8 pb-4">
-          <AreaChart data={memHistory} height={250} />
-        </div>
-      </div>
-    </div>
-
-    <!-- High-Fidelity Terminal Logs -->
-    <div class="relative group">
-      <div class="absolute -inset-1 bg-linear-to-r from-primary to-secondary rounded-[32px] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-      
-      <div class="relative rounded-[32px] overflow-hidden border border-slate-800 shadow-2xl bg-[#0b1120]">
-        <!-- Terminal Header -->
-        <div class="bg-slate-900/80 px-7 py-4 flex items-center justify-between border-b border-white/5">
-          <div class="flex items-center gap-6">
-             <div class="flex gap-1.5">
-                <div class="w-3 h-3 rounded-full bg-rose-500/50"></div>
-                <div class="w-3 h-3 rounded-full bg-amber-500/50"></div>
-                <div class="w-3 h-3 rounded-full bg-emerald-500/50"></div>
-             </div>
-             <div class="flex items-center gap-3">
-               <Terminal size={14} class="text-primary" />
-               <span class="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Log Protocol Alpha</span>
-             </div>
-          </div>
-          <div class="flex gap-4">
-             <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-amber-500"></div>
-                <span class="text-[10px] font-black uppercase text-amber-500/80 tracking-widest">Warning</span>
-             </div>
-             <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full bg-rose-500"></div>
-                <span class="text-[10px] font-black uppercase text-rose-500/80 tracking-widest">Critical</span>
-             </div>
-          </div>
-        </div>
-        
-        <div class="h-[400px] overflow-y-auto p-8 font-mono text-[13px] space-y-3 bg-[#0b1120] custom-scrollbar selection:bg-primary/30">
-          {#if logs.length === 0}
-            <div class="h-full flex flex-col items-center justify-center text-slate-600 gap-4">
-              <div class="w-12 h-12 rounded-full border-2 border-slate-800 border-t-primary animate-spin"></div>
-              <p class="font-black uppercase tracking-widest text-[10px] animate-pulse">Syncing Event Logs...</p>
-            </div>
-          {:else}
-            {#each logs as log (log.message + log.timestamp)}
-              <div in:slide={{ duration: 300 }} class="flex gap-4 py-2 px-4 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/5 transition-all group">
-                <span class="text-slate-500 shrink-0 font-bold select-none tabular-nums opacity-60">
-                  {new Date().toLocaleTimeString('en-GB', { hour12: false })}
-                </span>
-                <span class={cn(
-                  "font-black shrink-0 uppercase w-16 text-center rounded-md px-1.5 py-0.5 text-[10px] tracking-widest",
-                  log.level === 'error' ? 'bg-rose-500/20 text-rose-500 border border-rose-500/30' : 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
-                )}>
-                  {log.level}
-                </span>
-                <span class="text-white/80 group-hover:text-white leading-relaxed">{log.message}</span>
-              </div>
-            {/each}
-          {/if}
-        </div>
+      <div class="p-6">
+        <AreaChart data={memHistory} height={250} />
       </div>
     </div>
   </div>
-</AdminLayout>
+
+  <!-- Logs Section -->
+  <div class="bg-slate-950 dark:bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+    <div class="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <Terminal class="w-5 h-5 text-blue-400" />
+        <div>
+          <h2 class="text-sm font-bold text-white">System Logs</h2>
+          <p class="text-xs text-slate-400">Real-time event stream</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="h-100 overflow-y-auto font-mono text-sm space-y-1 p-6 custom-scrollbar">
+      {#if logs.length === 0}
+        <div class="h-full flex items-center justify-center text-slate-600">
+          <div class="text-center">
+            <div class="w-10 h-10 rounded-full border-2 border-slate-700 border-t-blue-500 animate-spin mx-auto mb-3"></div>
+            <p class="text-xs font-medium">Connecting to logs...</p>
+          </div>
+        </div>
+      {:else}
+        {#each logs as log (log.message + log.timestamp)}
+          <div in:slide={{ duration: 300 }} class="flex gap-3 py-1 px-2 rounded hover:bg-slate-800/50 transition-colors group">
+            <span class="text-slate-500 shrink-0 tabular-nums text-xs opacity-70">{new Date().toLocaleTimeString('en-GB', { hour12: false })}</span>
+            <span class={cn("shrink-0 text-xs font-bold px-2 py-0.5 rounded", log.level === 'error' ? 'text-red-400 bg-red-500/20' : 'text-amber-400 bg-amber-500/20')}>
+              {log.level?.toUpperCase()}
+            </span>
+            <span class="text-slate-300 group-hover:text-slate-100 text-xs">{log.message}</span>
+          </div>
+        {/each}
+      {/if}
+    </div>
+  </div>
+</div>
 
 <style>
   /* Custom scrollbar for terminal */

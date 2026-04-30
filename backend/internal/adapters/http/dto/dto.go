@@ -10,18 +10,18 @@ type RegisterRequest struct {
 	// User display name
 	// @required
 	// @example "John Doe"
-	Name string `json:"name" validate:"required,min=2,max=100" example:"John Doe"`
+	Name string `json:"name" validate:"required,min=2,max=100,alpha_space,no_html" sanitize:"trim" example:"John Doe"`
 
 	// User email address
 	// @required
 	// @example "user@example.com"
-	Email string `json:"email" validate:"required,email" example:"user@example.com"`
+	Email string `json:"email" validate:"required,email" sanitize:"trim,lowercase" example:"user@example.com"`
 
 	// User password
 	// @required
 	// @example "SecurePassword123!"
 	// @minLength 8
-	Password string `json:"password" validate:"required,min=8,max=72" example:"SecurePassword1123!"`
+	Password string `json:"password" validate:"required,min=8,max=72,strong_password" example:"SecurePassword1123!"`
 }
 
 // LoginRequest is the request body for POST /api/auth/login.
@@ -30,7 +30,7 @@ type LoginRequest struct {
 	// User email address
 	// @required
 	// @example "user@example.com"
-	Email string `json:"email" validate:"required,email" example:"user@example.com"`
+	Email string `json:"email" validate:"required,email" sanitize:"trim,lowercase" example:"user@example.com"`
 
 	// User password
 	// @required
@@ -69,7 +69,7 @@ type AuthResponse struct {
 type ForgotPasswordRequest struct {
 	// User email address
 	// @required
-	Email string `json:"email" validate:"required,email" example:"user@example.com"`
+	Email string `json:"email" validate:"required,email" sanitize:"trim,lowercase" example:"user@example.com"`
 }
 
 // ResetPasswordRequest is the request body for POST /api/auth/reset-password.
@@ -81,7 +81,7 @@ type ResetPasswordRequest struct {
 
 	// New password
 	// @required
-	NewPassword string `json:"new_password" validate:"required,min=8,max=72" example:"NewSecurePassword456!"`
+	NewPassword string `json:"new_password" validate:"required,min=8,max=72,strong_password" example:"NewSecurePassword456!"`
 }
 
 // Verify2FARequest is the request body for POST /api/auth/2fa/verify.
@@ -151,7 +151,7 @@ type UserResponse struct {
 // UpdateUserRequest is the request body for PATCH /api/users/:id.
 // @swagger:model
 type UpdateUserRequest struct {
-	Name      *string `json:"name"       validate:"omitempty,min=2,max=100" example:"Jane Doe"`
+	Name      *string `json:"name"       validate:"omitempty,min=2,max=100,alpha_space,no_html" sanitize:"trim" example:"Jane Doe"`
 	AvatarURL *string `json:"avatar_url" validate:"omitempty,url"             example:"https://example.com/avatar2.jpg"`
 }
 
@@ -159,7 +159,7 @@ type UpdateUserRequest struct {
 // @swagger:model
 type ChangePasswordRequest struct {
 	CurrentPassword string `json:"current_password" validate:"required" example:"OldSecurePassword123!"`
-	NewPassword     string `json:"new_password"     validate:"required,min=8,max=72" example:"NewSecurePassword456!"`
+	NewPassword     string `json:"new_password"     validate:"required,min=8,max=72,strong_password" example:"NewSecurePassword456!"`
 }
 
 // PaginatedUsersResponse wraps a list of users with pagination metadata.

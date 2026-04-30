@@ -67,6 +67,21 @@ func (m *MockUserRepository) CountByRole(ctx context.Context, role string) (int6
 	return args.Get(0).(int64), args.Error(1)
 }
 
+func (m *MockUserRepository) Restore(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) ForceDelete(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) FindTrashed(ctx context.Context, params *pagination.Params) ([]*domain.User, int64, error) {
+	args := m.Called(ctx, params)
+	return args.Get(0).([]*domain.User), args.Get(1).(int64), args.Error(2)
+}
+
 // MockRefreshTokenRepository is a mock implementation
 type MockRefreshTokenRepository struct {
 	mock.Mock

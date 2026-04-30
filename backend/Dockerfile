@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for Kodia Backend
 # Stage 1: Build stage
-FROM golang:1.22-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -21,8 +21,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
   -ldflags="-s -w" \
   -o server \
   cmd/server/main.go
-
----
 
 # Stage 2: Runtime stage
 FROM alpine:3.19
@@ -51,9 +49,9 @@ USER kodia
 # Expose application port (app) and metrics port (Prometheus)
 EXPOSE 8080 9090
 
-# Health check - probe the /health endpoint
+# Health check - probe the /api/v1/health/live endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
+  CMD curl -f http://localhost:8080/api/v1/health/live || exit 1
 
 # Run the application
 CMD ["./server"]

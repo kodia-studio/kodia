@@ -1,20 +1,16 @@
 <script lang="ts">
   import { cn } from "$lib/utils/styles";
-  import { 
-    LayoutDashboard, 
-    Users, 
-    Settings, 
-    ShieldCheck, 
-    BarChart3, 
+  import {
+    LayoutDashboard,
+    Users,
+    Settings,
+    ShieldCheck,
+    BarChart3,
     Layers,
     Activity,
-    Zap,
-    ChevronLeft,
-    LogOut
+    ChevronLeft
   } from "lucide-svelte";
   import { page } from "$app/state";
-  import { authStore } from "$lib/stores/auth.store";
-  import { goto } from "$app/navigation";
 
   let { collapsed = $bindable(false) } = $props();
 
@@ -25,10 +21,6 @@
     { name: "Settings", icon: Settings, href: "/settings" },
   ];
 
-  async function handleLogout() {
-    authStore.logout();
-    await goto("/login");
-  }
 </script>
 
 <aside 
@@ -43,9 +35,7 @@
     <div class="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-slate-200/50 dark:via-white/5 to-transparent"></div>
     
     <a href="/" class="flex items-center gap-4 overflow-hidden group">
-      <div class="min-w-[44px] h-11 bg-linear-to-tr from-primary to-secondary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
-        <Zap class="text-white w-6 h-6 fill-white/20" />
-      </div>
+      <img src="/logo.png" alt="Kodia Logo" class="min-w-11 h-11 group-hover:scale-105 transition-transform" />
       {#if !collapsed}
         <div class="flex flex-col">
           <span class="text-xl font-black font-heading tracking-tighter text-slate-900 dark:text-white leading-none">
@@ -94,26 +84,14 @@
   <div class="px-4 py-8 relative">
     <div class="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-slate-200/50 dark:via-white/5 to-transparent"></div>
     
-    <div class="space-y-2">
-      <button 
-        onclick={() => (collapsed = !collapsed)}
-        class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-slate-100/50 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 transition-all active:scale-95 group"
-      >
-        <ChevronLeft class={cn("w-5.5 h-5.5 transition-transform duration-500", collapsed && "rotate-180")} />
-        {#if !collapsed}
-          <span class="text-xs font-black uppercase tracking-widest group-hover:text-slate-900 dark:group-hover:text-white">Minimize.</span>
-        {/if}
-      </button>
-      
-      <button 
-        onclick={handleLogout}
-        class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-rose-500/10 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-all active:scale-95 group"
-      >
-        <LogOut class="w-5.5 h-5.5" />
-        {#if !collapsed}
-          <span class="text-xs font-black uppercase tracking-widest leading-none pt-0.5">Termination.</span>
-        {/if}
-      </button>
-    </div>
+    <button
+      onclick={() => (collapsed = !collapsed)}
+      class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-slate-100/50 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 transition-all active:scale-95 group"
+    >
+      <ChevronLeft class={cn("w-5.5 h-5.5 transition-transform duration-500", collapsed && "rotate-180")} />
+      {#if !collapsed}
+        <span class="text-xs font-black uppercase tracking-widest group-hover:text-slate-900 dark:group-hover:text-white">Minimize.</span>
+      {/if}
+    </button>
   </div>
 </aside>
