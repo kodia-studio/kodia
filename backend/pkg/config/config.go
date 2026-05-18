@@ -22,6 +22,7 @@ type Config struct {
 	Mail          MailConfig          `mapstructure:"mail"`
 	Observability ObservabilityConfig `mapstructure:"observability"`
 	Notification  NotificationConfig  `mapstructure:"notification"`
+	Midtrans      MidtransConfig      `mapstructure:"midtrans"`
 }
 
 // AppConfig holds general application settings.
@@ -139,6 +140,13 @@ type NotificationConfig struct {
 	FCMServerKey string `mapstructure:"fcm_server_key"`
 }
 
+// MidtransConfig holds Midtrans payment gateway settings.
+type MidtransConfig struct {
+	ServerKey    string `mapstructure:"server_key"`
+	ClientKey    string `mapstructure:"client_key"`
+	IsProduction bool   `mapstructure:"is_production"`
+}
+
 // Load reads the application configuration from environment variables and/or config.yaml.
 // Environment variables take precedence over file values.
 // Example: APP_PORT=8080 overrides app.port in the file.
@@ -209,6 +217,10 @@ func Load() (*Config, error) {
 	v.SetDefault("notification.twilio_from_number", "")
 	v.SetDefault("notification.slack_webhook_url", "")
 	v.SetDefault("notification.fcm_server_key", "")
+
+	v.SetDefault("midtrans.server_key", "")
+	v.SetDefault("midtrans.client_key", "")
+	v.SetDefault("midtrans.is_production", false)
 
 	// Config file
 	v.SetConfigName("config")

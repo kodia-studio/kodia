@@ -6,6 +6,7 @@ package ports
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/kodia-studio/kodia/internal/core/domain"
 	"github.com/kodia-studio/kodia/pkg/pagination"
 )
@@ -137,5 +138,26 @@ type PermissionRepository interface {
 
 	// FindByGroup retrieves all permissions in a group.
 	FindByGroup(ctx context.Context, group string) ([]*domain.PermissionEntity, error)
+}
+
+// ProductDocRepository defines all database operations for the ProductDoc entity.
+type ProductDocRepository interface {
+	// Create persists a new product doc to the database.
+	Create(ctx context.Context, doc *domain.ProductDoc) error
+
+	// FindByID retrieves a product doc by its unique ID.
+	FindByID(ctx context.Context, id uuid.UUID) (*domain.ProductDoc, error)
+
+	// FindByProduct retrieves all docs for a product filtered by doc type, ordered by section and sort order.
+	FindByProduct(ctx context.Context, productID uuid.UUID, docType string) ([]*domain.ProductDoc, error)
+
+	// FindBySlug retrieves a single doc by product, type, section slug, and doc slug.
+	FindBySlug(ctx context.Context, productID uuid.UUID, docType string, sectionSlug string, docSlug string) (*domain.ProductDoc, error)
+
+	// Update persists changes to an existing product doc.
+	Update(ctx context.Context, doc *domain.ProductDoc) error
+
+	// Delete soft-deletes a product doc by its ID.
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 

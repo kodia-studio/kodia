@@ -91,7 +91,12 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 
 // AutoMigrate runs the GORM auto-migration for the user and auth models.
 func AutoMigrate(db *gorm.DB) error {
-	return db.AutoMigrate(&gormUser{}, &gormRefreshToken{})
+	return db.AutoMigrate(
+		&gormUser{}, &gormRefreshToken{},
+		&gormProduct{}, &gormProductVariant{},
+		&gormOrder{}, &gormOrderItem{}, &gormPayment{},
+		&gormCoupon{},
+	)
 }
 
 func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {

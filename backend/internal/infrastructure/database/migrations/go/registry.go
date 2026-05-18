@@ -22,5 +22,9 @@ func All() []Entry {
 			Name:      "20260422164224_create_failed_jobs_tables",
 			Migration: &Migration_20260422164224{},
 		},
+		{
+			Name:      "20260508000000_create_product_docs_table",
+			Migration: &Migration_20260508000000{},
+		},
 	}
 }

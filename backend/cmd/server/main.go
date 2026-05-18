@@ -51,7 +51,7 @@ func main() {
 		providers.NewNotificationProvider(), // Requires event_broadcaster from RealtimeProvider
 		providers.NewGraphQLProvider(),
 		providers.NewPulseProvider(), // Real-time observability telemetry
-		// Third-party plugins would be added here
+		providers.NewCommerceProvider(), // Marketplace: products, orders, coupons, payments
 	)
 	if err != nil {
 		log.Fatal("Failed to register providers", zap.Error(err))
