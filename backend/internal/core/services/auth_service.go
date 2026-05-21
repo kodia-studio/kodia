@@ -14,6 +14,7 @@ import (
 	"github.com/boombuler/barcode/qr"
 	"github.com/google/uuid"
 	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/internal/core/events"
 	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/pkg/hash"
 	"github.com/kodia-studio/kodia/pkg/jwt"
@@ -24,6 +25,7 @@ import (
 type AuthService struct {
 	userRepo         ports.UserRepository
 	refreshTokenRepo ports.RefreshTokenRepository
+	dispatcher       ports.EventDispatcher
 	jwtManager       *jwt.Manager
 	cache            ports.CacheProvider
 	mailer           ports.Mailer
@@ -36,6 +38,7 @@ type AuthService struct {
 func NewAuthService(
 	userRepo ports.UserRepository,
 	refreshTokenRepo ports.RefreshTokenRepository,
+	dispatcher ports.EventDispatcher,
 	jwtManager *jwt.Manager,
 	cache ports.CacheProvider,
 	mailer ports.Mailer,
@@ -46,6 +49,7 @@ func NewAuthService(
 	return &AuthService{
 		userRepo:         userRepo,
 		refreshTokenRepo: refreshTokenRepo,
+		dispatcher:       dispatcher,
 		jwtManager:       jwtManager,
 		cache:            cache,
 		mailer:           mailer,
@@ -97,14 +101,26 @@ func (s *AuthService) Register(ctx context.Context, input ports.RegisterInput) (
 		return nil, fmt.Errorf("register: %w", err)
 	}
 
-	// 4. Trigger verification email (Batteries Included)
+	// 4. Dispatch UserRegisteredEvent (listeners handle welcome notification, etc.)
+	go func() {
+		if err := s.dispatcher.Dispatch(context.Background(), events.UserRegisteredEvent{
+			UserID:    user.ID,
+			Email:     user.Email,
+			UserName:  user.Name,
+			Timestamp: time.Now(),
+		}); err != nil {
+			s.log.Warn("Failed to dispatch user.registered event", zap.Error(err))
+		}
+	}()
+
+	// 5. Trigger verification email (Batteries Included)
 	go func() {
 		if err := s.SendVerificationEmail(context.Background(), user.ID); err != nil {
 			s.log.Warn("Failed to send verification email on register", zap.Error(err))
 		}
 	}()
 
-	// 5. Generate tokens
+	// 6. Generate tokens
 	return s.generateTokenPair(ctx, user)
 }
 
@@ -303,10 +319,14 @@ func (s *AuthService) ResetPassword(ctx context.Context, token string, newPasswo
 	return s.cache.Delete(ctx, key)
 }
 
-func (s *AuthService) Enable2FA(ctx context.Context, userID string) (*ports.TwoFactorSetup, error) {
+func (s *AuthService) Enable2FA(ctx context.Context, userID string, password string) (*ports.TwoFactorSetup, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		return nil, err
+	}
+
+	if !hash.Check(password, user.Password) {
+		return nil, domain.ErrInvalidCredentials
 	}
 
 	key, err := totp.Generate(totp.GenerateOpts{
@@ -378,10 +398,14 @@ func (s *AuthService) Verify2FA(ctx context.Context, userID string, code string)
 	return recovery, nil
 }
 
-func (s *AuthService) Disable2FA(ctx context.Context, userID string) error {
+func (s *AuthService) Disable2FA(ctx context.Context, userID string, password string) error {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		return err
+	}
+
+	if !hash.Check(password, user.Password) {
+		return domain.ErrInvalidCredentials
 	}
 
 	user.TwoFactorEnabled = false

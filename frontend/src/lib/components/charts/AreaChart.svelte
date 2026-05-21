@@ -72,20 +72,30 @@
     return ticks.slice(0, 5);
   });
 
+  const xFactor = 100 / (100 - padding.left - padding.right);
+  const xOffset = padding.left * xFactor;
+
+  function toSvgX(rawX: number): number {
+    return rawX * xFactor - xOffset;
+  }
+
   function handleMouseMove(e: MouseEvent) {
     const svg = e.currentTarget as SVGElement;
     const rect = svg.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
 
-    const xPixels = (x - padding.left) / ((100 - padding.left - padding.right) / 100);
     const closestIndex = data.reduce((closest, _, idx) => {
-      const distance = Math.abs((xScale(data[idx].date) as number) - xPixels);
-      const closestDistance = Math.abs((xScale(data[closest].date) as number) - xPixels);
-      return distance < closestDistance ? idx : closest;
+      const rawX = xScale(data[idx].date) as number;
+      const closestRawX = xScale(data[closest].date) as number;
+      return Math.abs(toSvgX(rawX) - x) < Math.abs(toSvgX(closestRawX) - x) ? idx : closest;
     }, 0);
 
     hoveredIndex = closestIndex;
-    tooltipPos = { x: (xScale(data[closestIndex].date) as number), y: yScale(data[closestIndex].value) as number };
+    const rawX = xScale(data[closestIndex].date) as number;
+    tooltipPos = {
+      x: toSvgX(rawX),
+      y: yScale(data[closestIndex].value) as number
+    };
   }
 
   function handleMouseLeave() {
@@ -122,17 +132,6 @@
       vector-effect="non-scaling-stroke"
     />
 
-    <!-- Y Axis -->
-    <line x1={padding.left} y1={padding.top} x2={padding.left} y2={height - padding.bottom} stroke="currentColor" stroke-width="0.5" opacity="0.2" />
-
-    <!-- Y Axis Ticks -->
-    {#each yTicks as tick}
-      {@const y = yScale(tick)}
-      <line x1={padding.left - 2} y1={y} x2={padding.left} y2={y} stroke="currentColor" stroke-width="0.5" opacity="0.2" />
-      <text x={padding.left - 5} y={y} text-anchor="end" dominant-baseline="middle" class="text-[8px] fill-slate-500">
-        {tick.toLocaleString()}
-      </text>
-    {/each}
 
     <!-- X Axis -->
     <line x1={padding.left} y1={height - padding.bottom} x2={100 - padding.right} y2={height - padding.bottom} stroke="currentColor" stroke-width="0.5" opacity="0.2" />
@@ -142,7 +141,7 @@
       <circle
         cx={tooltipPos.x}
         cy={tooltipPos.y}
-        r="2"
+        r="3"
         fill={color}
         class="pointer-events-none"
       />
@@ -153,7 +152,7 @@
   {#if hoveredIndex !== null}
     <div
       class="absolute pointer-events-none bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 text-sm shadow-lg z-10"
-      style="left: {(tooltipPos.x / 100) * 100}%; top: {(tooltipPos.y / height) * 100}%; transform: translate(-50%, -100%); margin-top: -8px;"
+      style="left: {tooltipPos.x}%; top: {tooltipPos.y}px; transform: translate(-50%, -100%); margin-top: -8px;"
     >
       <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">
         {data[hoveredIndex].date.toLocaleDateString()}

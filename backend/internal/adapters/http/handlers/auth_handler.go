@@ -259,17 +259,29 @@ func (h *AuthHandler) Me(c *gin.Context) {
 
 // Enable2FA godoc
 // @Summary      Enable two-factor authentication
-// @Description  Generate TOTP secret and QR code for setting up 2FA
+// @Description  Generate TOTP secret and QR code for setting up 2FA with password verification
 // @Tags         auth
 // @Security     BearerAuth
+// @Accept       json
 // @Produce      json
+// @Param        body body dto.Enable2FARequest true "Current password for verification"
 // @Success      200 {object} response.Response{data=dto.TwoFactorSetupResponse}
+// @Failure      400 {object} response.Response
 // @Failure      401 {object} response.Response
 // @Router       /auth/2fa/enable [post]
 func (h *AuthHandler) Enable2FA(c *gin.Context) {
+	var req dto.Enable2FARequest
+	if !validation.BindAndValidate(c, h.validate, &req) {
+		return
+	}
+
 	userID := middleware.GetUserID(c)
-	setup, err := h.authService.Enable2FA(c.Request.Context(), userID)
+	setup, err := h.authService.Enable2FA(c.Request.Context(), userID, req.Password)
 	if err != nil {
+		if errors.Is(err, domain.ErrInvalidCredentials) {
+			response.Unauthorized(c, "Invalid password")
+			return
+		}
 		response.InternalServerError(c, "Failed to initiate 2FA setup")
 		return
 	}
@@ -310,16 +322,28 @@ func (h *AuthHandler) Verify2FA(c *gin.Context) {
 
 // Disable2FA godoc
 // @Summary      Disable two-factor authentication
-// @Description  Disable TOTP for the authenticated user
+// @Description  Disable TOTP for the authenticated user with password verification
 // @Tags         auth
 // @Security     BearerAuth
+// @Accept       json
 // @Produce      json
+// @Param        body body dto.Disable2FARequest true "Current password for verification"
 // @Success      200 {object} response.Response
+// @Failure      400 {object} response.Response
 // @Failure      401 {object} response.Response
 // @Router       /auth/2fa/disable [delete]
 func (h *AuthHandler) Disable2FA(c *gin.Context) {
+	var req dto.Disable2FARequest
+	if !validation.BindAndValidate(c, h.validate, &req) {
+		return
+	}
+
 	userID := middleware.GetUserID(c)
-	if err := h.authService.Disable2FA(c.Request.Context(), userID); err != nil {
+	if err := h.authService.Disable2FA(c.Request.Context(), userID, req.Password); err != nil {
+		if errors.Is(err, domain.ErrInvalidCredentials) {
+			response.Unauthorized(c, "Invalid password")
+			return
+		}
 		response.InternalServerError(c, "Failed to disable 2FA")
 		return
 	}

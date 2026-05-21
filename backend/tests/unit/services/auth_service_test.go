@@ -160,6 +160,20 @@ func (m *MockMailer) SendWithTemplate(ctx context.Context, to []string, subject 
 	return args.Error(0)
 }
 
+// MockEventDispatcher is a mock implementation of the event dispatcher
+type MockEventDispatcher struct {
+	mock.Mock
+}
+
+func (m *MockEventDispatcher) Dispatch(ctx context.Context, event ports.Event) error {
+	args := m.Called(ctx, event)
+	return args.Error(0)
+}
+
+func (m *MockEventDispatcher) Register(eventName string, handlers ...ports.Listener) {
+	m.Called(eventName, handlers)
+}
+
 // TestAuthServiceRegister tests user registration
 func TestAuthServiceRegister(t *testing.T) {
 	mockUserRepo := new(MockUserRepository)
@@ -169,7 +183,9 @@ func TestAuthServiceRegister(t *testing.T) {
 
 	mockCache := new(MockCacheProvider)
 	mockMailer := new(MockMailer)
-	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, jwtManager, mockCache, mockMailer, "http://localhost:8080", "http://localhost:3000", logger)
+	mockDispatcher := new(MockEventDispatcher)
+	mockDispatcher.On("Dispatch", mock.Anything, mock.Anything).Return(nil)
+	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, mockDispatcher, jwtManager, mockCache, mockMailer, "http://localhost:8080", "http://localhost:3000", logger)
 
 	input := ports.RegisterInput{
 		Name:     "Test User",
@@ -206,7 +222,9 @@ func TestAuthServiceLogin(t *testing.T) {
 
 	mockCache := new(MockCacheProvider)
 	mockMailer := new(MockMailer)
-	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, jwtManager, mockCache, mockMailer, "http://localhost:8080", "http://localhost:3000", logger)
+	mockDispatcher := new(MockEventDispatcher)
+	mockDispatcher.On("Dispatch", mock.Anything, mock.Anything).Return(nil)
+	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, mockDispatcher, jwtManager, mockCache, mockMailer, "http://localhost:8080", "http://localhost:3000", logger)
 
 	password := "password123"
 	hashedPassword, _ := hash.Make(password)
@@ -249,7 +267,9 @@ func TestAuthServiceLogout(t *testing.T) {
 
 	mockCache := new(MockCacheProvider)
 	mockMailer := new(MockMailer)
-	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, jwtManager, mockCache, mockMailer, "http://localhost:8080", "http://localhost:3000", logger)
+	mockDispatcher := new(MockEventDispatcher)
+	mockDispatcher.On("Dispatch", mock.Anything, mock.Anything).Return(nil)
+	authService := services.NewAuthService(mockUserRepo, mockRefreshRepo, mockDispatcher, jwtManager, mockCache, mockMailer, "http://localhost:8080", "http://localhost:3000", logger)
 
 	token := "some-refresh-token"
 	mockRefreshRepo.On("RevokeByToken", mock.Anything, token).Return(nil)

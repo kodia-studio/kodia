@@ -72,14 +72,19 @@ func registerUserRoutes(g *gin.RouterGroup, h *handlers.UserHandler, jwtManager 
 	{
 		g.GET("/me", h.GetMe)
 		g.POST("/me/change-password", h.ChangePassword)
+		g.DELETE("/me", h.DeleteMe)
 
 		admin := g.Group("")
 		admin.Use(middleware.RequireRole("admin"))
 		{
+			admin.POST("", h.Create)
 			admin.GET("", h.GetAll)
 			admin.GET("/:id", h.GetByID)
 			admin.PATCH("/:id", h.Update)
 			admin.DELETE("/:id", h.Delete)
+			admin.GET("/trashed", h.GetTrashed)
+			admin.POST("/:id/restore", h.Restore)
+			admin.POST("/:id/force-delete", h.ForceDelete)
 		}
 	}
 }

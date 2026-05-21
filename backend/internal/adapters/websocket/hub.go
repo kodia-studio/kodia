@@ -1,10 +1,14 @@
 package websocket
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // Hub maintains the set of active WebSocket connections and broadcasts messages to them.
@@ -31,13 +35,20 @@ type Hub struct {
 	unregister chan *Connection
 
 	// Metrics
-	totalMessages atomic.Int64
+	totalMessages      atomic.Int64
+	totalConnections   atomic.Int64 // Total connections ever made
+	totalDisconnections atomic.Int64 // Total disconnections ever made
+	peakConnections    atomic.Int64 // Peak concurrent connections
+	failedBroadcasts   atomic.Int64 // Messages dropped due to full channels
+	startTime          time.Time
+
+	log *zap.Logger
 
 	mu sync.RWMutex
 }
 
 // NewHub creates a new Hub instance.
-func NewHub() *Hub {
+func NewHub(log *zap.Logger) *Hub {
 	return &Hub{
 		broadcast:  make(chan *Message, 256),
 		register:   make(chan *Connection),
@@ -46,6 +57,8 @@ func NewHub() *Hub {
 		rooms:      make(map[string]map[*Connection]bool),
 		userConns:  make(map[string][]*Connection),
 		channels:   make(map[string]*Channel),
+		log:        log,
+		startTime:  time.Now(),
 	}
 }
 
@@ -59,6 +72,19 @@ func (h *Hub) Run() {
 		case client := <-h.register:
 			h.mu.Lock()
 			h.clients[client] = true
+
+			// Track metrics
+			h.totalConnections.Add(1)
+			currentConnections := int64(len(h.clients))
+			for {
+				peak := h.peakConnections.Load()
+				if currentConnections <= peak {
+					break
+				}
+				if h.peakConnections.CompareAndSwap(peak, currentConnections) {
+					break
+				}
+			}
 
 			// Register user connection
 			if client.UserID != "" {
@@ -74,12 +100,17 @@ func (h *Hub) Run() {
 			}
 
 			h.mu.Unlock()
+			h.log.Debug("Client connected", zap.String("user_id", client.UserID), zap.Int64("total_connections", currentConnections))
 
 		case client := <-h.unregister:
 			h.mu.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
+
+				// Track metrics
+				h.totalDisconnections.Add(1)
+				currentConnections := int64(len(h.clients))
 
 				// Unregister user connection
 				if client.UserID != "" {
@@ -102,20 +133,28 @@ func (h *Hub) Run() {
 						delete(h.rooms, client.RoomID)
 					}
 				}
+
+				h.log.Debug("Client disconnected", zap.String("user_id", client.UserID), zap.Int64("total_connections", currentConnections))
 			}
 			h.mu.Unlock()
 
 		case message := <-h.broadcast:
 			h.totalMessages.Add(1)
 			h.mu.RLock()
+			failedCount := 0
 			for client := range h.clients {
 				select {
 				case client.send <- message:
 				default:
 					// Client's send channel is full, skip message
+					failedCount++
 				}
 			}
 			h.mu.RUnlock()
+			if failedCount > 0 {
+				h.failedBroadcasts.Add(int64(failedCount))
+				h.log.Debug("Broadcast messages dropped", zap.Int("count", failedCount))
+			}
 
 		case <-ticker.C:
 			// Send periodic ping to all clients
@@ -306,11 +345,69 @@ func (h *Hub) TotalMessages() int64 {
 func (h *Hub) Metrics() map[string]interface{} {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
+
+	uptime := time.Since(h.startTime)
+	totalConns := h.totalConnections.Load()
+	totalDisconns := h.totalDisconnections.Load()
+	currentConns := int64(len(h.clients))
+
 	return map[string]interface{}{
-		"total_clients":   len(h.clients),
-		"total_users":     len(h.userConns),
-		"total_rooms":     len(h.rooms),
-		"total_channels":  len(h.channels),
-		"total_messages":  h.totalMessages.Load(),
+		// Current state
+		"active_connections": currentConns,
+		"active_users":       len(h.userConns),
+		"active_rooms":       len(h.rooms),
+		"active_channels":    len(h.channels),
+
+		// Cumulative metrics
+		"total_connections":     totalConns,
+		"total_disconnections":  totalDisconns,
+		"peak_connections":      h.peakConnections.Load(),
+		"total_messages":        h.totalMessages.Load(),
+		"failed_broadcasts":     h.failedBroadcasts.Load(),
+
+		// Timing
+		"uptime_seconds": uptime.Seconds(),
+		"start_time":     h.startTime.Unix(),
+
+		// Calculated
+		"reconnections_estimated": totalConns - totalDisconns - currentConns,
 	}
+}
+
+// --- Broadcaster Interface Implementation ---
+
+// BroadcastToUser implements ports.Broadcaster - sends message to specific user's connections.
+func (h *Hub) BroadcastToUser(ctx context.Context, userID string, eventName string, data map[string]interface{}) error {
+	if userID == "" {
+		return fmt.Errorf("userID cannot be empty")
+	}
+
+	msg := &Message{
+		Type:      MessageTypeNotification,
+		Event:     eventName,
+		Payload:   data,
+		UserID:    userID,
+		Timestamp: time.Now().Unix(),
+	}
+
+	h.SendToUser(userID, msg)
+	return nil
+}
+
+// BroadcastToRoom implements ports.Broadcaster - sends message to all users in a room.
+func (h *Hub) BroadcastToRoom(ctx context.Context, roomID string, eventName string, data map[string]interface{}) error {
+	if roomID == "" {
+		return fmt.Errorf("roomID cannot be empty")
+	}
+
+	msg := &Message{
+		Type:      MessageTypeNotification,
+		Event:     eventName,
+		Payload:   data,
+		RoomID:    roomID,
+		Timestamp: time.Now().Unix(),
+	}
+
+	h.SendToRoom(roomID, msg)
+	return nil
 }

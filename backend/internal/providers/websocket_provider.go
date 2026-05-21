@@ -17,7 +17,7 @@ func (p *WebSocketProvider) Name() string {
 }
 
 func (p *WebSocketProvider) Register(app *kodia.App) error {
-	hub := websocket.NewHub()
+	hub := websocket.NewHub(app.Log)
 	go hub.Run()
 	app.Set("ws_hub", hub)
 

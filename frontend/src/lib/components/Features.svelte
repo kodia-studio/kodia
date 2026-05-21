@@ -41,7 +41,7 @@
         },
         {
             title: "High Performance",
-            description: "Built on Gin and GORM with artisanal optimizations.",
+            description: "Built on Gin and GORM with advanced optimizations.",
             icon: Zap,
             span: "col-span-12 lg:col-span-4",
             color: "text-emerald-500",
@@ -73,50 +73,52 @@
     onMount(() => mounted = true);
 </script>
 
-<section class="py-32 relative overflow-hidden transition-colors duration-500">
+<section class="pt-12 md:pt-16 lg:pt-20 pb-16 md:pb-24 lg:pb-32 relative overflow-hidden transition-colors duration-500">
     <!-- Background patterns -->
     <div class="absolute inset-0 bg-hive opacity-5 -z-10"></div>
-    
-    <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
+
+    <div class="container mx-auto px-4 md:px-6">
+        <div class="flex flex-col gap-6 md:gap-8 lg:gap-0 lg:flex-row lg:items-end lg:justify-between mb-12 md:mb-16 lg:mb-20">
             <div class="text-left max-w-2xl">
-                <span class="text-xs font-black tracking-[0.3em] text-primary uppercase mb-4 block">Engineered for Velocity</span>
-                <h2 class="text-5xl md:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[0.9]">
-                    Points of <br/>
-                    <span class="text-gradient">The Sting.</span>
+                <span class="text-[10px] md:text-xs font-black tracking-[0.3em] text-primary uppercase mb-3 md:mb-4 block">Engineered for Velocity</span>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[0.9]">
+                    Key <br/>
+                    <span class="text-gradient">Features.</span>
                 </h2>
             </div>
-            <p class="text-slate-500 dark:text-slate-400 max-w-sm text-sm font-medium leading-relaxed">
+            <p class="text-slate-500 dark:text-slate-400 max-w-sm text-xs md:text-sm font-medium leading-relaxed">
                 Kodia isn't just a library. It's a cohesive ecosystem designed to solve everyday fullstack problems with Go.
             </p>
         </div>
 
-        <div class="grid grid-cols-12 gap-6">
+        <div class="grid grid-cols-12 gap-4 md:gap-5 lg:gap-6">
             {#if mounted}
                 {#each features as feature, i}
-                    <div 
+                    <div
                         class="{feature.span} group relative"
                         in:fly={{ y: 20, duration: 800, delay: i * 100 }}
                     >
-                        <div class="h-full glass rounded-3xl p-8 border border-slate-200 dark:border-slate-800 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1 group-hover:bg-white/50 dark:group-hover:bg-white/5 flex flex-col justify-between">
+                        <div class="h-full glass rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 border border-slate-200 dark:border-slate-800 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1 group-hover:bg-white/50 dark:group-hover:bg-white/5 flex flex-col justify-between">
                             <div>
-                                <div class="flex items-center justify-between mb-10">
-                                    <div class="w-14 h-14 {feature.bg} {feature.color} rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
-                                        <feature.icon size={28} />
+                                <div class="flex items-center justify-between mb-6 md:mb-8 lg:mb-10">
+                                    <div class="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 {feature.bg} {feature.color} rounded-lg md:rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 shrink-0">
+                                        <feature.icon size={20} class="md:hidden" />
+                                        <feature.icon size={24} class="hidden md:block lg:hidden" />
+                                        <feature.icon size={28} class="hidden lg:block" />
                                     </div>
-                                    <span class="text-[10px] font-black uppercase tracking-widest opacity-30 group-hover:opacity-100 transition-opacity">
+                                    <span class="text-[9px] md:text-[10px] font-black uppercase tracking-widest opacity-30 group-hover:opacity-100 transition-opacity">
                                         {feature.tag}
                                     </span>
                                 </div>
-                                <h3 class="text-2xl font-black mb-4 text-slate-900 dark:text-white tracking-tight">
+                                <h3 class="text-lg md:text-xl lg:text-2xl font-black mb-2 md:mb-3 lg:mb-4 text-slate-900 dark:text-white tracking-tight">
                                     {feature.title}
                                 </h3>
-                                <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-xs">
+                                <p class="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed max-w-xs">
                                     {feature.description}
                                 </p>
                             </div>
 
-                            <div class="mt-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-tighter text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">
+                            <div class="mt-6 md:mt-7 lg:mt-8 flex items-center gap-2 text-[9px] md:text-[10px] font-bold uppercase tracking-tighter text-primary opacity-0 group-hover:opacity-100 transition-all -translate-x-2.5 group-hover:translate-x-0">
                                 Learn more about {feature.title.split(' ')[1] || feature.title}
                                 <Zap size={10} fill="currentColor" />
                             </div>

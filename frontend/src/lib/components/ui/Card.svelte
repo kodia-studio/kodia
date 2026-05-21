@@ -12,12 +12,7 @@
 		hover?: boolean;
 	}
 
-	let { 
-		children, 
-		class: className,
-		padding = 'md',
-		hover = false
-	}: Props = $props();
+	let { children, class: className, padding = 'md', hover = false }: Props = $props();
 
 	const paddings = {
 		none: 'p-0',
@@ -27,11 +22,13 @@
 	};
 </script>
 
-<div class={cn(
-	"glass rounded-[2rem] border border-slate-200 dark:border-slate-800 overflow-hidden transition-all duration-500",
-	hover && "hover:shadow-kodia-xl hover:shadow-primary/5 hover:-translate-y-1",
-	paddings[padding],
-	className
-)}>
+<div
+	class={cn(
+		'glass overflow-hidden rounded-4xl border border-slate-200 transition-all duration-500 dark:border-slate-800',
+		hover && 'hover:shadow-kodia-xl hover:shadow-primary/5 hover:-translate-y-1',
+		paddings[padding],
+		className
+	)}
+>
 	{@render children()}
 </div>

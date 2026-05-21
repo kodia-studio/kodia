@@ -156,7 +156,6 @@
 </div>
 
 <style>
-  /* Custom scrollbar for terminal */
   div::-webkit-scrollbar {
     width: 6px;
   }

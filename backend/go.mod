@@ -27,6 +27,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/mailgun/mailgun-go/v4 v4.23.0
 	github.com/meilisearch/meilisearch-go v0.36.2
+	github.com/midtrans/midtrans-go v1.3.8
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/pquerna/otp v1.5.0
 	github.com/prometheus/client_golang v1.23.2

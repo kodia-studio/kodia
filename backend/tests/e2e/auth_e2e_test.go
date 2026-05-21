@@ -16,6 +16,7 @@ import (
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/adapters/repository/postgres"
 	"github.com/kodia-studio/kodia/internal/core/domain"
+	"github.com/kodia-studio/kodia/internal/core/ports"
 	"github.com/kodia-studio/kodia/internal/core/services"
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	tests "github.com/kodia-studio/kodia/tests"
@@ -364,9 +365,11 @@ func setupTestRouter(_ *testing.T, testDB *tests.TestDatabase) *gin.Engine {
 	// Create services
 	mockCache := new(MockCacheProvider)
 	mockMailer := new(MockMailer)
+	mockDispatcher := new(MockEventDispatcher)
 	authService := services.NewAuthService(
 		userRepo,
 		refreshTokenRepo,
+		mockDispatcher,
 		jwtManager,
 		mockCache,
 		mockMailer,
@@ -421,3 +424,8 @@ type MockMailer struct{}
 func (m *MockMailer) Send(ctx context.Context, to []string, subject string, body string) error { return nil }
 func (m *MockMailer) SendHTML(ctx context.Context, to []string, subject string, htmlBody string) error { return nil }
 func (m *MockMailer) SendWithTemplate(ctx context.Context, to []string, subject string, templatePath string, data interface{}) error { return nil }
+
+// MockEventDispatcher is a simple mock for E2E tests
+type MockEventDispatcher struct{}
+func (m *MockEventDispatcher) Dispatch(ctx context.Context, event ports.Event) error { return nil }
+func (m *MockEventDispatcher) Register(eventName string, handlers ...ports.Listener) {}

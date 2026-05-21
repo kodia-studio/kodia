@@ -43,8 +43,8 @@
 <AuthLayout>
   <form onsubmit={handleLogin} class="space-y-6">
     <div class="text-center mb-10">
-      <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Sign In.</h1>
-      <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Enter your colony credentials to access the hub.</p>
+      <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Sign In</h1>
+      <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Enter your email and password to access your account</p>
     </div>
 
     <div class="space-y-4">
@@ -92,14 +92,14 @@
       {:else}
         <LogIn size={20} class="group-hover:translate-x-1 transition-transform" />
       {/if}
-      Sign In to Hive
+      Sign In
     </button>
 
     <div class="pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
       <p class="text-xs font-bold text-slate-500 dark:text-slate-400">
-        Don't have an account yet? 
+        Don't have an account?
         <a href="/register" class="inline-flex items-center gap-1 text-primary hover:underline ml-1">
-          Create One
+          Sign Up
           <ArrowRight size={10} />
         </a>
       </p>

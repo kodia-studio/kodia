@@ -46,12 +46,12 @@
       <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-500 mx-auto flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/20 rotate-12">
         <CheckCircle2 size={32} />
       </div>
-      <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">Secure.</h1>
+      <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">Password Reset</h1>
       <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-10 leading-relaxed">
         Your password has been reset successfully. <br/>
-        Taking you back to the colony...
+        You can now sign in with your new password.
       </p>
-      
+
       <button onclick={() => goto("/login")} class="btn-premium w-full py-4 inline-flex items-center justify-center gap-3 text-lg font-bold">
         Sign In Now
         <ArrowRight size={20} />
@@ -60,8 +60,8 @@
   {:else}
     <form onsubmit={handleReset} class="space-y-6">
       <div class="text-center mb-10">
-        <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Secure.</h1>
-        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Choose a strong new password to protect your hive access.</p>
+        <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Reset Your Password</h1>
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Enter a new password to secure your account</p>
       </div>
 
       {#if !token}
@@ -111,12 +111,12 @@
         {:else}
           <KeyRound size={20} class="group-hover:rotate-12 transition-transform" />
         {/if}
-        Update Access
+        Reset Password
       </button>
 
       <div class="pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
         <a href="/login" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
-          Log In instead
+          Back to Sign In
         </a>
       </div>
     </form>

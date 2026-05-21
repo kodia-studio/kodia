@@ -1,51 +1,46 @@
-package providers
+package pulse
 
 import (
 	"context"
 
-	"github.com/kodia-studio/kodia/internal/adapters/http/handlers"
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/pkg/jwt"
 	"github.com/kodia-studio/kodia/pkg/kodia"
-	"github.com/kodia-studio/kodia/pkg/observability"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-type PulseProvider struct {
-	manager *observability.PulseManager
+type ServiceProvider struct {
+	manager *Manager
 }
 
-func NewPulseProvider() *PulseProvider {
-	return &PulseProvider{}
+func NewServiceProvider() *ServiceProvider {
+	return &ServiceProvider{}
 }
 
-func (p *PulseProvider) Name() string {
+func (p *ServiceProvider) Name() string {
 	return "kodia:pulse"
 }
 
-func (p *PulseProvider) Register(app *kodia.App) error {
-	p.manager = observability.NewPulseManager(app.Log)
+func (p *ServiceProvider) Register(app *kodia.App) error {
+	p.manager = NewManager(app.Log)
 	app.Set("pulse_manager", p.manager)
 
-	// Wrap the global logger with PulseCore to intercept Warn/Error logs
 	app.Log = app.Log.WithOptions(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
-		pulseCore := observability.NewPulseCore(p.manager, zapcore.WarnLevel)
+		pulseCore := NewCore(p.manager, zapcore.WarnLevel)
 		return zapcore.NewTee(core, pulseCore)
 	}))
 
 	return nil
 }
 
-func (p *PulseProvider) Boot(app *kodia.App) error {
-	// 1. Start the Pulse Manager in a background goroutine
+func (p *ServiceProvider) Boot(app *kodia.App) error {
 	ctx := context.Background()
 	go p.manager.Run(ctx)
 
-	// 2. Register real-time stream route if router is available
 	if app.Router != nil {
 		jwtManager := kodia.MustResolve[*jwt.Manager](app, "jwt_manager")
-		handler := handlers.NewPulseHandler(p.manager, app.Log)
+		handler := NewHandler(p.manager, app.Log)
 
 		pulse := app.Router.Group("/api/pulse")
 		pulse.Use(middleware.Auth(jwtManager))

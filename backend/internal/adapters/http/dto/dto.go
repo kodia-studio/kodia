@@ -111,6 +111,22 @@ type LoginVerify2FARequest struct {
 	Code string `json:"code" validate:"required,len=6" example:"123456"`
 }
 
+// Enable2FARequest is the request body for POST /api/auth/2fa/enable.
+// @swagger:model
+type Enable2FARequest struct {
+	// Current password for verification
+	// @required
+	Password string `json:"password" validate:"required" example:"SecurePassword123!"`
+}
+
+// Disable2FARequest is the request body for DELETE /api/auth/2fa/disable.
+// @swagger:model
+type Disable2FARequest struct {
+	// Current password for verification
+	// @required
+	Password string `json:"password" validate:"required" example:"SecurePassword123!"`
+}
+
 // --- User DTOs ---
 
 // UserResponse is the public-safe user representation.
@@ -153,6 +169,26 @@ type UserResponse struct {
 type UpdateUserRequest struct {
 	Name      *string `json:"name"       validate:"omitempty,min=2,max=100,alpha_space,no_html" sanitize:"trim" example:"Jane Doe"`
 	AvatarURL *string `json:"avatar_url" validate:"omitempty,url"             example:"https://example.com/avatar2.jpg"`
+}
+
+// CreateUserRequest is the request body for POST /api/users.
+// @swagger:model
+type CreateUserRequest struct {
+	// User display name
+	// @required
+	Name string `json:"name" validate:"required,min=2,max=100,alpha_space,no_html" sanitize:"trim" example:"John Doe"`
+
+	// User email address
+	// @required
+	Email string `json:"email" validate:"required,email" sanitize:"trim,lowercase" example:"user@example.com"`
+
+	// User password
+	// @required
+	Password string `json:"password" validate:"required,min=8,max=72,strong_password" example:"SecurePassword123!"`
+
+	// User role
+	// @required
+	Role string `json:"role" validate:"required,oneof=user moderator admin" example:"user"`
 }
 
 // ChangePasswordRequest is the request body for POST /api/users/me/change-password.

@@ -32,16 +32,22 @@ func (p *NotificationProvider) Register(app *kodia.App) error {
 	mailer := kodia.MustResolve[ports.Mailer](app, "mailer")
 	userRepo := postgres.NewUserRepository(app.DB)
 
-	// 3. Register listener with dependencies
+	// 3. Service
+	notifService := services.NewNotificationService(notifRepo, broadcaster, dispatcher, app.Log)
+	app.Set("notification_service", notifService)
+
+	// 4. Register listeners
 	emailListener := &listeners.SendNotificationEmail{
 		Mailer:   mailer,
 		UserRepo: userRepo,
 	}
 	dispatcher.Register("NotificationCreated", emailListener)
 
-	// 4. Service
-	notifService := services.NewNotificationService(notifRepo, broadcaster, dispatcher, app.Log)
-	app.Set("notification_service", notifService)
+	welcomeListener := &listeners.SendWelcomeNotification{
+		NotificationService: notifService,
+		Log:                 app.Log,
+	}
+	dispatcher.Register("user.registered", welcomeListener)
 
 	// 5. Handler
 	validate := validation.New()
@@ -64,9 +70,9 @@ func (p *NotificationProvider) Boot(app *kodia.App) error {
 	notifs.Use(middleware.Auth(jwtManager))
 	{
 		notifs.GET("", notifHandler.List)
-		notifs.GET("/unread-count", notifHandler.UnreadCount)
-		notifs.PUT("/:id/read", notifHandler.MarkAsRead)
-		notifs.PUT("/read-all", notifHandler.MarkAllAsRead)
+		notifs.GET("/unread/count", notifHandler.UnreadCount)
+		notifs.POST("/:id/read", notifHandler.MarkAsRead)
+		notifs.POST("/read-all", notifHandler.MarkAllAsRead)
 		notifs.DELETE("/:id", notifHandler.Delete)
 	}
 

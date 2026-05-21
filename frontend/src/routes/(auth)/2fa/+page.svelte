@@ -30,12 +30,12 @@
 
     isLoading = true;
     try {
-      const response = await api.post<any>("/auth/2fa/login-verify", { 
-        mfa_token: mfaToken, 
-        code 
+      const response = await api.post<any>("/api/auth/2fa/login-verify", {
+        mfa_token: mfaToken,
+        code
       });
-      
-      const { user, access_token } = response.data;
+
+      const { user, access_token } = response;
       authStore.login(user, access_token);
       sessionStorage.removeItem("mfa_token");
       toast.success("Identity verified! Welcome, " + user.name);
@@ -54,7 +54,7 @@
       <div class="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 mx-auto flex items-center justify-center mb-6 shadow-2xl shadow-amber-500/20 rotate-3">
         <Smartphone size={32} />
       </div>
-      <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Shield.</h1>
+      <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Two-Factor Authentication</h1>
       <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
         Enter the 6-digit code from your authenticator app to authorize this entry.
       </p>

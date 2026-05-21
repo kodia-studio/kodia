@@ -20,8 +20,8 @@ import (
 type gormUser struct {
 	ID        string     `gorm:"column:id;primaryKey"`
 	Name      string     `gorm:"column:name;not null"`
-	Email     string     `gorm:"column:email;uniqueIndex;not null"`
-	Password  string     `gorm:"column:password;not null"`
+	Email     *string    `gorm:"column:email;uniqueIndex"`
+	Password  *string    `gorm:"column:password"`
 	Role      string     `gorm:"column:role;not null;default:'user'"`
 	IsActive  bool       `gorm:"column:is_active;not null;default:true"`
 	IsVerified bool       `gorm:"column:is_verified;not null;default:false"`
@@ -41,11 +41,19 @@ func (gormUser) TableName() string { return "users" }
 
 // toDomain converts a gormUser to a domain.User entity.
 func (g *gormUser) toDomain() *domain.User {
+	email := ""
+	if g.Email != nil {
+		email = *g.Email
+	}
+	password := ""
+	if g.Password != nil {
+		password = *g.Password
+	}
 	return &domain.User{
 		ID:        g.ID,
 		Name:      g.Name,
-		Email:     g.Email,
-		Password:  g.Password,
+		Email:     email,
+		Password:  password,
 		Role:      domain.UserRole(g.Role),
 		IsActive:  g.IsActive,
 		IsVerified: g.IsVerified,
@@ -61,11 +69,13 @@ func (g *gormUser) toDomain() *domain.User {
 
 // fromDomain converts a domain.User to a gormUser.
 func fromDomainUser(u *domain.User) *gormUser {
+	email := u.Email
+	password := u.Password
 	return &gormUser{
 		ID:        u.ID,
 		Name:      u.Name,
-		Email:     u.Email,
-		Password:  u.Password,
+		Email:     &email,
+		Password:  &password,
 		Role:      string(u.Role),
 		IsActive:  u.IsActive,
 		IsVerified: u.IsVerified,
@@ -119,12 +129,13 @@ func (r *UserRepository) FindByID(ctx context.Context, id string) (*domain.User,
 
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var m gormUser
-	result := r.DB().WithContext(ctx).Where("email = ?", email).First(&m)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	// Explicitly exclude soft-deleted records to prevent finding deleted accounts
+	result := r.Query().Where("email = ?", email).WhereNull("deleted_at").First(ctx, &m)
+	if result != nil {
+		if errors.Is(result, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
-		return nil, result.Error
+		return nil, result
 	}
 	return m.toDomain(), nil
 }
@@ -150,11 +161,19 @@ func (r *UserRepository) Update(ctx context.Context, user *domain.User) error {
 }
 
 func (r *UserRepository) Delete(ctx context.Context, id string) error {
-	return r.RawDelete(ctx, id)
+	// Clear sensitive data (email, password) before soft-deleting
+	// This preserves user record for history/analytics but removes auth credentials
+	return r.DB().WithContext(ctx).Model(&gormUser{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"email":    nil,
+			"password": nil,
+		}).Delete(&gormUser{}, "id = ?", id).Error
 }
 
 func (r *UserRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
-	return r.Query().Where("email = ?", email).Exists(ctx)
+	// Explicitly exclude soft-deleted records (where deleted_at IS NULL)
+	return r.Query().Where("email = ?", email).WhereNull("deleted_at").Exists(ctx)
 }
 
 func (r *UserRepository) CountByRole(ctx context.Context, role string) (int64, error) {

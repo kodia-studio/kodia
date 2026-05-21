@@ -194,16 +194,13 @@ func (s *ProductService) UpdateVariant(ctx context.Context, productID, variantID
 		case "promo_start_at":
 			if value == nil {
 				variant.PromoStartAt = nil
-			} else if _, ok := value.(interface{}); ok {
-				// Handle time parsing from request
-				variant.PromoStartAt = nil
 			}
+			// TODO: Handle time parsing from request
 		case "promo_end_at":
 			if value == nil {
 				variant.PromoEndAt = nil
-			} else if _, ok := value.(interface{}); ok {
-				variant.PromoEndAt = nil
 			}
+			// TODO: Handle time parsing from request
 		case "is_active":
 			if v, ok := value.(bool); ok {
 				variant.IsActive = v

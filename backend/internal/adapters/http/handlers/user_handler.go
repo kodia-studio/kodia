@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/kodia-studio/kodia/internal/adapters/http/dto"
 	"github.com/kodia-studio/kodia/internal/adapters/http/middleware"
 	"github.com/kodia-studio/kodia/internal/core/domain"
@@ -177,4 +178,119 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	}
 
 	response.OK(c, "Password changed successfully", nil)
+}
+
+// DeleteMe godoc
+// @Summary      Delete own account
+// @Description  Permanently delete the authenticated user's account
+// @Tags         users
+// @Security     BearerAuth
+// @Success      204
+// @Failure      401 {object} response.Response
+// @Router       /users/me [delete]
+func (h *UserHandler) DeleteMe(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	if err := h.userService.Delete(c.Request.Context(), userID); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			response.NotFound(c, "User not found")
+			return
+		}
+		response.InternalServerError(c, "")
+		return
+	}
+	response.NoContent(c)
+}
+
+// Create godoc
+// @Summary      Create a new user
+// @Tags         users
+// @Security     BearerAuth
+// @Param        body body dto.CreateUserRequest true "User creation data"
+// @Success      201 {object} response.Response{data=dto.UserResponse}
+// @Router       /users [post]
+func (h *UserHandler) Create(c *gin.Context) {
+	var req dto.CreateUserRequest
+	if !validation.BindAndValidate(c, h.validate, &req) {
+		return
+	}
+
+	id := uuid.NewString()
+	user, err := h.userService.Create(c.Request.Context(), ports.CreateUserInput{
+		ID:       id,
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+		Role:     req.Role,
+	})
+	if err != nil {
+		response.InternalServerError(c, "Failed to create user")
+		return
+	}
+
+	c.JSON(201, response.Response{
+		Success: true,
+		Message: "User created successfully",
+		Data:    dto.MapUserToResponse(user),
+	})
+}
+
+// GetTrashed godoc
+// @Summary      List trashed (soft-deleted) users
+// @Tags         users
+// @Security     BearerAuth
+// @Param        page     query int false "Page number" default(1)
+// @Param        per_page query int false "Items per page" default(15)
+// @Success      200 {object} response.Response{data=[]dto.UserResponse}
+// @Router       /users/trashed [get]
+func (h *UserHandler) GetTrashed(c *gin.Context) {
+	params := pagination.FromContext(c)
+	users, total, err := h.userService.GetTrashed(c.Request.Context(), params)
+	if err != nil {
+		h.log.Error("Failed to get trashed users", zap.Error(err))
+		response.InternalServerError(c, "")
+		return
+	}
+
+	meta := response.NewMeta(params.Page, params.PerPage, total)
+	response.OKWithMeta(c, "Trashed users retrieved", dto.MapUsersToResponse(users), meta)
+}
+
+// Restore godoc
+// @Summary      Restore a trashed user
+// @Tags         users
+// @Security     BearerAuth
+// @Param        id path string true "User ID"
+// @Success      200 {object} response.Response
+// @Router       /users/{id}/restore [post]
+func (h *UserHandler) Restore(c *gin.Context) {
+	id := c.Param("id")
+	if err := h.userService.Restore(c.Request.Context(), id); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			response.NotFound(c, "User not found")
+			return
+		}
+		response.InternalServerError(c, "")
+		return
+	}
+	response.OK(c, "User restored successfully", nil)
+}
+
+// ForceDelete godoc
+// @Summary      Permanently delete a user
+// @Tags         users
+// @Security     BearerAuth
+// @Param        id path string true "User ID"
+// @Success      204
+// @Router       /users/{id}/force-delete [post]
+func (h *UserHandler) ForceDelete(c *gin.Context) {
+	id := c.Param("id")
+	if err := h.userService.ForceDelete(c.Request.Context(), id); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			response.NotFound(c, "User not found")
+			return
+		}
+		response.InternalServerError(c, "")
+		return
+	}
+	response.NoContent(c)
 }

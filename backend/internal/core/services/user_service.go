@@ -105,3 +105,44 @@ func (s *UserService) UpdateAvatar(ctx context.Context, id string, avatarURL str
 
 	return s.userRepo.Update(ctx, user)
 }
+
+// Create creates a new user with the provided information.
+func (s *UserService) Create(ctx context.Context, input ports.CreateUserInput) (*domain.User, error) {
+	hashedPassword, err := hash.Make(input.Password)
+	if err != nil {
+		return nil, fmt.Errorf("create user: %w", err)
+	}
+
+	user := &domain.User{
+		ID:       input.ID,
+		Name:     input.Name,
+		Email:    input.Email,
+		Password: hashedPassword,
+		Role:     domain.UserRole(input.Role),
+		IsActive: true,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := s.userRepo.Create(ctx, user); err != nil {
+		s.log.Error("Failed to create user", zap.Error(err))
+		return nil, fmt.Errorf("create user: %w", err)
+	}
+
+	return user, nil
+}
+
+// GetTrashed returns a paginated list of soft-deleted users.
+func (s *UserService) GetTrashed(ctx context.Context, params *pagination.Params) ([]*domain.User, int64, error) {
+	return s.userRepo.FindTrashed(ctx, params)
+}
+
+// Restore restores a soft-deleted user by ID.
+func (s *UserService) Restore(ctx context.Context, id string) error {
+	return s.userRepo.Restore(ctx, id)
+}
+
+// ForceDelete permanently deletes a user by ID.
+func (s *UserService) ForceDelete(ctx context.Context, id string) error {
+	return s.userRepo.ForceDelete(ctx, id)
+}

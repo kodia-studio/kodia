@@ -229,9 +229,73 @@ func Load() (*Config, error) {
 	v.AddConfigPath(".")
 
 	// Environment variables
-	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.SetEnvPrefix("APP")
+	v.AutomaticEnv()
+
+	// Bind specific env vars to config keys (needed because AutomaticEnv doesn't work well with SetEnvPrefix for nested keys)
+	v.BindEnv("app.name", "APP_NAME")
+	v.BindEnv("app.env", "APP_ENV")
+	v.BindEnv("app.port", "APP_PORT")
+	v.BindEnv("app.debug", "APP_DEBUG")
+	v.BindEnv("app.base_url", "APP_BASE_URL")
+	v.BindEnv("app.frontend_url", "APP_FRONTEND_URL")
+
+	v.BindEnv("database.driver", "APP_DATABASE_DRIVER")
+	v.BindEnv("database.host", "APP_DATABASE_HOST")
+	v.BindEnv("database.port", "APP_DATABASE_PORT")
+	v.BindEnv("database.name", "APP_DATABASE_NAME")
+	v.BindEnv("database.user", "APP_DATABASE_USER")
+	v.BindEnv("database.password", "APP_DATABASE_PASSWORD")
+	v.BindEnv("database.path", "APP_DATABASE_PATH")
+	v.BindEnv("database.ssl_mode", "APP_DATABASE_SSL_MODE")
+	v.BindEnv("database.timezone", "APP_DATABASE_TIMEZONE")
+
+	v.BindEnv("redis.host", "APP_REDIS_HOST")
+	v.BindEnv("redis.port", "APP_REDIS_PORT")
+	v.BindEnv("redis.password", "APP_REDIS_PASSWORD")
+	v.BindEnv("redis.db", "APP_REDIS_DB")
+
+	v.BindEnv("jwt.access_secret", "APP_JWT_ACCESS_SECRET")
+	v.BindEnv("jwt.refresh_secret", "APP_JWT_REFRESH_SECRET")
+	v.BindEnv("jwt.access_expiry_hours", "APP_JWT_ACCESS_EXPIRY_HOURS")
+	v.BindEnv("jwt.refresh_expiry_days", "APP_JWT_REFRESH_EXPIRY_DAYS")
+
+	v.BindEnv("cors.allowed_origins", "APP_CORS_ALLOWED_ORIGINS")
+
+	v.BindEnv("storage.provider", "APP_STORAGE_PROVIDER")
+	v.BindEnv("storage.local_dir", "APP_STORAGE_LOCAL_DIR")
+	v.BindEnv("storage.bucket", "APP_STORAGE_BUCKET")
+	v.BindEnv("storage.region", "APP_STORAGE_REGION")
+	v.BindEnv("storage.endpoint", "APP_STORAGE_ENDPOINT")
+	v.BindEnv("storage.access_id", "APP_STORAGE_ACCESS_ID")
+	v.BindEnv("storage.secret_key", "APP_STORAGE_SECRET_KEY")
+	v.BindEnv("storage.public_url", "APP_STORAGE_PUBLIC_URL")
+
+	v.BindEnv("mail.host", "MAIL_HOST")
+	v.BindEnv("mail.port", "MAIL_PORT")
+	v.BindEnv("mail.user", "MAIL_USER")
+	v.BindEnv("mail.password", "MAIL_PASSWORD")
+	v.BindEnv("mail.from_addr", "MAIL_FROM_ADDR")
+	v.BindEnv("mail.from_name", "MAIL_FROM_NAME")
+
+	v.BindEnv("observability.tracing_enabled", "APP_OBSERVABILITY_TRACING_ENABLED")
+	v.BindEnv("observability.metrics_enabled", "APP_OBSERVABILITY_METRICS_ENABLED")
+	v.BindEnv("observability.sentry_dsn", "APP_OBSERVABILITY_SENTRY_DSN")
+	v.BindEnv("observability.prometheus_port", "APP_OBSERVABILITY_PROMETHEUS_PORT")
+	v.BindEnv("observability.sampling_rate", "APP_OBSERVABILITY_SAMPLING_RATE")
+	v.BindEnv("observability.otlp_endpoint", "APP_OBSERVABILITY_OTLP_ENDPOINT")
+	v.BindEnv("observability.service_name", "APP_OBSERVABILITY_SERVICE_NAME")
+
+	v.BindEnv("notification.twilio_account_sid", "APP_NOTIFICATION_TWILIO_ACCOUNT_SID")
+	v.BindEnv("notification.twilio_auth_token", "APP_NOTIFICATION_TWILIO_AUTH_TOKEN")
+	v.BindEnv("notification.twilio_from_number", "APP_NOTIFICATION_TWILIO_FROM_NUMBER")
+	v.BindEnv("notification.slack_webhook_url", "APP_NOTIFICATION_SLACK_WEBHOOK_URL")
+	v.BindEnv("notification.fcm_server_key", "APP_NOTIFICATION_FCM_SERVER_KEY")
+
+	v.BindEnv("midtrans.server_key", "APP_MIDTRANS_SERVER_KEY")
+	v.BindEnv("midtrans.client_key", "APP_MIDTRANS_CLIENT_KEY")
+	v.BindEnv("midtrans.is_production", "APP_MIDTRANS_IS_PRODUCTION")
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {

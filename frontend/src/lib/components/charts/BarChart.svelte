@@ -16,32 +16,21 @@
 
 	let { data = [], title, height = 300, class: className }: Props = $props();
 
-	const padding = { left: 50, right: 20, top: 20, bottom: 40 };
+	const padding = { left: 5, right: 5, top: 10, bottom: 40 };
 	let hoveredIndex = $state<number | null>(null);
 
 	const xScale = $derived.by(() => {
 		return scaleBand()
 			.domain(data.map(d => String(d.x)))
 			.range([padding.left, 100 - padding.right])
-			.padding(0.4);
+			.padding(0.3);
 	});
 
 	const yScale = $derived.by(() => {
 		const max = data.length > 0 ? Math.max(...data.map(d => d.y)) : 100;
 		return scaleLinear()
-			.domain([0, max])
+			.domain([0, max * 1.1])
 			.range([height - padding.bottom, padding.top]);
-	});
-
-	const yTicks = $derived.by(() => {
-		if (data.length === 0) return [];
-		const max = Math.max(...data.map(d => d.y));
-		const step = Math.pow(10, Math.floor(Math.log10(max))) / 2;
-		const ticks = [];
-		for (let i = 0; i <= max; i += step) {
-			ticks.push(i);
-		}
-		return ticks.slice(0, 5);
 	});
 
 	function handleBarHover(index: number) {
@@ -60,7 +49,7 @@
 		</h3>
 	{/if}
 
-	<div class="card-premium p-6 relative" style="height: {height}px">
+	<div class="relative" style="height: {height}px">
 		<svg
 			{height}
 			viewBox="0 0 100 {height}"
@@ -69,40 +58,6 @@
 			role="img"
 			aria-label="Bar chart"
 		>
-			<!-- Y Axis -->
-			<line
-				x1={padding.left}
-				y1={padding.top}
-				x2={padding.left}
-				y2={height - padding.bottom}
-				stroke="currentColor"
-				stroke-width="0.5"
-				opacity="0.2"
-			/>
-
-			<!-- Y Axis Ticks & Labels -->
-			{#each yTicks as tick}
-				{@const y = yScale(tick)}
-				<line
-					x1={padding.left - 2}
-					y1={y}
-					x2={padding.left}
-					y2={y}
-					stroke="currentColor"
-					stroke-width="0.5"
-					opacity="0.2"
-				/>
-				<text
-					x={padding.left - 5}
-					y={y}
-					text-anchor="end"
-					dominant-baseline="middle"
-					class="text-[8px] fill-slate-500"
-				>
-					{tick.toLocaleString()}
-				</text>
-			{/each}
-
 			<!-- X Axis -->
 			<line
 				x1={padding.left}
@@ -114,24 +69,10 @@
 				opacity="0.2"
 			/>
 
-			<!-- Grid Lines -->
-			{#each yTicks as tick}
-				{@const y = yScale(tick)}
-				<line
-					x1={padding.left}
-					y1={y}
-					x2={100 - padding.right}
-					y2={y}
-					stroke="currentColor"
-					stroke-width="0.25"
-					opacity="0.1"
-				/>
-			{/each}
-
 			<!-- Bars -->
 			{#each data as point, idx}
 				{@const barWidth = xScale.bandwidth()}
-				{@const barX = xScale(String(point.x))}
+				{@const barX = xScale(String(point.x)) ?? 0}
 				{@const barY = yScale(point.y)}
 				{@const barHeight = height - padding.bottom - barY}
 
@@ -140,8 +81,9 @@
 					y={barY}
 					width={barWidth}
 					height={barHeight}
-					fill={hoveredIndex === idx ? "#8b5cf6" : "rgba(139, 92, 246, 0.8)"}
-					class="transition-all cursor-pointer dark:opacity-60"
+					fill={hoveredIndex === idx ? "#3b82f6" : "rgba(59, 130, 246, 0.75)"}
+					rx="1"
+					class="transition-all cursor-pointer"
 					onmouseenter={() => handleBarHover(idx)}
 					onmouseleave={handleBarLeave}
 					role="button"
@@ -151,11 +93,11 @@
 			{/each}
 		</svg>
 
-		<!-- X Axis Labels (Positioned Absolutely) -->
+		<!-- X Axis Labels -->
 		<div class="absolute" style="left: {padding.left}%; bottom: 0; right: {padding.right}%; height: {padding.bottom}px;">
-			<div class="flex h-full items-start justify-around text-center">
+			<div class="flex h-full items-start justify-around pt-2 text-center">
 				{#each data as point}
-					<span class="text-[10px] font-bold uppercase tracking-tight text-slate-400 leading-tight">
+					<span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 leading-tight">
 						{point.x}
 					</span>
 				{/each}
@@ -165,14 +107,14 @@
 		<!-- Tooltip -->
 		{#if hoveredIndex !== null}
 			{@const point = data[hoveredIndex]}
-			{@const barX = xScale(String(point.x)) || 0}
+			{@const barX = xScale(String(point.x)) ?? 0}
 			{@const barWidth = xScale.bandwidth()}
 			<div
 				class="absolute pointer-events-none bg-white dark:bg-slate-900 p-2 px-3 rounded-lg border border-primary/20 shadow-xl z-10"
-				style="left: {barX + barWidth / 2}%; top: {yScale(point.y)}%; transform: translate(-50%, -100%); margin-top: -8px;"
+				style="left: {barX + barWidth / 2}%; top: {yScale(point.y)}px; transform: translate(-50%, -100%); margin-top: -8px;"
 			>
 				<p class="text-[10px] font-black uppercase tracking-widest text-primary">{point.x}</p>
-				<p class="text-lg font-black tracking-tight text-slate-900 dark:text-white">{point.y.toLocaleString()}</p>
+				<p class="text-sm font-black tracking-tight text-slate-900 dark:text-white">{point.y.toLocaleString()}</p>
 			</div>
 		{/if}
 	</div>

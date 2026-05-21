@@ -1,4 +1,4 @@
-package observability
+package pulse
 
 import (
 	"context"
@@ -10,22 +10,19 @@ import (
 	"go.uber.org/zap"
 )
 
-// PulseMessage represents the data sent over the WebSocket.
-type PulseMessage struct {
-	Type      string      `json:"type"` // "stats" or "log"
+type Message struct {
+	Type      string      `json:"type"`
 	Timestamp time.Time   `json:"timestamp"`
 	Data      interface{} `json:"data"`
 }
 
-// LogData represents a filtered log entry for Pulse.
 type LogData struct {
 	Level   string `json:"level"`
 	Message string `json:"message"`
 	Module  string `json:"module,omitempty"`
 }
 
-// PulseManager orchestrates real-time telemetry broadcasting.
-type PulseManager struct {
+type Manager struct {
 	log         *zap.Logger
 	clients     map[chan []byte]bool
 	register    chan chan []byte
@@ -36,9 +33,8 @@ type PulseManager struct {
 	stopChannel chan struct{}
 }
 
-// NewPulseManager creates a new PulseManager instance.
-func NewPulseManager(log *zap.Logger) *PulseManager {
-	return &PulseManager{
+func NewManager(log *zap.Logger) *Manager {
+	return &Manager{
 		log:         log,
 		clients:     make(map[chan []byte]bool),
 		register:    make(chan chan []byte),
@@ -49,8 +45,7 @@ func NewPulseManager(log *zap.Logger) *PulseManager {
 	}
 }
 
-// Run starts the Pulse broadcasting loop.
-func (pm *PulseManager) Run(ctx context.Context) {
+func (pm *Manager) Run(ctx context.Context) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
@@ -59,7 +54,6 @@ func (pm *PulseManager) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			// Gather stats and broadcast
 			stats, err := health.Gather(ctx)
 			if err == nil {
 				pm.send("stats", stats)
@@ -101,29 +95,25 @@ func (pm *PulseManager) Run(ctx context.Context) {
 	}
 }
 
-// Register adds a new client channel.
-func (pm *PulseManager) Register() chan []byte {
+func (pm *Manager) Register() chan []byte {
 	ch := make(chan []byte, 256)
 	pm.register <- ch
 	return ch
 }
 
-// Unregister removes a client channel.
-func (pm *PulseManager) Unregister(ch chan []byte) {
+func (pm *Manager) Unregister(ch chan []byte) {
 	pm.unregister <- ch
 }
 
-// Log appends a new log entry to be streamed.
-func (pm *PulseManager) Log(level, message string) {
+func (pm *Manager) Log(level, message string) {
 	select {
 	case pm.logs <- LogData{Level: level, Message: message}:
 	default:
-		// Drop if buffer full
 	}
 }
 
-func (pm *PulseManager) send(msgType string, data interface{}) {
-	msg := PulseMessage{
+func (pm *Manager) send(msgType string, data interface{}) {
+	msg := Message{
 		Type:      msgType,
 		Timestamp: time.Now(),
 		Data:      data,
@@ -137,7 +127,6 @@ func (pm *PulseManager) send(msgType string, data interface{}) {
 	pm.broadcast <- payload
 }
 
-// Stop shuts down the manager.
-func (pm *PulseManager) Stop() {
+func (pm *Manager) Stop() {
 	close(pm.stopChannel)
 }

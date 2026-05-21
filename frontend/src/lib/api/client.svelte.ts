@@ -86,8 +86,19 @@ class ApiClient {
 				body: options.body ? JSON.stringify(options.body) : undefined
 			});
 
-			const result = await response.json();
 			const duration = performance.now() - startTime;
+
+			// Handle 204 No Content - no body to parse
+			if (response.status === 204) {
+				devStore.updateLog(logId, {
+					status: response.status,
+					duration,
+					responseBody: null
+				});
+				return null;
+			}
+
+			const result = await response.json();
 
 			devStore.updateLog(logId, {
 				status: response.status,
@@ -133,8 +144,8 @@ class ApiClient {
 		return this.request<T>(path as string, 'patch', { body, params });
 	}
 
-	delete<T = any, P extends keyof paths | (string & {}) = string>(path: P, params?: any) {
-		return this.request<T>(path as string, 'delete', { params });
+	delete<T = any, P extends keyof paths | (string & {}) = string>(path: P, body?: any, params?: any) {
+		return this.request<T>(path as string, 'delete', { body, params });
 	}
 }
 

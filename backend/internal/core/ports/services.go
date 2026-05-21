@@ -36,9 +36,9 @@ type AuthService interface {
 	ResetPassword(ctx context.Context, token string, newPassword string) error
 
 	// 2FA Security
-	Enable2FA(ctx context.Context, userID string) (*TwoFactorSetup, error)
+	Enable2FA(ctx context.Context, userID string, password string) (*TwoFactorSetup, error)
 	Verify2FA(ctx context.Context, userID string, code string) ([]string, error)
-	Disable2FA(ctx context.Context, userID string) error
+	Disable2FA(ctx context.Context, userID string, password string) error
 	LoginVerify2FA(ctx context.Context, mfaToken string, code string) (*AuthResponse, error)
 }
 
@@ -56,11 +56,23 @@ type UserService interface {
 	// GetAll returns a paginated list of users.
 	GetAll(ctx context.Context, params *pagination.Params) ([]*domain.User, int64, error)
 
+	// Create creates a new user.
+	Create(ctx context.Context, input CreateUserInput) (*domain.User, error)
+
 	// Update updates a user's profile information.
 	Update(ctx context.Context, id string, input UpdateUserInput) (*domain.User, error)
 
 	// Delete soft-deletes a user.
 	Delete(ctx context.Context, id string) error
+
+	// GetTrashed returns a paginated list of soft-deleted users.
+	GetTrashed(ctx context.Context, params *pagination.Params) ([]*domain.User, int64, error)
+
+	// Restore restores a soft-deleted user.
+	Restore(ctx context.Context, id string) error
+
+	// ForceDelete permanently deletes a user.
+	ForceDelete(ctx context.Context, id string) error
 
 	// ChangePassword updates a user's password after verifying the current one.
 	ChangePassword(ctx context.Context, id string, input ChangePasswordInput) error
@@ -89,6 +101,14 @@ type AuthResponse struct {
 	User         *domain.User
 	MFARequired  bool   `json:"mfa_required,omitempty"`
 	MFAToken     string `json:"mfa_token,omitempty"`
+}
+
+type CreateUserInput struct {
+	ID       string
+	Name     string
+	Email    string
+	Password string
+	Role     string
 }
 
 type UpdateUserInput struct {

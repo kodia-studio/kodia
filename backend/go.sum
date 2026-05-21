@@ -725,6 +725,8 @@ github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxU
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/meilisearch/meilisearch-go v0.36.2 h1:MYaMPCpdLh2aYPt+zK+19mLoA4dfBY3S1L7T0FADCjU=
 github.com/meilisearch/meilisearch-go v0.36.2/go.mod h1:hWcR0MuWLSzHfbz9GGzIr3s9rnXLm1jqkmHkJPbUSvM=
+github.com/midtrans/midtrans-go v1.3.8 h1:r6eq51LJwbMQ05dBF3Twg99u45G3pLxP5INYoqOoNzU=
+github.com/midtrans/midtrans-go v1.3.8/go.mod h1:5hN2oiZDP3/SwSBxHPTg8eC/RVoRE9DXQOY1Ah9au10=
 github.com/minio/asm2plan9s v0.0.0-20200509001527-cdd76441f9d8/go.mod h1:mC1jAcsrzbxHt8iiaC+zU4b1ylILSosueou12R++wfY=
 github.com/minio/c2goasm v0.0.0-20190812172519-36a3d3bbc4f3/go.mod h1:RagcQ7I8IeTMnF8JTXieKnO4Z6JCsikNEzj0DwauVzE=
 github.com/moby/patternmatcher v0.6.1 h1:qlhtafmr6kgMIJjKJMDmMWq7WLkKIo23hsrpR3x084U=

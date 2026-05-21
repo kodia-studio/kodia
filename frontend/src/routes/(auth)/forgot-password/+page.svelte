@@ -32,22 +32,22 @@
       <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-500 mx-auto flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/20 rotate-12">
         <Send size={32} />
       </div>
-      <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">Sent.</h1>
+      <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">Reset Link Sent</h1>
       <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-10 leading-relaxed">
-        We've dispatched a sting-ready reset link to <br/>
+        We've sent a password reset link to <br/>
         <span class="font-black text-primary">{email}</span>
       </p>
-      
+
       <a href="/login" class="btn-premium w-full py-4 inline-flex items-center justify-center gap-3 text-lg font-bold">
         <ArrowLeft size={20} />
-        Return to Hive
+        Back to Sign In
       </a>
     </div>
   {:else}
     <form onsubmit={handleSubmit} class="space-y-6">
       <div class="text-center mb-10">
-        <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Reset.</h1>
-        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Enter your email and we'll send a recovery link to your colony.</p>
+        <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-2">Forgot Your Password?</h1>
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Enter your email and we'll send a password reset link</p>
       </div>
 
       <FormField label="Email Address">
@@ -73,7 +73,7 @@
         {:else}
           <Send size={20} class="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
         {/if}
-        Request Access
+        Send Reset Link
       </button>
 
       <div class="pt-6 border-t border-slate-100 dark:border-slate-800 text-center">

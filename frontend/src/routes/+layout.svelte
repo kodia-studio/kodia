@@ -9,6 +9,13 @@
 
   onMount(() => {
     initTheme();
+
+    // Unregister any stale service workers — this project does not use service workers
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(r => r.unregister());
+      });
+    }
   });
 
   const theme = $derived(themeStore.dark ? 'dark' : 'light');

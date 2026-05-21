@@ -40,14 +40,16 @@ func (p *AuthProvider) Register(app *kodia.App) error {
 	// Retrieve infra from container
 	cacheProvider := kodia.MustResolve[ports.CacheProvider](app, "cache")
 	mailProvider := kodia.MustResolve[ports.Mailer](app, "mailer")
+	dispatcher := kodia.MustResolve[ports.EventDispatcher](app, "events")
 
 	// 3. Services
 	authService := services.NewAuthService(
-		userRepo, 
-		refreshRepo, 
-		jwtManager, 
-		cacheProvider, 
-		mailProvider, 
+		userRepo,
+		refreshRepo,
+		dispatcher,
+		jwtManager,
+		cacheProvider,
+		mailProvider,
 		app.Config.App.BaseURL,
 		app.Config.App.FrontendURL,
 		app.Log,

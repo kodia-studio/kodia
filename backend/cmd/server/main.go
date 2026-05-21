@@ -43,14 +43,13 @@ func main() {
 		providers.NewObservabilityProvider(),
 		providers.NewHttpProvider(),
 		providers.NewStaticProvider(), // Handles frontend embedding
-		providers.NewAuthProvider(),
+		providers.NewAuthProvider(), // Registers jwt_manager (required by WebSocketProvider)
+		providers.NewWebSocketProvider(), // Requires jwt_manager from AuthProvider, provides ws_hub
+		providers.NewRealtimeProvider(), // Requires ws_hub from WebSocketProvider, provides event_broadcaster
+		providers.NewNotificationProvider(), // Requires event_broadcaster from RealtimeProvider
 		providers.NewUserProvider(),
 		providers.NewRoleProvider(), // Role and permission management
-		providers.NewWebSocketProvider(), // Provides ws_hub (required by RealtimeProvider)
-		providers.NewRealtimeProvider(), // Provides event_broadcaster (required by NotificationProvider)
-		providers.NewNotificationProvider(), // Requires event_broadcaster from RealtimeProvider
 		providers.NewGraphQLProvider(),
-		providers.NewPulseProvider(), // Real-time observability telemetry
 		providers.NewCommerceProvider(), // Marketplace: products, orders, coupons, payments
 	)
 	if err != nil {

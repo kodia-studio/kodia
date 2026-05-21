@@ -7,6 +7,7 @@ interface AuthState {
 	accessToken: string | null;
 	isAuthenticated: boolean;
 	isLoading: boolean;
+	notificationUnreadCount?: number;
 }
 
 const initialState: AuthState = {
